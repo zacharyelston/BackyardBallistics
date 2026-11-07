@@ -1,5 +1,9 @@
 # Backyard Ballistics
 
+![SpudGunGolf browser prototype: a top-down hole with range rings, the launcher controls and the firing computer](docs/image.png)
+
+*The browser prototype in [`prototype/spudgungolf.html`](prototype/spudgungolf.html).*
+
 SpudGunGolf: a backyard trajectory game played with a low-power launcher on published courses. Flags are guyed furring-strip poles standing in a trash can lid; the iPhone app ranges the lid from photos of the pole, runs a firing computer and keeps score.
 
 Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
