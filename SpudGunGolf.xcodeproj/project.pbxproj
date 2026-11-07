@@ -1,0 +1,359 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2689D1FFC142DC580FD916E6 /* PoleHeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79353712A94811FE37ACA5FE /* PoleHeightView.swift */; };
+		2D4BCCC1C504DFB5DC877435 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF2333D0AC6A542A2A76243 /* HomeView.swift */; };
+		833F06491C4DDFF9FDC23AC6 /* RangingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5E31597492CC0E5465EB5069 /* RangingKit */; };
+		876F3F764992A8C51AE61BC9 /* LeanCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B425201901CEBCB9F02D12 /* LeanCheckView.swift */; };
+		8F1AEA5A301F57DC6C3A6D65 /* FieldLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFCA1D9063ED0D520FAA61F9 /* FieldLog.swift */; };
+		98CFC8BF190C087C75B7F89F /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98147AB9E2989F7A57C3ACD5 /* CameraController.swift */; };
+		C261031B77559718F55215ED /* SpudGunGolfApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E1D86E4D3FA61A97A688B1 /* SpudGunGolfApp.swift */; };
+		E56B114D737E570029C4400D /* SightingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49053E2218B3B585F16BBC57 /* SightingView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1FF2333D0AC6A542A2A76243 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		49053E2218B3B585F16BBC57 /* SightingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SightingView.swift; sourceTree = "<group>"; };
+		4BBF86E79DD801AAF20E9E85 /* RangingKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RangingKit; path = Packages/RangingKit; sourceTree = SOURCE_ROOT; };
+		79353712A94811FE37ACA5FE /* PoleHeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleHeightView.swift; sourceTree = "<group>"; };
+		98147AB9E2989F7A57C3ACD5 /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
+		A7B425201901CEBCB9F02D12 /* LeanCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeanCheckView.swift; sourceTree = "<group>"; };
+		BFCA1D9063ED0D520FAA61F9 /* FieldLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldLog.swift; sourceTree = "<group>"; };
+		D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SpudGunGolf.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F0E1D86E4D3FA61A97A688B1 /* SpudGunGolfApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpudGunGolfApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AC02E49F1C645A886C0AC92D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				833F06491C4DDFF9FDC23AC6 /* RangingKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		31471B55732A74AE3FC8058E /* App */ = {
+			isa = PBXGroup;
+			children = (
+				EE34B935C2BCB7EEE43C21E4 /* Sources */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		48E702EBEDAFF5E5DCA3466B = {
+			isa = PBXGroup;
+			children = (
+				31471B55732A74AE3FC8058E /* App */,
+				7C7CE68EF33EEB883DB37F1A /* Packages */,
+				E38998785BBB083889B06138 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7C7CE68EF33EEB883DB37F1A /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				4BBF86E79DD801AAF20E9E85 /* RangingKit */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		E38998785BBB083889B06138 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		EE34B935C2BCB7EEE43C21E4 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				98147AB9E2989F7A57C3ACD5 /* CameraController.swift */,
+				BFCA1D9063ED0D520FAA61F9 /* FieldLog.swift */,
+				1FF2333D0AC6A542A2A76243 /* HomeView.swift */,
+				A7B425201901CEBCB9F02D12 /* LeanCheckView.swift */,
+				79353712A94811FE37ACA5FE /* PoleHeightView.swift */,
+				49053E2218B3B585F16BBC57 /* SightingView.swift */,
+				F0E1D86E4D3FA61A97A688B1 /* SpudGunGolfApp.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		BE7DD4331BD91D496AFB5FF6 /* SpudGunGolf */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D345BB381149A45422359E11 /* Build configuration list for PBXNativeTarget "SpudGunGolf" */;
+			buildPhases = (
+				9207B5E4235D41F5E1FD65B2 /* Sources */,
+				AC02E49F1C645A886C0AC92D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SpudGunGolf;
+			packageProductDependencies = (
+				5E31597492CC0E5465EB5069 /* RangingKit */,
+			);
+			productName = SpudGunGolf;
+			productReference = D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DE51B7B0F572828BD048A9A9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = B53025587128EA806A87EFB0 /* Build configuration list for PBXProject "SpudGunGolf" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 48E702EBEDAFF5E5DCA3466B;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D1AD85BE788518574D66EEDC /* XCLocalSwiftPackageReference "Packages/RangingKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = E38998785BBB083889B06138 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BE7DD4331BD91D496AFB5FF6 /* SpudGunGolf */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9207B5E4235D41F5E1FD65B2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				98CFC8BF190C087C75B7F89F /* CameraController.swift in Sources */,
+				8F1AEA5A301F57DC6C3A6D65 /* FieldLog.swift in Sources */,
+				2D4BCCC1C504DFB5DC877435 /* HomeView.swift in Sources */,
+				876F3F764992A8C51AE61BC9 /* LeanCheckView.swift in Sources */,
+				2689D1FFC142DC580FD916E6 /* PoleHeightView.swift in Sources */,
+				E56B114D737E570029C4400D /* SightingView.swift in Sources */,
+				C261031B77559718F55215ED /* SpudGunGolfApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		3DC1F9BCCA950ECFB83FBE0D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.backyardballistics.spudgungolf;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		835284E259FDA916076E9E57 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		8CACFAA4E73E74E24D5A003F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.backyardballistics.spudgungolf;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		9CCA5BEDD141D4E5A5B5DCBE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B53025587128EA806A87EFB0 /* Build configuration list for PBXProject "SpudGunGolf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CCA5BEDD141D4E5A5B5DCBE /* Debug */,
+				835284E259FDA916076E9E57 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D345BB381149A45422359E11 /* Build configuration list for PBXNativeTarget "SpudGunGolf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8CACFAA4E73E74E24D5A003F /* Debug */,
+				3DC1F9BCCA950ECFB83FBE0D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D1AD85BE788518574D66EEDC /* XCLocalSwiftPackageReference "Packages/RangingKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/RangingKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5E31597492CC0E5465EB5069 /* RangingKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = RangingKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = DE51B7B0F572828BD048A9A9 /* Project object */;
+}
