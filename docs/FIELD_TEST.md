@@ -7,7 +7,7 @@
 
 Goal: check the fused range, its ± estimate, the height difference and the flag check at real distances.
 
-1. Set up one plumb flag with its height measured. Stand at the lid and use **Range the flag → Save my GPS position as the flag point** (wait for GPS accuracy of ±5 m or better).
+1. Set up one plumb flag with its height measured. Stand at the pole and use **Range the flag → Save my GPS position as the flag point** (wait for GPS accuracy of ±5 m or better).
 2. Tape out 10, 30, 60 and 90 m. Note if the ground slopes; measure the height difference if you can.
 3. At each distance, open **Range the flag**, wait for "Tracking", and take photo 1 at the taped spot. Mark tip and base, tap **Use photo**.
 4. Step sideways across the line, one step at a time, taking 2–4 more photos until the baseline bar fills (3 m).
@@ -46,7 +46,7 @@ Goal: find out how precisely a player can mark a pole's tip and base, and how go
 | --- | --- |
 | Do repeat marks agree? | Spread of `est_m` across the three samples at one distance |
 | Is the range biased? | Mean of `error_pct` per lens and distance |
-| Does the base hide in grass or behind the lid rim? | Larger errors plus notes about the base |
+| Does the base hide in grass or behind a lid rim? | Larger errors plus notes about the base |
 | Does the lens report calibration? | `approx_intrinsics` = 1 means it was estimated |
 
 ## Pass mark

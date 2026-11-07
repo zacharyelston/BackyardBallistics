@@ -17,6 +17,7 @@ hole.1.start.1: 42.360120, -71.058880
 hole.1.flag.position: 42.360950, -71.058810
 hole.1.flag.pole_height_m: 2.438
 hole.1.flag.lean_deg: 0.3
+hole.1.flag.in_radius_m: 1.0
 hole.1.lid.diameter_m: 0.58
 
 hole.2.meta.name: Garden Hose
@@ -26,6 +27,6 @@ hole.2.start.2: 42.360300, -71.058150
 hole.2.flag.position: 42.361250, -71.057900
 hole.2.flag.pole_height_m: 3.658
 hole.2.flag.lean_deg: 0.2
-hole.2.lid.diameter_m: 0.61
+hole.2.flag.in_radius_m: 1.5
 hole.2.hazard.1.type: water
 hole.2.hazard.1.points: 42.360700, -71.058150; 42.360700, -71.057950; 42.360850, -71.057950; 42.360850, -71.058150

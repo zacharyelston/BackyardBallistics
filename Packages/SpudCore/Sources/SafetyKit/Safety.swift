@@ -21,7 +21,7 @@ public enum SafetyReason: Equatable, Sendable, CustomStringConvertible {
         case let .muzzleVelocityOverCap(v, cap):
             return String(format: "This charge setting measured %.1f m/s, over the %.0f m/s limit. Solutions for it are blocked.", v, cap)
         case let .beyondSolutionRange(d, limit):
-            return String(format: "The lid is %.0f m away, past the %.0f m (100 yd) limit. Lay up closer first.", d, limit)
+            return String(format: "The hole is %.0f m away, past the %.0f m (100 yd) limit. Lay up closer first.", d, limit)
         case .noFlag:
             return "No published flag here. Ranging only works on a loaded course's flags."
         case let .flagTooFar(miss, tol):
@@ -158,22 +158,22 @@ public enum Safety {
     // MARK: Ranging (course flags only)
 
     public struct FlagCheck: Equatable, Sendable {
-        public var rangedLid: GeoPoint
-        /// Distance from the ranged lid to the published flag, or nil without a flag.
+        public var rangedHole: GeoPoint
+        /// Distance from the ranged hole to the published flag, or nil without a flag.
         public var miss: Double?
         public var verdict: Verdict
     }
 
     /// - Parameters:
     ///   - lie: GPS position of the player when ranging.
-    ///   - east, north: ranged offset from the lie to the lid, metres.
+    ///   - east, north: ranged offset from the lie to the hole (the pole's base), metres.
     ///   - flag: the published flag point from the loaded course.
     public static func checkFlag(lie: GeoPoint, east: Double, north: Double, flag: GeoPoint?) -> FlagCheck {
-        let lid = Geo.offset(lie, east: east, north: north)
-        guard let flag else { return FlagCheck(rangedLid: lid, miss: nil, verdict: .blocked([.noFlag])) }
-        let miss = Geo.distance(lid, flag)
+        let hole = Geo.offset(lie, east: east, north: north)
+        guard let flag else { return FlagCheck(rangedHole: hole, miss: nil, verdict: .blocked([.noFlag])) }
+        let miss = Geo.distance(hole, flag)
         let verdict = Verdict(miss > limits.flagGateTolerance ? [.flagTooFar(miss: miss, tolerance: limits.flagGateTolerance)] : [])
-        return FlagCheck(rangedLid: lid, miss: miss, verdict: verdict)
+        return FlagCheck(rangedHole: hole, miss: miss, verdict: verdict)
     }
 
     /// The only way to turn a range into something the firing computer may use.
@@ -185,11 +185,11 @@ public enum Safety {
 
     // MARK: Course publishing
 
-    /// Every point of the fan from `start` toward `lid` (radius `fanRange`, ± `fanHalfAngle`)
+    /// Every point of the fan from `start` toward `hole` (radius `fanRange`, ± `fanHalfAngle`)
     /// must lie inside the course boundary.
-    public static func checkFan(start: GeoPoint, lid: GeoPoint, boundary: GeoPolygon?) -> Verdict {
+    public static func checkFan(start: GeoPoint, hole: GeoPoint, boundary: GeoPolygon?) -> Verdict {
         guard let boundary, boundary.vertices.count >= 3 else { return .blocked([.noBoundary]) }
-        let centre = Geo.bearing(from: start, to: lid)
+        let centre = Geo.bearing(from: start, to: hole)
         let radii = Array(stride(from: 5.0, to: limits.fanRange, by: 5)) + [limits.fanRange]
         let angles = Array(stride(from: -limits.fanHalfAngle, through: limits.fanHalfAngle, by: 1))
         var outside = 0

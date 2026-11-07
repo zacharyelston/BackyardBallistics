@@ -61,7 +61,7 @@ The app never needs internet during play: it joins the course Wi-Fi at the first
 
 | Gate | Check | Blocks when |
 | --- | --- | --- |
-| `Safety.clearRange` | Ranged lid vs. published flag | No course flag, or more than 10 m off |
+| `Safety.clearRange` | Ranged hole vs. published flag | No course flag, or more than 10 m off |
 | `Safety.clearSolution` | Launcher conformance, distance, muzzle velocity, downrange confirmation | Launcher not conforming, past 100 yd, any setting over 45 m/s, or the player hasn't confirmed the fan for this hole |
 | `Safety.checkLauncher` | The Launcher standard's conformance steps and this round's inspection | Unsupported launcher type, a missing step, no inspection this round, or a failed inspection item |
 | `Safety.pressureInhibit` | Live pressure against the launcher's calibrated setpoint (drives the inhibit relay) | Over the setpoint, or no setpoint. Inhibit only; it never starts a shot |

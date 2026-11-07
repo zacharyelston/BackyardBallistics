@@ -84,18 +84,18 @@ final class SafetyChecksTests: XCTestCase {
 
     func testSafetyFan() {
         let start = GeoPoint(latitude: 42.3601, longitude: -71.0589)
-        let lid = Geo.offset(start, east: 0, north: 80)
+        let hole = Geo.offset(start, east: 0, north: 80)
         let big = GeoPolygon([Geo.offset(start, east: -150, north: -20), Geo.offset(start, east: 150, north: -20),
                               Geo.offset(start, east: 150, north: 150), Geo.offset(start, east: -150, north: 150)])
-        XCTAssertTrue(Safety.checkFan(start: start, lid: lid, boundary: big).isAllowed)
+        XCTAssertTrue(Safety.checkFan(start: start, hole: hole, boundary: big).isAllowed)
 
         let narrow = GeoPolygon([Geo.offset(start, east: -20, north: -20), Geo.offset(start, east: 20, north: -20),
                                  Geo.offset(start, east: 20, north: 150), Geo.offset(start, east: -20, north: 150)])
-        guard case let .blocked(r) = Safety.checkFan(start: start, lid: lid, boundary: narrow),
+        guard case let .blocked(r) = Safety.checkFan(start: start, hole: hole, boundary: narrow),
               case let .fanLeavesBoundary(n) = r.first else { return XCTFail() }
         XCTAssertGreaterThan(n, 0)
 
-        XCTAssertEqual(Safety.checkFan(start: start, lid: lid, boundary: nil).reasons, [.noBoundary])
+        XCTAssertEqual(Safety.checkFan(start: start, hole: hole, boundary: nil).reasons, [.noBoundary])
     }
 
     func testReasonsReadAsSentences() {

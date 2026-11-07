@@ -19,7 +19,7 @@ struct PlayView: View {
         Step(id: 4, title: "Range the flag", detail: "Three to five photos of the pole from a short arc.", milestone: 2, ready: true),
         Step(id: 5, title: "Get a solution", detail: "Charge, elevation and aim, cleared by the safety checks.", milestone: 4, ready: false),
         Step(id: 6, title: "Fire, walk, log", detail: "Tap the lie, range again, and the shot teaches the wind.", milestone: 6, ready: false),
-        Step(id: 7, title: "Hole out", detail: "Scores the moment the potato touches the lid.", milestone: 6, ready: false)
+        Step(id: 7, title: "Hole out", detail: "Range the pole from where it stopped; within the hole's in-radius (1 m) and you're done. Pick up any time for par + 3.", milestone: 6, ready: false)
     ]
 
     var body: some View {

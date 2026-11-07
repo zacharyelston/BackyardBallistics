@@ -4,7 +4,7 @@ import RangingKit
 import CoreGeo
 import SafetyKit
 
-/// Milestone 2: range the lid from a few photos of the pole taken along a short arc.
+/// Milestone 2: range the hole (the pole's base) from a few photos of the pole taken along a short arc.
 struct RangingView: View {
     @StateObject private var session = RangingSession()
     @EnvironmentObject private var rangingLog: RangingLogStore
@@ -157,7 +157,7 @@ struct RangingView: View {
         Section {
             if let g = gate, let miss = g.miss {
                 HStack {
-                    Text(String(format: "Ranged lid is %.1f m from the flag point", miss))
+                    Text(String(format: "Ranged hole is %.1f m from the flag point", miss))
                     Spacer()
                     Image(systemName: g.verdict.isAllowed ? "checkmark.circle.fill" : "xmark.octagon.fill")
                         .foregroundStyle(g.verdict.isAllowed ? .green : .red)
@@ -166,7 +166,7 @@ struct RangingView: View {
                     Text(reason.description).font(.footnote).foregroundStyle(.red)
                 }
             } else if flagPoint == nil {
-                Text("No flag point saved. Stand at the lid and save one to test the flag check.")
+                Text("No flag point saved. Stand at the pole and save one to test the flag check.")
                     .font(.footnote).foregroundStyle(.secondary)
             } else if session.lieLocation == nil {
                 Text("Waiting for GPS at the lie.").font(.footnote).foregroundStyle(.secondary)

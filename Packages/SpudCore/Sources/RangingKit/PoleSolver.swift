@@ -168,13 +168,13 @@ public enum PoleSolver {
 
 /// What the player sees after ranging: distance, height difference and line from the lie.
 public struct RangeReport: Sendable {
-    /// Horizontal distance from the lie to the lid, metres.
+    /// Horizontal distance from the lie to the hole (the pole's base), metres.
     public var distance: Double
     /// 1-sigma uncertainty of that distance, metres.
     public var distanceSigma: Double
-    /// Lid ground minus lie ground, metres (positive = uphill).
+    /// Hole ground minus lie ground, metres (positive = uphill).
     public var heightDifference: Double
-    /// Horizontal offset lie → lid in ARKit world (x, z).
+    /// Horizontal offset lie → hole in ARKit world (x, z).
     public var offset: SIMD2<Double>
     /// Widest horizontal spread between photo positions, metres.
     public var baseline: Double
@@ -189,7 +189,7 @@ public struct RangeReport: Sendable {
 
     public var confident: Bool { maxDisagreementPercent <= Self.disagreementLimitPercent }
 
-    /// Offset lie → lid in metres east and north, for a `.gravityAndHeading` AR session.
+    /// Offset lie → hole in metres east and north, for a `.gravityAndHeading` AR session.
     public var eastNorth: (east: Double, north: Double) { Geo.eastNorth(arOffset: offset.x, offset.y) }
 }
 

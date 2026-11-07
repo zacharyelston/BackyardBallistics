@@ -32,7 +32,7 @@ targets:
         UILaunchScreen: {}
         UIRequiredDeviceCapabilities: [arkit]
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        NSCameraUsageDescription: SpudGunGolf uses the camera to measure flag poles and range the lid.
+        NSCameraUsageDescription: SpudGunGolf uses the camera to measure flag poles and range the hole.
         NSLocationWhenInUseUsageDescription: SpudGunGolf uses your location to find the hole and check that a range lands on a course flag.
     settings:
       base:

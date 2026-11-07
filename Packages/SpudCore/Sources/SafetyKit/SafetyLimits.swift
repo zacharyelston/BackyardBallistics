@@ -17,11 +17,11 @@ public struct SafetyLimits: Codable, Equatable, Sendable {
     public var maxMuzzleVelocity: Double
     /// Longest distance the firing computer will solve for, m (100 yd).
     public var maxSolutionRange: Double
-    /// How far a ranged lid may land from a published flag point, m.
+    /// How far a ranged hole may land from a published flag point, m.
     public var flagGateTolerance: Double
     /// Radius of each start spot's safety fan, m (105 yd).
     public var fanRange: Double
-    /// Half-angle of the safety fan either side of the line to the lid, degrees.
+    /// Half-angle of the safety fan either side of the line to the hole, degrees.
     public var fanHalfAngle: Double
     public var projectile: Projectile
 

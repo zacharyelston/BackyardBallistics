@@ -101,7 +101,7 @@ kbd{font-family:var(--f-data);font-size:11px;border:1px solid var(--line);border
   <header>
     <div>
       <h1>SpudGun<span>Golf</span></h1>
-      <p class="tag">Nine backyard holes, one low-power launcher, one trash can lid per hole. Any touch on the lid scores.</p>
+      <p class="tag">Nine backyard holes, one low-power launcher, and a pole for each hole. Finish within a metre of the pole; the lid just clangs.</p>
     </div>
     <div class="hstats">
       <div class="stat"><span class="lbl">Hole</span><b id="sHole">1/9</b></div>
@@ -136,7 +136,7 @@ kbd{font-family:var(--f-data);font-size:11px;border:1px solid var(--line);border
         <h3>Your lie</h3>
         <div class="liegrid">
           <div><div class="lbl">Surface</div><span class="pill" id="lieSurf">Tee</span></div>
-          <div><div class="lbl">To lid</div><div class="v" id="lieDist">0 yd</div></div>
+          <div><div class="lbl">To hole</div><div class="v" id="lieDist">0 yd</div></div>
           <div><div class="lbl">Wind</div><div class="v" id="windTxt">0 mph</div></div>
         </div>
         <p class="small" id="lieNote"></p>
@@ -146,9 +146,9 @@ kbd{font-family:var(--f-data);font-size:11px;border:1px solid var(--line);border
         <h3>Launcher</h3>
         <div class="ctl"><label for="brg">Aim</label><input type="range" id="brg" min="-90" max="90" step="0.1" value="0"><output id="brgOut">On line</output></div>
         <div class="nudge" id="aimNudge" role="group" aria-label="Nudge aim">
-          <button class="btn" data-a="-1">◂ 1°</button><button class="btn" data-a="-0.1">◂ 0.1°</button><button class="btn" data-a="0">On lid</button><button class="btn" data-a="0.1">0.1° ▸</button><button class="btn" data-a="1">1° ▸</button>
+          <button class="btn" data-a="-1">◂ 1°</button><button class="btn" data-a="-0.1">◂ 0.1°</button><button class="btn" data-a="0">On hole</button><button class="btn" data-a="0.1">0.1° ▸</button><button class="btn" data-a="1">1° ▸</button>
         </div>
-        <p class="small" id="brgAbs">Aim is left or right of the line to the lid.</p>
+        <p class="small" id="brgAbs">Aim is left or right of the line to the hole.</p>
         <div class="ctl"><label for="elev">Elevation</label><input type="range" id="elev" min="0" max="88" step="0.1" value="38"><output id="elevOut">38°</output></div>
         <div class="nudge" id="elevNudge" role="group" aria-label="Nudge elevation">
           <button class="btn" data-e="-1">▾ 1°</button><button class="btn" data-e="-0.1">▾ 0.1°</button><button class="btn" data-e="0.1">▴ 0.1°</button><button class="btn" data-e="1">▴ 1°</button>
@@ -158,6 +158,7 @@ kbd{font-family:var(--f-data);font-size:11px;border:1px solid var(--line);border
           <div class="seg" id="charge" role="group" aria-label="Charge"></div>
         </div>
         <button class="fire" id="fireBtn">Fire</button>
+        <button class="btn" id="pickBtn">Pick up (scores par + 3)</button>
         <p class="keys"><kbd>←</kbd><kbd>→</kbd> aim · <kbd>↑</kbd><kbd>↓</kbd> elevation (hold <kbd>Shift</kbd> for 0.1°) · <kbd>0</kbd>–<kbd>5</kbd> charge · <kbd>Space</kbd> fire</p>
       </div>
 
@@ -171,7 +172,7 @@ kbd{font-family:var(--f-data);font-size:11px;border:1px solid var(--line);border
         <p class="small" id="tgtTxt">Tap the course to set a target.</p>
         <div class="row">
           <button class="btn" id="pointBtn">Point at target</button>
-          <button class="btn" id="tgtCup">Target lid</button>
+          <button class="btn" id="tgtCup">Target hole</button>
           <label class="check"><input type="checkbox" id="rollChk" checked> Allow for roll-out</label>
         </div>
         <div class="tablewrap" id="solWrap"></div>
@@ -204,9 +205,11 @@ const CHARGES = [
 const LIE_V = { tee: 1, fairway: 1, green: 1, rough: 0.9, sand: 0.72 };
 const RET = { tee: .35, fairway: .35, rough: .15, sand: .03, green: .45 };
 const DEC = { tee: 3.5, fairway: 3.5, rough: 9, sand: 40, green: 2.2 };
-// Trash can lid, rim up, with the flag pole standing in its centre. Any touch scores.
+// Optional trash can lid at the pole's base: it only clangs, it doesn't score.
 const LID = { r: 0.29, rim: 0.05, touch: 0.29 + 0.035 }; // m: radius, rim height, radius + potato radius
 const POLE = { r: 0.02 + 0.035, h: 2.44 };                // m: half-width + potato radius, 8 ft pole
+// The pole is the hole: a hole is finished when the potato rests within this distance of it.
+const IN_R = 1.0; // m
 const MAX_EL = 88;
 // Wind is stronger with height (shear), so lobs that hang high drift more.
 const shear = z => Math.min(1.7, Math.max(0.6, Math.pow(Math.max(z, 0.3) / 2, 0.25)));
@@ -220,21 +223,21 @@ function inEll(x, y, e) { const a = (x - e.x) / e.rx, b = (y - e.y) / e.ry; retu
 // ---------- course (meters; y runs up the screen) ----------
 const E = (x, y, rx, ry) => ({ x, y, rx, ry }), T = (x, y, r, h) => ({ x, y, r, h });
 const HOLES = [
-  { name: 'The Driveway', par: 3, desc: 'Straight shot. One tree on the left, a sand trap guarding the right of the green.', w: 80, h: 120, tee: { x: 40, y: 10 }, cup: { x: 42, y: 100 }, greenR: 10, fw: 22,
+  { name: 'The Driveway', par: 4, desc: 'Straight shot. One tree on the left, a sand trap guarding the right of the green.', w: 80, h: 120, tee: { x: 40, y: 10 }, cup: { x: 42, y: 100 }, greenR: 10, fw: 22,
     fairway: [[[40, 10], [42, 100]]], water: [], sand: [E(55, 93, 7, 4)], trees: [T(25, 60, 4, 9)] },
-  { name: 'Garden Hose', par: 4, desc: 'Dogleg right around the ornamental pond. Lay up short or carry it.', w: 110, h: 190, tee: { x: 30, y: 10 }, cup: { x: 80, y: 175 }, greenR: 10, fw: 24,
+  { name: 'Garden Hose', par: 5, desc: 'Dogleg right around the ornamental pond. Lay up short or carry it.', w: 110, h: 190, tee: { x: 30, y: 10 }, cup: { x: 80, y: 175 }, greenR: 10, fw: 24,
     fairway: [[[30, 10], [35, 90], [80, 175]]], water: [E(62, 100, 14, 10)], sand: [E(92, 166, 6, 5), E(68, 171, 5, 4)], trees: [T(15, 120, 5, 11), T(22, 136, 4, 10)] },
-  { name: 'Shed Shot', par: 3, desc: 'A big maple stands between you and the green. Go over it or bend around it.', w: 90, h: 110, tee: { x: 20, y: 10 }, cup: { x: 70, y: 95 }, greenR: 9, fw: 18,
+  { name: 'Shed Shot', par: 4, desc: 'A big maple stands between you and the green. Go over it or bend around it.', w: 90, h: 110, tee: { x: 20, y: 10 }, cup: { x: 70, y: 95 }, greenR: 9, fw: 18,
     fairway: [[[20, 10], [70, 95]]], water: [], sand: [E(60, 84, 6, 4), E(81, 91, 4, 5)], trees: [T(45, 54, 7, 15)] },
-  { name: 'Over the Pond', par: 3, desc: 'Forced carry. Anything short gets wet.', w: 90, h: 130, tee: { x: 45, y: 10 }, cup: { x: 45, y: 115 }, greenR: 10, fw: 20,
+  { name: 'Over the Pond', par: 4, desc: 'Forced carry. Anything short gets wet.', w: 90, h: 130, tee: { x: 45, y: 10 }, cup: { x: 45, y: 115 }, greenR: 10, fw: 20,
     fairway: [[[45, 10], [45, 40]], [[45, 90], [45, 115]]], water: [E(45, 65, 32, 20)], sand: [E(31, 111, 5, 4)], trees: [] },
-  { name: 'Dogleg Fence', par: 5, desc: 'Long dogleg right. Trees on the corner, a puddle short of the green.', w: 140, h: 240, tee: { x: 20, y: 10 }, cup: { x: 120, y: 225 }, greenR: 11, fw: 26,
+  { name: 'Dogleg Fence', par: 6, desc: 'Long dogleg right. Trees on the corner, a puddle short of the green.', w: 140, h: 240, tee: { x: 20, y: 10 }, cup: { x: 120, y: 225 }, greenR: 11, fw: 26,
     fairway: [[[20, 10], [25, 120], [70, 150], [120, 225]]], water: [E(95, 172, 12, 9)], sand: [E(108, 214, 6, 4), E(132, 213, 4, 5)], trees: [T(50, 90, 6, 14), T(55, 110, 6, 13), T(45, 70, 5, 12)] },
-  { name: 'Clothesline', par: 4, desc: 'Thread the gap between two trees, then watch for the sapling in the middle.', w: 100, h: 200, tee: { x: 50, y: 10 }, cup: { x: 50, y: 185 }, greenR: 10, fw: 20,
+  { name: 'Clothesline', par: 5, desc: 'Thread the gap between two trees, then watch for the sapling in the middle.', w: 100, h: 200, tee: { x: 50, y: 10 }, cup: { x: 50, y: 185 }, greenR: 10, fw: 20,
     fairway: [[[50, 10], [50, 185]]], water: [], sand: [E(39, 175, 5, 4), E(62, 178, 5, 4)], trees: [T(30, 100, 6, 12), T(70, 100, 6, 12), T(50, 140, 3, 8)] },
-  { name: 'Kiddie Pool', par: 3, desc: 'Short, but the pool sits right in front of the green.', w: 80, h: 92, tee: { x: 15, y: 10 }, cup: { x: 60, y: 75 }, greenR: 9, fw: 18,
+  { name: 'Kiddie Pool', par: 4, desc: 'Short, but the pool sits right in front of the green.', w: 80, h: 92, tee: { x: 15, y: 10 }, cup: { x: 60, y: 75 }, greenR: 9, fw: 18,
     fairway: [[[15, 10], [60, 75]]], water: [E(45, 56, 10, 8)], sand: [E(67, 86, 7, 3)], trees: [] },
-  { name: "Neighbor's Fence", par: 4, desc: 'The fence on the right is out of bounds. A pond waits on the left.', w: 100, h: 180, tee: { x: 50, y: 10 }, cup: { x: 80, y: 165 }, greenR: 9, fw: 20,
+  { name: "Neighbor's Fence", par: 5, desc: 'The fence on the right is out of bounds. A pond waits on the left.', w: 100, h: 180, tee: { x: 50, y: 10 }, cup: { x: 80, y: 165 }, greenR: 9, fw: 20,
     fairway: [[[50, 10], [78, 90], [80, 165]]], water: [E(25, 60, 10, 14)], sand: [E(68, 155, 5, 4)], trees: [T(42, 120, 7, 13)] },
   { name: 'The Deck', par: 5, desc: 'S-shaped finishing hole with two ponds. Plan all three shots.', w: 130, h: 250, tee: { x: 65, y: 10 }, cup: { x: 65, y: 235 }, greenR: 11, fw: 24,
     fairway: [[[65, 10], [40, 90], [90, 170], [65, 235]]], water: [E(88, 108, 14, 12), E(28, 182, 12, 10)], sand: [E(51, 226, 5, 4), E(80, 227, 5, 4), E(65, 246, 7, 2.5)], trees: [T(20, 40, 6, 12), T(110, 60, 6, 13), T(66, 140, 5, 12)] },
@@ -252,11 +255,11 @@ function surfaceAt(h, x, y) {
 }
 
 // Point-mass flight with quadratic drag relative to a height-sheared wind.
-// o.lid: stop when the potato touches the lid or the pole (both score). o.landZ: stop when descending through this height.
+// o.lid: note a clang off the lid or the pole (no effect on scoring). o.landZ: stop when descending through this height.
 // o.knuckle: small random sideways push from a lumpy potato; it grows with time aloft.
 function fly(h, x0, y0, v, elevDeg, brgDeg, wind, o = {}) {
   const e = elevDeg * D2R, b = brgDeg * D2R, dt = o.dt || 0.005, landZ = o.landZ || 0, kn = o.knuckle || { x: 0, y: 0 }, cup = h.cup;
-  let x = x0, y = y0, z = MUZZLE_H, t = 0, apex = z, tree = null, lastRec = 0, lid = null;
+  let x = x0, y = y0, z = MUZZLE_H, t = 0, apex = z, tree = null, lastRec = 0, clang = null;
   let vx = v * Math.cos(e) * Math.sin(b), vy = v * Math.cos(e) * Math.cos(b), vz = v * Math.sin(e);
   const path = o.rec ? [{ x, y, z, t: 0 }] : null;
   while (t < 40) {
@@ -265,8 +268,8 @@ function fly(h, x0, y0, v, elevDeg, brgDeg, wind, o = {}) {
     const nx = x + vx * dt, ny = y + vy * dt, nz = z + vz * dt;
     if (o.lid) {
       const dn = Math.hypot(nx - cup.x, ny - cup.y);
-      if (nz < POLE.h && dn < POLE.r) { lid = 'pole'; x = nx; y = ny; z = nz; t += dt; break; } // off the pole, onto the lid
-      if (nz < LID.rim && dn < LID.touch) { lid = 'land'; x = nx; y = ny; z = 0; t += dt; break; }
+      if (!clang && nz < POLE.h && dn < POLE.r) { clang = 'pole'; vx *= 0.1; vy *= 0.1; } // off the pole: drops at its base
+      else if (!clang && nz < LID.rim && dn < LID.touch) clang = 'lid';
     }
     if (nz <= landZ && vz < 0) {
       const f2 = (z - landZ) / (z - nz); x += (nx - x) * f2; y += (ny - y) * f2; t += dt * f2; z = landZ; break;
@@ -278,13 +281,13 @@ function fly(h, x0, y0, v, elevDeg, brgDeg, wind, o = {}) {
     if (path && t - lastRec >= 0.02) { path.push({ x, y, z, t }); lastRec = t; }
   }
   if (path) path.push({ x, y, z, t });
-  return { x, y, t, apex, vx, vy, vz, tree, path, lid };
+  return { x, y, t, apex, vx, vy, vz, tree, path, clang };
 }
 
 function rollOut(h, land, noise) {
   const path = [{ x: land.x, y: land.y, t: 0 }];
   let s = surfaceAt(h, land.x, land.y);
-  if (land.lid) return { x: land.x, y: land.y, result: 'holed', path, direct: true, how: land.lid };
+  let clang = land.clang || null;
   if (s === 'water' || s === 'ob') return { x: land.x, y: land.y, result: s, path };
   let sp = Math.hypot(land.vx, land.vy) * RET[s], dir = Math.atan2(land.vx, land.vy);
   if (noise) dir += gauss() * 0.12;
@@ -294,15 +297,14 @@ function rollOut(h, land, noise) {
     if (s === 'water' || s === 'ob') { path.push({ x, y, t }); return { x, y, result: s, path }; }
     sp = Math.max(0, sp - DEC[s] * dt);
     x += Math.sin(dir) * sp * dt; y += Math.cos(dir) * sp * dt; t += dt;
-    if (Math.hypot(x - h.cup.x, y - h.cup.y) < LID.touch) { // rolled onto the lid: scores
-      path.push({ x, y, t }); return { x, y, result: 'holed', path, how: 'roll' };
-    }
+    if (!clang && Math.hypot(x - h.cup.x, y - h.cup.y) < LID.touch) clang = 'lid'; // rolls over the lid: clang
     if (t - path[path.length - 1].t >= 0.03) path.push({ x, y, t });
   }
   path.push({ x, y, t });
   s = surfaceAt(h, x, y);
   if (s === 'water' || s === 'ob') return { x, y, result: s, path };
-  return { x, y, result: 'rest', path, surf: s };
+  const dHole = Math.hypot(x - h.cup.x, y - h.cup.y);
+  return { x, y, result: dHole <= IN_R ? 'holed' : 'rest', path, surf: s, clang, dHole };
 }
 
 // ---------- firing computer ----------
@@ -311,7 +313,7 @@ const wrap180 = a => ((a % 360) + 540) % 360 - 180;
 const isLid = (h, p) => Math.hypot(p.x - h.cup.x, p.y - h.cup.y) < 0.6;
 
 function solveCharge(h, from, target, v, wind) {
-  const lz = 0; // the lid lies on the ground
+  const lz = 0; // the hole is at ground level
   const b0 = Math.atan2(target.x - from.x, target.y - from.y) / D2R;
   let lo = 0, hi = 80;
   for (let i = 0; i < 24; i++) {
@@ -388,7 +390,7 @@ function startHole(i) {
 }
 function defaultTarget() {
   const h = H(), dx = h.cup.x - state.pos.x, dy = h.cup.y - state.pos.y, d = Math.hypot(dx, dy);
-  const reach = 90; // lay-up point on the line to the lid if it is out of range
+  const reach = 90; // lay-up point on the line to the hole if it is out of range
   if (d <= reach) return { ...h.cup };
   return { x: state.pos.x + dx / d * reach, y: state.pos.y + dy / d * reach };
 }
@@ -399,7 +401,7 @@ const brgEl = $('#brg'), elevEl = $('#elev');
 const chargeSeg = $('#charge');
 CHARGES.forEach((c, i) => { const b = document.createElement('button'); b.textContent = c.n; b.dataset.i = i; b.title = `${c.v} m/s muzzle velocity`; chargeSeg.appendChild(b); });
 chargeSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || state.busy) return; state.charge = +b.dataset.i; refresh(); });
-// Aim is an offset from the line to the lid: negative = left, positive = right.
+// Aim is an offset from the line to the hole: negative = left, positive = right.
 const lineBrg = () => (Math.atan2(H().cup.x - state.pos.x, H().cup.y - state.pos.y) / D2R + 360) % 360;
 const aimOff = () => wrap180(state.brg - lineBrg());
 const r1 = v => Math.round(v * 10) / 10;
@@ -415,6 +417,11 @@ $('#rollChk').addEventListener('change', e => { state.useRoll = e.target.checked
 $('#pointBtn').addEventListener('click', () => { if (!state.target) return; state.brg = (Math.atan2(state.target.x - state.pos.x, state.target.y - state.pos.y) / D2R + 360) % 360; refresh(true); });
 $('#tgtCup').addEventListener('click', () => { state.target = { ...H().cup }; refresh(); });
 $('#fireBtn').addEventListener('click', fire);
+$('#pickBtn').addEventListener('click', () => {
+  if (state.busy || !$('#done').hidden) return;
+  state.strokes = H().par + 3;
+  holeOut('Picked up.');
+});
 $('#nextBtn').addEventListener('click', () => { if (state.hi < 8) startHole(state.hi + 1); else newRound(); });
 $('#newRound').addEventListener('click', newRound);
 document.addEventListener('keydown', e => {
@@ -545,7 +552,7 @@ function drawLid(c, X, Y, r, ring) {
   c.fillStyle = '#c9a36b'; c.beginPath(); c.arc(X, Y, p, 0, Math.PI * 2); c.fill();
   c.fillStyle = '#f26b1d'; c.beginPath(); c.arc(X, Y, p * 0.6, 0, Math.PI * 2); c.fill();
 }
-// Close-up of the lid once you're on approach: 4 m across.
+// Close-up of the hole once you are on approach: 4 m across.
 function drawInset(c) {
   const h = H(), near = Math.hypot(h.cup.x - state.pos.x, h.cup.y - state.pos.y) <= 30;
   if (!near) return;
@@ -560,6 +567,8 @@ function drawInset(c) {
   const a = Math.atan2(state.pos.x - h.cup.x, state.pos.y - h.cup.y);
   c.strokeStyle = 'rgba(255,255,255,.7)'; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(ix(h.cup.x), iy(h.cup.y));
   c.lineTo(ix(h.cup.x + Math.sin(a) * 3), iy(h.cup.y + Math.cos(a) * 3)); c.stroke(); c.setLineDash([]);
+  c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.5; c.setLineDash([4, 3]);
+  c.beginPath(); c.arc(ix(h.cup.x), iy(h.cup.y), IN_R * k, 0, Math.PI * 2); c.stroke(); c.setLineDash([]);
   drawLid(c, ix(h.cup.x), iy(h.cup.y), LID.r * k, false);
   if (state.mode === 'full' && state.pred && !state.busy) {
     const p = state.pred.fl, X = ix(p.x), Y = iy(p.y);
@@ -570,7 +579,7 @@ function drawInset(c) {
   if (state.anim) pts.push(state.anim.cur);
   for (const q of pts) { c.fillStyle = '#c89254'; c.strokeStyle = '#5a3412'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(ix(q.x), iy(q.y), 6, 4.5, .5, 0, Math.PI * 2); c.fill(); c.stroke(); }
   c.restore();
-  label(c, 'Lid close-up · 4 m', X0 + S / 2, Y0 - 6, 10);
+  label(c, 'Hole close-up · 4 m · ring = 1 m', X0 + S / 2, Y0 - 6, 10);
 }
 function capsulePath(c, a, b, r) {
   const ax = sx(a[0]), ay = sy(a[1]), bx = sx(b[0]), by = sy(b[1]), ang = Math.atan2(by - ay, bx - ax), R = r * scale;
@@ -640,7 +649,7 @@ function updateComputer() {
   const d = Math.hypot(t.x - state.pos.x, t.y - state.pos.y), b = Math.atan2(t.x - state.pos.x, t.y - state.pos.y) / D2R;
   const ts = surfaceAt(H(), t.x, t.y), onLid = isLid(H(), t);
   const dTxt = d < 9 ? `${(d * 3.281).toFixed(0)} ft` : `${yd(d)} yd`;
-  $('#tgtTxt').innerHTML = `Target: <b>${dTxt}</b>, aim <b>${fmtAim(wrap180(b - lineBrg()))}</b> · ${onLid ? '<span class="pill">Lid</span>' : `<span class="pill ${ts}">${SURF_NAME[ts]}</span>`}`;
+  $('#tgtTxt').innerHTML = `Target: <b>${dTxt}</b>, aim <b>${fmtAim(wrap180(b - lineBrg()))}</b> · ${onLid ? '<span class="pill">Hole</span>' : `<span class="pill ${ts}">${SURF_NAME[ts]}</span>`}`;
   if (m === 'card') {
     wrap.innerHTML = rangeCard();
     $('#modeNote').textContent = 'Range card: flat-ground carry at each elevation, no wind. Correcting for wind and roll is up to you.';
@@ -653,7 +662,7 @@ function updateComputer() {
     const rows = CHARGES.map((c, i) => ({ i, c, s: solveWithRoll(H(), state.pos, t, lieV(i), state.wind, state.useRoll) }));
     state.solCache = rows;
     const verdict = s => s.tree ? '<span class="flag">tree</span>' : s.rest.result === 'water' ? '<span class="flag">wet</span>'
-      : s.rest.result === 'ob' ? '<span class="flag">OB</span>' : s.rest.result === 'holed' ? '<span class="okc">on lid!</span>' : '<span class="okc">clear</span>';
+      : s.rest.result === 'ob' ? '<span class="flag">OB</span>' : s.rest.result === 'holed' ? '<span class="okc">in!</span>' : '<span class="okc">clear</span>';
     const cell = (s) => s.ok
       ? `<td>${s.el.toFixed(1)}°</td><td>${fmtAim(wrap180(s.b - lineBrg())).replace('On line', '0°')}</td><td>${s.t.toFixed(1)}s</td><td>${verdict(s)}</td>`
       : `<td class="na" colspan="4">${s.why === 'long' ? 'out of range' : s.why === 'limit' ? 'past 100 yd limit' : 'too close'}</td>`;
@@ -663,7 +672,7 @@ function updateComputer() {
       if (!s.ok && arc === 'high') continue;
       html += `<tr ${s.ok ? `class="pick" tabindex="0" data-i="${r.i}" data-arc="${arc}"` : ''}><td>${r.c.n}${arc === 'high' ? ' ↑' : ''}</td>${cell(s)}</tr>`;
     }
-    html += `</tbody></table><p class="small">↑ = lob. Any touch on the lid scores, so a roll-on counts. Lobs hang longer and drift more in the wind.</p>`;
+    html += `</tbody></table><p class="small">↑ = lob. The hole is done when the potato stops within 1 m of the pole. Lobs hang longer and drift more in the wind.</p>`;
     wrap.innerHTML = html;
   }, 30);
 }
@@ -691,11 +700,12 @@ function refresh(aimOnly) {
   const off = aimOff();
   brgEl.value = off; elevEl.value = state.elev;
   $('#brgOut').textContent = fmtAim(off); $('#elevOut').textContent = state.elev.toFixed(1) + '°';
-  $('#brgAbs').textContent = `Left or right of the line to the lid · compass ${state.brg.toFixed(1)}°`;
+  $('#brgAbs').textContent = `Left or right of the line to the hole · compass ${state.brg.toFixed(1)}°`;
   [...$('#aimNudge').children, ...$('#elevNudge').children].forEach(b => b.disabled = state.busy);
   [...chargeSeg.children].forEach((b, i) => b.setAttribute('aria-pressed', i === state.charge));
   [...$('#mode').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.m === state.mode));
   $('#fireBtn').disabled = state.busy;
+  $('#pickBtn').disabled = state.busy;
   // predicted path
   state.pred = null;
   if (state.mode === 'full' && !state.busy) {
@@ -712,7 +722,7 @@ function refresh(aimOnly) {
     $('#windTxt').textContent = (ws * 2.237).toFixed(0) + ' mph';
     const dB = Math.hypot(h.cup.x - state.pos.x, h.cup.y - state.pos.y);
     $('#lieNote').textContent = (state.surf === 'sand' ? 'Sand: the potato sits down, so every charge loses about 28% velocity. ' : state.surf === 'rough' ? 'Rough: about 10% velocity loss. ' : '') +
-      (dB < 25 ? 'Close in: a roll onto the lid counts, so a low running shot can beat a lob in the wind. ' : '') +
+      (dB < 25 ? 'Close in: you only need to stop within 1 m of the pole, so a low running shot can beat a lob in the wind. ' : '') +
       (ws > 0.2 ? `Wind blowing toward ${compass(Math.atan2(w.x, w.y) / D2R)}.` : 'Dead calm.');
     updateRound(); drawScore();
   }
@@ -734,7 +744,7 @@ function drawScore() {
     r3 += `<td${cur}>${s == null ? '·' : `<span class="${s < h.par ? 'under' : s > h.par ? 'over' : ''}">${s}</span>`}</td>`;
   });
   t.innerHTML = r1 + '<th>Tot</th></tr>' + r2 + `<td>${tp}</td></tr>` + r3 + `<td>${ts || '·'}</td></tr>`;
-  let best = null; try { best = JSON.parse(localStorage.getItem('sgg-best-v3')); } catch (e) {}
+  let best = null; try { best = JSON.parse(localStorage.getItem('sgg-best-v5')); } catch (e) {}
   $('#bestTxt').textContent = best ? `Best round on this device: ${best.total} (${best.diff === 0 ? 'E' : (best.diff > 0 ? '+' : '') + best.diff}).` : 'Finish all nine to set a best round.';
 }
 
@@ -774,23 +784,23 @@ function fire() {
 function finishShot(a) {
   const h = H(), ro = a.ro;
   state.lastShot = { fl: a.fl, ro: a.ro, from: a.from }; state.anim = null; state.busy = false;
-  const note = a.fl.tree ? 'Thwack! Off the tree.' : '';
+  const note = a.fl.tree ? 'Thwack! Off the tree.' : ro.clang === 'pole' ? 'Clang! Off the pole.' : ro.clang === 'lid' ? 'Clang! Off the lid.' : '';
   if (note) toast(note);
   if (ro.result === 'water' || ro.result === 'ob') {
     state.strokes++;
     toast(ro.result === 'water' ? 'Splash. +1 penalty, replay from your last spot.' : 'Over the fence. +1 penalty, replay.');
     state.pos = { ...a.from };
   } else if (ro.result === 'holed') {
-    state.pos = { ...h.cup };
-    return holeOut(ro.how === 'pole' ? 'Off the pole and onto the lid!' : ro.how === 'roll' ? 'Rolled onto the lid!' : 'Straight onto the lid!');
+    state.pos = { x: ro.x, y: ro.y };
+    return holeOut(`In: stopped ${(ro.dHole * 3.281).toFixed(0)} ft from the pole.${ro.clang ? ' Clang!' : ''}`);
   } else {
     state.prev = { ...a.from }; state.pos = { x: ro.x, y: ro.y }; state.surf = ro.surf;
     const dc = Math.hypot(h.cup.x - ro.x, h.cup.y - ro.y);
-    if (state.strokes >= 10) { return holeOut('Ten-shot limit. Pick it up.'); }
-    if (!note) toast(`${SURF_NAME[ro.surf]} · ${dc < 9 ? (dc * 3.281).toFixed(0) + ' ft' : yd(dc) + ' yd'} to the lid`);
+    if (state.strokes >= 10) { state.strokes = h.par + 3; return holeOut('Ten shots: picked up.'); }
+    if (!note) toast(`${SURF_NAME[ro.surf]} · ${dc < 9 ? (dc * 3.281).toFixed(0) + ' ft' : yd(dc) + ' yd'} to the hole`);
   }
   if (ro.result !== 'rest') state.surf = surfaceAt(h, state.pos.x, state.pos.y);
-  state.target = defaultTarget(); setAim(0); // new lie: re-center aim on the lid line
+  state.target = defaultTarget(); setAim(0); // new lie: re-center aim on the hole line
   refresh();
 }
 const NAMES = { "-4": "Condor", '-3': 'Albatross', '-2': 'Eagle', '-1': 'Birdie', '0': 'Par', '1': 'Bogey', '2': 'Double bogey', '3': 'Triple bogey' };
@@ -802,7 +812,7 @@ function holeOut(msg) {
   if (state.hi === 8) {
     const total = state.scores.reduce((a, b) => a + (b || 0), 0), par = HOLES.reduce((a, b) => a + b.par, 0);
     $('#doneText').textContent += ` Round total: ${total} (par ${par}).`;
-    try { const best = JSON.parse(localStorage.getItem('sgg-best-v3')); if (!best || total < best.total) localStorage.setItem('sgg-best-v3', JSON.stringify({ total, diff: total - par })); } catch (e) {}
+    try { const best = JSON.parse(localStorage.getItem('sgg-best-v5')); if (!best || total < best.total) localStorage.setItem('sgg-best-v5', JSON.stringify({ total, diff: total - par })); } catch (e) {}
     $('#nextBtn').textContent = 'Play again';
   } else $('#nextBtn').textContent = 'Next hole';
   $('#done').hidden = false; refresh();
