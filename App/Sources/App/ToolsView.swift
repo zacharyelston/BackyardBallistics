@@ -6,6 +6,7 @@ struct ToolsView: View {
     @EnvironmentObject private var rangingLog: RangingLogStore
     @AppStorage(Settings.poleHeightKey) private var poleHeight = Settings.defaultPoleHeight
     @AppStorage(Settings.cameraHeightKey) private var cameraHeight = Settings.defaultCameraHeight
+    @AppStorage(Settings.simulatedCaptureKey) private var simulatedCapture = false
 
     var body: some View {
         NavigationStack {
@@ -62,6 +63,7 @@ struct ToolsView: View {
                         }
                     }
                     Text(Units.feetInches(poleHeight)).foregroundStyle(.secondary).font(.footnote)
+                    Toggle("Simulated camera for ranging", isOn: $simulatedCapture)
                     LabeledContent("Phone height when sighting") {
                         HStack {
                             TextField("m", value: $cameraHeight, format: .number.precision(.fractionLength(2)))

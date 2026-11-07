@@ -8,6 +8,8 @@ enum Settings {
     /// Test flag point until course files exist (milestone 3).
     static let flagLatKey = "flagLat"
     static let flagLonKey = "flagLon"
+    /// Use the simulated camera for ranging (always on in the Simulator).
+    static let simulatedCaptureKey = "simulatedCapture"
     static let defaultPoleHeight = 2.438
     static let defaultCameraHeight = 1.5
 }

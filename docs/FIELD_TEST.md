@@ -17,7 +17,9 @@ Goal: check the fused range, its ± estimate, the height difference and the flag
 
 What to look for: error within about 2σ of the shown ±; "Photo agreement" Good on clean marks; flag check under 10 m; height difference sign and size on sloped ground.
 
-Ranging uses the 1× camera only, by design. If you have poles of different heights, repeat at 60 and 90 m with each to confirm taller poles range better.
+Ranging uses the standard wide (1×) camera by choice. ARKit can also track on the telephoto camera on iPhones that offer it, which would help on long holes; that's a later option. If you have poles of different heights, repeat at 60 and 90 m with each to confirm taller poles range better.
+
+No phone handy? Turn on **Tools → Simulated camera for ranging** (always on in the Simulator). It renders a pole 40 m away from known poses, so you can walk through capture, marking, the solver, the flag check (tap **Use the simulated scene's flag point**) and the log.
 
 # Milestone 1 field test: sighting the pole
 
@@ -32,7 +34,7 @@ Goal: find out how precisely a player can mark a pole's tip and base, and how go
 ## Procedure
 
 1. Mark taped distances from the pole: **10, 30, 60 and 90 m**. Keep the ground as level as you can for now; slope correction comes later.
-2. At each distance, on the 1× lens (the app ranges with 1× only):
+2. At each distance, on the 1× (wide) lens, the one the app ranges with:
    1. Open **Sighting test**, pick the lens, fit the whole pole in frame and tap **Capture**.
    2. Tap the tip, then switch to **Base** and tap the base. Use the loupe to nudge each mark onto the pole's edge.
    3. Enter the taped distance, add a note (light, wind, what hides the base), and tap **Log sample**.

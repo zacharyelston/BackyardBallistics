@@ -43,6 +43,7 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 2. A module may only use modules below it in the graph. CoreGeo depends on nothing.
 3. Safety numbers live only in `SafetyKit/SafetyLimits.swift` and its bundled `safety-limits.json`. Nothing else restates them; tests pin both and the prototype.
 4. Accuracy thresholds (lean under 0.5°, photo agreement within 3%) stay with the module that measures them. They are not safety rules.
+5. Camera hardware stays behind a seam. Only `ARKitRangingSource` touches ARKit and Core Location; `RangingSession` and the views talk to the `RangingCaptureSource` protocol. `SimulatedRangingSource` renders a pole from known poses (a phone held in portrait, ARKit's camera conventions), so the ranging flow runs in the Simulator and with the Tools toggle on a phone. New capture paths, such as spotting rounds in milestone 4, follow the same pattern.
 
 ## Services
 
