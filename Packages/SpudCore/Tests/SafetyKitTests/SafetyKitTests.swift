@@ -41,15 +41,18 @@ final class SafetyChecksTests: XCTestCase {
     }
 
     func testSolutionNeedsRangeVelocityAndDownrange() {
+        let ready = LauncherFixtures.conformingPneumatic(round: "r1")
         var log = DownrangeLog()
+        func clear(_ d: Double, _ v: Double, _ launcher: LauncherConformance = ready) -> Result<Cleared<String>, SafetyBlock> {
+            Safety.clearSolution("shot", distance: d, muzzleVelocity: v, launcher: launcher, roundID: "r1",
+                                 downrange: log, player: "Zac", hole: 3)
+        }
         // Not confirmed yet.
-        guard case let .failure(b) = Safety.clearSolution("shot", distance: 60, muzzleVelocity: 30, downrange: log,
-                                                          player: "Zac", hole: 3) else { return XCTFail() }
+        guard case let .failure(b) = clear(60, 30) else { return XCTFail() }
         XCTAssertEqual(b.reasons, [.downrangeNotConfirmed])
 
         log.confirm(player: "Zac", hole: 3)
-        guard case let .success(c) = Safety.clearSolution("shot", distance: 60, muzzleVelocity: 30, downrange: log,
-                                                          player: "Zac", hole: 3) else { return XCTFail() }
+        guard case let .success(c) = clear(60, 30) else { return XCTFail() }
         XCTAssertEqual(c.value, "shot")
         XCTAssertEqual(c.limitsVersion, 1)
 
@@ -57,10 +60,15 @@ final class SafetyChecksTests: XCTestCase {
         XCTAssertFalse(log.isConfirmed(player: "Sam", hole: 3))
         XCTAssertFalse(log.isConfirmed(player: "Zac", hole: 4))
 
-        guard case let .failure(b2) = Safety.clearSolution("shot", distance: 95, muzzleVelocity: 50, downrange: log,
-                                                           player: "Zac", hole: 3) else { return XCTFail() }
+        guard case let .failure(b2) = clear(95, 50) else { return XCTFail() }
         XCTAssertEqual(b2.reasons.count, 2)
         XCTAssertTrue(b2.reasons.contains(.muzzleVelocityOverCap(measured: 50, cap: 45)))
+
+        // A non-conforming launcher blocks even a perfect shot.
+        var unready = ready
+        unready.pressurePartsChanged()
+        guard case let .failure(b3) = clear(60, 30, unready) else { return XCTFail() }
+        XCTAssertTrue(b3.reasons.contains(where: { if case .launcherNotConforming = $0 { return true } else { return false } }))
     }
 
     func testFlagGate() {
@@ -94,7 +102,10 @@ final class SafetyChecksTests: XCTestCase {
         for r: SafetyReason in [.noFlag, .downrangeNotConfirmed, .noBoundary,
                                 .muzzleVelocityOverCap(measured: 50, cap: 45),
                                 .beyondSolutionRange(distance: 95, limit: 91.44),
-                                .flagTooFar(miss: 14, tolerance: 10), .fanLeavesBoundary(pointsOutside: 3)] {
+                                .flagTooFar(miss: 14, tolerance: 10), .fanLeavesBoundary(pointsOutside: 3),
+                                .unsupportedLauncher, .launcherNotConforming(missing: [.reliefTest, .interlockTest]),
+                                .inspectionNeeded, .inspectionFailed(items: [.bandsIntact]),
+                                .pressureOverSetpoint(reading: 95, cap: 80)] {
             XCTAssertTrue(r.description.hasSuffix("."), r.description)
         }
     }

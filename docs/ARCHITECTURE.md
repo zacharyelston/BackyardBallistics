@@ -30,7 +30,7 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 | Module | Owns | Depends on | Tested by |
 | --- | --- | --- | --- |
 | CoreGeo | `GeoPoint`, east/north offsets, bearings, `GeoPolygon` | nothing | `swift test` |
-| SafetyKit | Every safety limit, the checks, `Cleared<T>`, `DownrangeLog`, `safety-limits.json` | CoreGeo | `swift test`, including a check that the browser prototype uses the same numbers |
+| SafetyKit | Every safety limit, the checks, `Cleared<T>`, `DownrangeLog`, launcher conformance, `safety-limits.json` | CoreGeo | `swift test`, including a check that the browser prototype uses the same numbers |
 | RangingKit | Camera intrinsics and rays, size ranging, lean, pole height, multi-photo `PoleSolver` | CoreGeo | `swift test` on synthetic scenes |
 | CourseKit (m3) | Course file format, loading, validator (calls `Safety.checkFan`) | SafetyKit | planned |
 | BallisticsKit (m4–5) | Trajectory and roll-out model, firing solutions, calibration fitting | SafetyKit | planned |
@@ -50,7 +50,9 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 | Gate | Check | Blocks when |
 | --- | --- | --- |
 | `Safety.clearRange` | Ranged lid vs. published flag | No course flag, or more than 10 m off |
-| `Safety.clearSolution` | Distance, muzzle velocity, downrange confirmation | Past 100 yd, any setting over 45 m/s, or the player hasn't confirmed the fan for this hole |
+| `Safety.clearSolution` | Launcher conformance, distance, muzzle velocity, downrange confirmation | Launcher not conforming, past 100 yd, any setting over 45 m/s, or the player hasn't confirmed the fan for this hole |
+| `Safety.checkLauncher` | The Launcher standard's conformance steps and this round's inspection | Unsupported launcher type, a missing step, no inspection this round, or a failed inspection item |
+| `Safety.pressureInhibit` | Live pressure against the launcher's calibrated setpoint (drives the inhibit relay) | Over the setpoint, or no setpoint. Inhibit only; it never starts a shot |
 | `Safety.checkCalibration` | A charge setting's fitted velocity | Over 45 m/s |
 | `Safety.checkFan` | Course publishing | A start spot's 105 yd, ±30° fan leaves the boundary, or there is no boundary |
 

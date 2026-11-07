@@ -10,6 +10,11 @@ public enum SafetyReason: Equatable, Sendable, CustomStringConvertible {
     case noBoundary
     case fanLeavesBoundary(pointsOutside: Int)
     case downrangeNotConfirmed
+    case unsupportedLauncher
+    case launcherNotConforming(missing: [ConformanceStep])
+    case inspectionNeeded
+    case inspectionFailed(items: [InspectionItem])
+    case pressureOverSetpoint(reading: Double, cap: Double)
 
     public var description: String {
         switch self {
@@ -27,6 +32,16 @@ public enum SafetyReason: Equatable, Sendable, CustomStringConvertible {
             return "The safety fan from this start spot leaves the course boundary (\(n) check points outside). Move the start spot or the flag."
         case .downrangeNotConfirmed:
             return "Confirm the fan is clear of people and animals before the first shot on this hole."
+        case .unsupportedLauncher:
+            return "This launcher isn't a standard pneumatic or elastic launcher, so the app won't solve for it."
+        case let .launcherNotConforming(missing):
+            return "This launcher hasn't passed: " + missing.map(\.title).joined(separator: ", ") + "."
+        case .inspectionNeeded:
+            return "Do the pre-round inspection for this round before the first shot."
+        case let .inspectionFailed(items):
+            return "The pre-round inspection failed on: " + items.map(\.prompt).joined(separator: "; ") + ". Fix it before firing."
+        case let .pressureOverSetpoint(reading, cap):
+            return String(format: "Pressure reads %.0f psi, over this launcher's %.0f psi calibrated limit. The shot is held.", reading, cap)
         }
     }
 }
@@ -84,14 +99,60 @@ public enum Safety {
 
     /// The only way to turn a firing solution into something the app may show.
     public static func clearSolution<S>(_ solution: S, distance: Double, muzzleVelocity: Double,
+                                        launcher: LauncherConformance, roundID: String,
                                         downrange: DownrangeLog, player: String, hole: Int) -> Result<Cleared<S>, SafetyBlock> {
-        var reasons: [SafetyReason] = []
+        var reasons = checkLauncher(launcher, roundID: roundID).reasons
         if distance > limits.maxSolutionRange {
             reasons.append(.beyondSolutionRange(distance: distance, limit: limits.maxSolutionRange))
         }
-        reasons += checkCalibration(muzzleVelocity: muzzleVelocity).reasons
+        let velocity = checkCalibration(muzzleVelocity: muzzleVelocity).reasons
+        reasons += velocity.filter { !reasons.contains($0) }
         if !downrange.isConfirmed(player: player, hole: hole) { reasons.append(.downrangeNotConfirmed) }
         return reasons.isEmpty ? .success(Cleared(solution)) : .failure(SafetyBlock(reasons: reasons))
+    }
+
+    // MARK: Launcher standard
+
+    /// Whether a launcher conforms to the Launcher standard for this round.
+    public static func checkLauncher(_ c: LauncherConformance, roundID: String) -> Verdict {
+        guard c.kind != .other else { return .blocked([.unsupportedLauncher]) }
+        var missing: [ConformanceStep] = []
+        var reasons: [SafetyReason] = []
+        for step in ConformanceStep.required(for: c.kind) {
+            switch step {
+            case .ratingsDocumented:
+                if !c.ratingsDocumented { missing.append(step) }
+            case .reliefTest:
+                if !c.reliefVented { missing.append(step) }
+            case .interlockTest:
+                if !c.interlock.passed { missing.append(step) }
+            case .velocityCap:
+                if let v = c.calibratedMaxVelocity {
+                    reasons += checkCalibration(muzzleVelocity: v).reasons
+                } else {
+                    missing.append(step)
+                }
+                if c.kind == .pneumaticStandard, c.maxSetpointPSI == nil, !missing.contains(step) { missing.append(step) }
+            case .preRoundInspection:
+                break // reported separately below, after the one-time checks
+            }
+        }
+        if !missing.isEmpty { reasons.insert(.launcherNotConforming(missing: missing), at: 0) }
+        if let inspection = c.inspection, inspection.roundID == roundID {
+            let failed = InspectionItem.items(for: c.kind).filter { inspection.results[$0] != true }
+            if !failed.isEmpty { reasons.append(.inspectionFailed(items: failed)) }
+        } else {
+            reasons.append(.inspectionNeeded)
+        }
+        return Verdict(reasons)
+    }
+
+    /// The pressure interlock rule for the inhibit relay: hold the shot if pressure is over the
+    /// calibrated setpoint or the launcher has none. Inhibit only; this never starts a shot.
+    public static func pressureInhibit(readingPSI: Double, launcher: LauncherConformance) -> Verdict {
+        guard launcher.kind == .pneumaticStandard else { return .blocked([.unsupportedLauncher]) }
+        guard let cap = launcher.maxSetpointPSI else { return .blocked([.launcherNotConforming(missing: [.velocityCap])]) }
+        return Verdict(readingPSI > cap ? [.pressureOverSetpoint(reading: readingPSI, cap: cap)] : [])
     }
 
     // MARK: Ranging (course flags only)
