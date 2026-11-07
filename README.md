@@ -9,7 +9,7 @@
 | Prototype | Ruleset | How it plays |
 | --- | --- | --- |
 | [`prototype/spudgungolf.html`](prototype/spudgungolf.html) | v1 Classic | Walk to every round; shots to rest within 1 m of the pole; pick up for par + 3 |
-| [`prototype/spudgungolf-v2.html`](prototype/spudgungolf-v2.html) | v2 Fire Missions | Fire from a firing point, spot each round, let fire control correct, cease fire and verify; rounds plus metres outside the ring. Four fixed-firing-point holes and five downrange-play holes |
+| [`prototype/spudgungolf-v2.html`](prototype/spudgungolf-v2.html) | v2 Fire Missions | Range the pole with a reticle, fire from a firing point, call each round short, over or range correct (left/right is measured), let fire control bracket, cease fire and verify; rounds plus metres outside the ring. Four fixed-firing-point holes and five downrange-play holes |
 
 v2 drives the app's requirements; v1 stays as an optional ruleset on the same engine.
 
@@ -17,7 +17,7 @@ v2 drives the app's requirements; v1 stays as an optional ruleset on the same en
 
 v2 pars (6, 6, 6, 7, 7, 6, 6, 5, 7; par 56) come from simulating a player who uses fire control, prefers lobs, and ceases fire when a round stops improving on the best by a metre.
 
-SpudGunGolf: a backyard trajectory game played with a low-power launcher on published courses. Each hole is a guyed furring-strip pole, and the pole is the hole: every hole is played as fire missions: range the pole from photos, fire, spot each round from the firing point, adjust, and score rounds fired plus metres outside the ring.
+SpudGunGolf: a backyard trajectory game played with a low-power launcher on published courses. Each hole is a guyed furring-strip pole, and the pole is the hole: every hole is played as fire missions: range the pole with a reticle, fire, spot each round from the firing point, adjust, and score rounds fired plus metres outside the ring.
 
 Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 
@@ -64,7 +64,7 @@ scripts/typecheck-ios.sh
 ## Milestone status
 
 1. **Flag kit guide and setup flow** — built: lean check, pole height and the sighting field-test tool. Field results pending.
-2. **Ranging prototype** — built: multi-photo AR ranging with fused size range and triangulation, outlier drop, height difference, and the 10 m flag check. Device tuning pending.
+2. **Ranging** — built: reticle (stadia) ranging as the main method: crosshair on the pole's base, a CoreMotion-plumb line sized by the range dial, and a lock that records range, bearing, angle below level and GPS, then runs the 10 m flag check. The multi-photo AR solve (triangulation, outlier drop, height difference) stays as an optional cross-check. The spotting model (called long/short, measured left/right, bracketing) is in RangingKit. Device tuning pending.
 3. Course file and validator
 4. Fire control in Swift
 5. Calibration shots

@@ -1,19 +1,37 @@
 # Field tests
 
 - [Milestone 1: sighting the pole](#milestone-1-field-test-sighting-the-pole) (single photo, any lens)
-- [Milestone 2: multi-photo ranging](#milestone-2-field-test-multi-photo-ranging) (AR session, 1× lens)
+- [Milestone 2: reticle ranging](#milestone-2-field-test-reticle-ranging) (the main method, AR session, 1× lens)
+- [Milestone 2: multi-photo cross-check](#milestone-2-field-test-multi-photo-cross-check) (optional, AR session, 1× lens)
 
-## Milestone 2 field test: multi-photo ranging
+## Milestone 2 field test: reticle ranging
+
+Goal: check that a reticle lock lands within its ± at real distances, and that the height difference and flag check come out right. This is the main ranging method; there is no tapping.
+
+1. Set up one plumb flag with its height measured (8, 10 or 12 ft). Stand at the pole and use **Range the pole → Save my GPS position as the flag point** (wait for GPS accuracy of ±5 m or better).
+2. Tape out 10, 30, 60 and 90 m. Note if the ground slopes; measure the height difference if you can.
+3. At each distance, open **Tools → Range the pole**, wait for "Tracking", and check the pole height (the menu sets 8, 10 or 12 ft; a measured height is better).
+4. Hold the crosshair on the pole's base. Turn the dial (or use − / + for 0.1 m) until the top of the white plumb line meets the top of the orange band. Pinch to zoom if it helps; zoom doesn't change the range.
+5. Tap **Lock**. Read the range, ±, height difference and flag check, enter the taped distance and a note, and tap **Log this lock**. **Re-range** and do three locks per distance.
+6. **Reticle log → Export CSV**. Each row keeps the line length in sensor pixels, focal length, angle below level, bearing and GPS, so ranges can be recomputed later.
+
+What to look for: error within about 2σ of the shown ± (the spec's 1σ for an 8 ft pole on the 4K wide camera is about 2 cm, 16 cm, 63 cm and 1.4 m at 10/30/60/90 m); repeat locks agreeing; flag check under 10 m; the height difference sign on sloped ground; the plumb line staying plumb as you roll the phone.
+
+No phone handy? The Simulator (or **Tools → Simulated camera for ranging**) shows a pole 40 m away with the crosshair on its base. Dial to about 40.1 m, tap **Use the simulated scene's flag point**, then **Lock** to walk through the whole flow.
+
+## Milestone 2 field test: multi-photo cross-check
+
+Optional. The reticle is the main method; this independent solve is a cross-check, kept in **Tools → Multi-photo cross-check**.
 
 Goal: check the fused range, its ± estimate, the height difference and the flag check at real distances.
 
-1. Set up one plumb flag with its height measured. Stand at the pole and use **Range the flag → Save my GPS position as the flag point** (wait for GPS accuracy of ±5 m or better).
+1. Set up one plumb flag with its height measured. Stand at the pole and use **Multi-photo cross-check → Save my GPS position as the flag point** (wait for GPS accuracy of ±5 m or better).
 2. Tape out 10, 30, 60 and 90 m. Note if the ground slopes; measure the height difference if you can.
-3. At each distance, open **Range the flag**, wait for "Tracking", and take photo 1 at the taped spot. Mark tip and base, tap **Use photo**.
+3. At each distance, open **Multi-photo cross-check**, wait for "Tracking", and take photo 1 at the taped spot. Mark tip and base, tap **Use photo**.
 4. Step sideways across the line, one step at a time, taking 2–4 more photos until the baseline bar fills (3 m).
 5. Read the result, enter the taped distance and a note, and tap **Log this ranging**. Do three rangings per distance.
 6. Try one deliberately bad mark (base tapped on the grass beside the pole) to see the outlier drop.
-7. **Ranging log → Export** both the CSV and the full JSON. The JSON keeps every photo's pose and marks, so the solver can be re-tuned without going back outside.
+7. **Multi-photo log → Export** both the CSV and the full JSON. The JSON keeps every photo's pose and marks, so the solver can be re-tuned without going back outside.
 
 What to look for: error within about 2σ of the shown ±; "Photo agreement" Good on clean marks; flag check under 10 m; height difference sign and size on sloped ground.
 

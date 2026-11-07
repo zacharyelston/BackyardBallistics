@@ -26,13 +26,18 @@ final class SimulatedRangingSource: RangingCaptureSource {
     /// A 1920 × 1440 landscape sensor, like ARKit's default wide format.
     let intrinsics = Intrinsics(fx: 1450, fy: 1450, cx: 960, cy: 720, width: 1920, height: 1440)
     private(set) var eye: SIMD3<Double>
+    /// Hold the crosshair on the pole's base (the reticle screen) instead of looking level (multi-photo).
+    var aimAtBase = false
 
     init(poleHeight: Double) {
         scene = Scene(poleHeight: poleHeight)
         eye = SIMD3(0, scene.eyeHeight, 0)
     }
 
-    var pose: CameraPose { CameraPose.portrait(eye: eye, facing: scene.poleBase) }
+    var pose: CameraPose {
+        aimAtBase ? CameraPose.portrait(eye: eye, lookingAt: scene.poleBase)
+                  : CameraPose.portrait(eye: eye, facing: scene.poleBase)
+    }
 
     /// The flag point that matches this scene, so the flag check passes in the Simulator.
     var flagPoint: GeoPoint {
@@ -61,7 +66,14 @@ final class SimulatedRangingSource: RangingCaptureSource {
     }
 
     /// The live "camera" view, at a reduced size.
-    func preview() -> CGImage? { render(scale: 0.3) }
+    func preview(scale: CGFloat = 0.3) -> CGImage? { render(scale: scale) }
+
+    func liveIntrinsics() -> Intrinsics? { intrinsics }
+
+    func liveAim() -> CaptureAim? {
+        let aim = pose.aim
+        return CaptureAim(bearing: aim.bearing, angleBelowLevel: aim.angleBelowLevel)
+    }
 
     private func emit() {
         onStatus?(CaptureStatus(tracking: .normal, cameraPosition: eye, location: location, horizontalAccuracy: 4))

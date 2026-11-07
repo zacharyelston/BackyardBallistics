@@ -4,7 +4,7 @@ import RangingKit
 import CoreGeo
 import SafetyKit
 
-/// Milestone 2: range the hole (the pole's base) from a few photos of the pole taken along a short arc.
+/// Optional cross-check for the reticle: range the pole's base from a few marked photos taken along a short arc.
 struct RangingView: View {
     @StateObject private var session = RangingSession.make()
     @EnvironmentObject private var rangingLog: RangingLogStore
@@ -59,7 +59,7 @@ struct RangingView: View {
                 if report != nil { logSection }
             }
         }
-        .navigationTitle("Range the flag")
+        .navigationTitle("Multi-photo cross-check")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $pending) { frame in
             MarkPhotoSheet(frame: frame) { tip, base in

@@ -9,9 +9,11 @@
 /* Begin PBXBuildFile section */
 		02A1B855EAFC04BFFF0A95E5 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8331D4584229CE4D7A8756 /* AppSettings.swift */; };
 		0AF36FDEC5020706C479DECC /* RangingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5E31597492CC0E5465EB5069 /* RangingKit */; };
+		0DB342C6E1811E08407493BD /* ReticleLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AB2145B8AC206B21693A78 /* ReticleLog.swift */; };
 		1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E339C687D3B38CF183F162C /* CameraController.swift */; };
 		1769E9EFAF55537C3DAF1649 /* RangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29F67AAE33283A8171918D7 /* RangingView.swift */; };
 		1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B045324F460255AFAFCFE722 /* FieldLog.swift */; };
+		2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */; };
 		42FCF884DB4D1292750E9C3A /* ARKitRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */; };
 		4C17D03F0FA06FE37704E92C /* PoleHeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC575A2D9586FD6E557618AD /* PoleHeightView.swift */; };
 		723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */; };
@@ -20,6 +22,7 @@
 		9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA6EB5E25631668DAC5462C /* JSONStore.swift */; };
 		AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058FD02EB37A4DD2D60E9425 /* LauncherView.swift */; };
 		ABC854639A4529209FB9DA2B /* RangingLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1956E8D95530FA7EA760FD87 /* RangingLog.swift */; };
+		ADCBF1C6E705A2F12C6A84FC /* ReticleRangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E87C56614F017F0224D65F /* ReticleRangingView.swift */; };
 		B4139AA51DCD859C3D15F05A /* PoleMarker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E9E1B2EC8B568A9E479CDA /* PoleMarker.swift */; };
 		BC5AFF250A5499A470335176 /* SafetyKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9650B624C198CEA48B5299D6 /* SafetyKit */; };
 		C17CD159F8E81ACE5278508D /* SimulatedRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B45B7403F091985D78297E /* SimulatedRangingSource.swift */; };
@@ -42,6 +45,7 @@
 		311424D16BF397C1CD80DDFE /* RangingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingSession.swift; sourceTree = "<group>"; };
 		52C51A940D33C796DF2A866B /* SightingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SightingView.swift; sourceTree = "<group>"; };
 		54BDFBE220065C8E3F5A4FEF /* SpudCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SpudCore; path = Packages/SpudCore; sourceTree = SOURCE_ROOT; };
+		57E87C56614F017F0224D65F /* ReticleRangingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReticleRangingView.swift; sourceTree = "<group>"; };
 		5C49810F5CD5D313FB0CD103 /* RangingCaptureSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingCaptureSource.swift; sourceTree = "<group>"; };
 		86B45B7403F091985D78297E /* SimulatedRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatedRangingSource.swift; sourceTree = "<group>"; };
 		AC575A2D9586FD6E557618AD /* PoleHeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleHeightView.swift; sourceTree = "<group>"; };
@@ -51,6 +55,8 @@
 		D1E9E1B2EC8B568A9E479CDA /* PoleMarker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleMarker.swift; sourceTree = "<group>"; };
 		D29F67AAE33283A8171918D7 /* RangingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingView.swift; sourceTree = "<group>"; };
 		D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SpudGunGolf.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionReader.swift; sourceTree = "<group>"; };
+		F7AB2145B8AC206B21693A78 /* ReticleLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReticleLog.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +114,8 @@
 				1956E8D95530FA7EA760FD87 /* RangingLog.swift */,
 				311424D16BF397C1CD80DDFE /* RangingSession.swift */,
 				D29F67AAE33283A8171918D7 /* RangingView.swift */,
+				F7AB2145B8AC206B21693A78 /* ReticleLog.swift */,
+				57E87C56614F017F0224D65F /* ReticleRangingView.swift */,
 				86B45B7403F091985D78297E /* SimulatedRangingSource.swift */,
 			);
 			path = Ranging;
@@ -157,6 +165,7 @@
 			children = (
 				0E339C687D3B38CF183F162C /* CameraController.swift */,
 				1DA6EB5E25631668DAC5462C /* JSONStore.swift */,
+				E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */,
 				D1E9E1B2EC8B568A9E479CDA /* PoleMarker.swift */,
 				5C49810F5CD5D313FB0CD103 /* RangingCaptureSource.swift */,
 			);
@@ -242,6 +251,7 @@
 				9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */,
 				AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */,
 				8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */,
+				2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */,
 				723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */,
 				4C17D03F0FA06FE37704E92C /* PoleHeightView.swift in Sources */,
 				B4139AA51DCD859C3D15F05A /* PoleMarker.swift in Sources */,
@@ -249,6 +259,8 @@
 				ABC854639A4529209FB9DA2B /* RangingLog.swift in Sources */,
 				C670AE24783CEC45026EA822 /* RangingSession.swift in Sources */,
 				1769E9EFAF55537C3DAF1649 /* RangingView.swift in Sources */,
+				0DB342C6E1811E08407493BD /* ReticleLog.swift in Sources */,
+				ADCBF1C6E705A2F12C6A84FC /* ReticleRangingView.swift in Sources */,
 				ED15A3B0669DB05DBE20DD3D /* SightingView.swift in Sources */,
 				C17CD159F8E81ACE5278508D /* SimulatedRangingSource.swift in Sources */,
 				EA0FB4BBE754C7D64CD92FB1 /* SpudGunGolfApp.swift in Sources */,

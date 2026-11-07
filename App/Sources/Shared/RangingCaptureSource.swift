@@ -1,5 +1,6 @@
 import Foundation
 import CoreGeo
+import RangingKit
 
 /// How well the capture source knows where the phone is.
 enum CaptureTracking: Equatable {
@@ -30,6 +31,14 @@ struct CaptureStatus {
     var horizontalAccuracy: Double?
 }
 
+/// Where the crosshair (the optical axis) points, from the capture source's own tracking.
+struct CaptureAim: Equatable {
+    /// Compass bearing, degrees clockwise from true north.
+    var bearing: Double
+    /// Angle below level, degrees (+ looking down).
+    var angleBelowLevel: Double
+}
+
 /// The seam that keeps ranging testable without a phone.
 ///
 /// ARKit needs a real camera and motion tracking, so nothing above this protocol may touch ARKit.
@@ -44,4 +53,8 @@ protocol RangingCaptureSource: AnyObject {
     func stop()
     /// Freezes the current frame, with its pose and intrinsics, for marking. Nil if tracking isn't ready.
     func capture() -> FrozenFrame?
+    /// Intrinsics of the live feed's native (landscape) buffer, for the reticle. Nil until the first frame.
+    func liveIntrinsics() -> Intrinsics?
+    /// Where the optical axis points now. Nil until tracking has a heading.
+    func liveAim() -> CaptureAim?
 }
