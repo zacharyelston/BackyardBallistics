@@ -40,6 +40,9 @@ h1 .ver{font:600 14px var(--f-data);color:var(--muted);letter-spacing:.04em;vert
 .course{display:flex;flex-direction:column;gap:10px;min-width:0}
 .holehead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
 .holehead h2{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0;text-wrap:balance}
+.holepick{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.holepick select{font:600 13px var(--f-body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 6px;max-width:220px}
+.overlay .box .fire,.overlay .box .btn{width:100%}
 .holehead p{margin:0;color:var(--muted);font-size:14px;max-width:60ch}
 .mapwrap{position:relative;border-radius:10px;overflow:hidden;background:#3e6e35;touch-action:manipulation}
 #map{display:block;width:100%;cursor:crosshair}
@@ -122,6 +125,7 @@ kbd{font-family:var(--f-data);font-size:11px;border:1px solid var(--line);border
     <section class="course">
       <div class="holehead">
         <h2 id="hName">The Driveway</h2>
+        <label class="holepick">Hole <select id="holeSel" aria-label="Jump to hole"></select></label>
         <p id="hDesc"></p>
       </div>
       <div class="mapwrap" id="mapwrap">
@@ -133,6 +137,7 @@ kbd{font-family:var(--f-data);font-size:11px;border:1px solid var(--line);border
             <p id="doneText"></p>
             <button class="btn" id="advanceBtn" hidden>Next mission from your closest round</button>
             <button class="fire" id="nextBtn">Next hole</button>
+            <button class="btn" id="resumeBtn" hidden>Resume firing</button>
           </div>
         </div>
       </div>
@@ -174,7 +179,7 @@ kbd{font-family:var(--f-data);font-size:11px;border:1px solid var(--line);border
         </div>
         <button class="fire" id="fireBtn">Fire</button>
         <button class="btn" id="ceaseBtn">Cease fire &amp; verify</button>
-        <p class="keys"><kbd>←</kbd><kbd>→</kbd> aim · <kbd>↑</kbd><kbd>↓</kbd> elevation (hold <kbd>Shift</kbd> for 0.1°) · <kbd>0</kbd>–<kbd>5</kbd> charge · <kbd>Space</kbd> fire · <kbd>C</kbd> cease fire</p>
+        <p class="keys"><kbd>←</kbd><kbd>→</kbd> aim · <kbd>↑</kbd><kbd>↓</kbd> elevation (hold <kbd>Shift</kbd> for 0.1°) · <kbd>0</kbd>–<kbd>5</kbd> charge · <kbd>Space</kbd> fire · <kbd>C</kbd> cease fire · <kbd>R</kbd> resume</p>
       </div>
 
       <div class="card">
@@ -556,6 +561,10 @@ $('#advanceBtn').addEventListener('click', () => {
   refresh();
 });
 $('#newRound').addEventListener('click', newRound);
+$('#resumeBtn').addEventListener('click', resumeFiring);
+const holeSel = $('#holeSel');
+HOLES.forEach((h, i) => holeSel.add(new Option(`${i + 1}. ${h.name} · ${h.downrange ? 'downrange' : 'fixed'}`, i)));
+holeSel.addEventListener('change', () => { if (state.busy) { holeSel.value = state.hi; return; } state.summary = false; startHole(+holeSel.value); });
 document.addEventListener('keydown', e => {
   if (e.target.matches('input[type=checkbox]') && e.key === ' ') return;
   if (state.busy) return;
@@ -566,7 +575,8 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowUp') setElev(state.elev + fine);
   else if (e.key === 'ArrowDown') setElev(state.elev - fine);
   else if (/^[0-5]$/.test(e.key)) { state.charge = +e.key; }
-  else if (e.key === ' ' && !$('#done').hidden) { e.preventDefault(); $('#nextBtn').click(); return; }
+  else if ((e.key === 'r' || e.key === 'R') && !$('#done').hidden) { e.preventDefault(); resumeFiring(); return; }
+  else if (e.key === ' ' && !$('#done').hidden) { e.preventDefault(); (document.activeElement && document.activeElement.closest('#done button') || $('#nextBtn')).click(); return; }
   else if ((e.key === 'c' || e.key === 'C') && $('#done').hidden) { e.preventDefault(); $('#ceaseBtn').click(); return; }
   else if (e.key === ' ') { e.preventDefault(); fire(); return; }
   else return;
@@ -859,7 +869,7 @@ function refresh(aimOnly) {
   }
   if (!aimOnly) {
     $('#sHole').textContent = `${state.hi + 1}/9`; $('#sPar').textContent = h.par; $('#sStrokes').textContent = state.rounds;
-    $('#hName').textContent = `${state.hi + 1}. ${h.name}`;
+    $('#hName').textContent = `${state.hi + 1}. ${h.name}`; holeSel.value = state.hi; holeSel.disabled = state.busy;
     const F = firingPoint(h);
     $('#hDesc').textContent = `${h.desc} About ${yd(Math.hypot(h.cup.x - F.x, h.cup.y - F.y))} yd from the firing point by the course file; range it to fire.${h.downrange ? ' Downrange play allowed.' : ''}`;
     const s = $('#lieSurf'); s.textContent = SURF_NAME[state.surf]; s.className = 'pill ' + state.surf;
@@ -899,6 +909,7 @@ function renderMission() {
   const h = H(), M = state.mission, best = closestRound('spotDist');
   $('#modePill').textContent = h.downrange ? 'Downrange play' : 'Fixed firing point';
   $('#missionTxt').textContent = `Mission ${M.n} · ${state.rounds} round${state.rounds === 1 ? '' : 's'} on this hole · ring ${IN_R.toFixed(0)} m. ` +
+    (h.downrange ? 'Downrange play: cease fire to walk out, then fire the next mission from your closest round. ' : 'Fixed firing point: every round is fired from here. ') +
     (M.rounds.length ? '' : state.mode === 'full' ? 'Spot each round: left/right is measured with the crosshair, long/short is called. Fire control brackets the range and corrects the line.' : 'Spot each round and correct by hand.');
   $('#mlog').innerHTML = M.rounds.map(r => r.lost
     ? `<li>${r.how === 'water' ? 'Lost in the water' : 'Lost over the fence'}</li>`
@@ -983,14 +994,26 @@ function ceaseFire(reason) {
   const score = Math.round((state.rounds + Math.max(0, dist - IN_R)) * 10) / 10;
   const canAdvance = h.downrange && !inRing && !!best && state.rounds < MAX_ROUNDS;
   state.verdict = { dist, inRing, score, best };
+  const gain = dist - IN_R, preferAdvance = canAdvance && gain >= 3;
+  const dTxt = dist < 9 ? `${dist.toFixed(1)} m` : `${dist.toFixed(1)} m (${yd(dist)} yd)`;
+  const sum = `${state.rounds} round${state.rounds === 1 ? '' : 's'}` + (inRing ? '' : ` + ${gain.toFixed(1)} m outside the ring`) + ` = ${score.toFixed(1)}`;
   $('#doneTitle').textContent = inRing ? (state.rounds === 1 ? 'First-round hit!' : `Hit on round ${state.rounds}`) : 'Ceased fire';
-  $('#doneText').textContent = `${reason ? reason + ' ' : ''}Walked out: your closest round is ${fmtDist(dist)} from the pole${inRing ? ', inside the ring' : ''}. ` +
-    (canAdvance ? `Finish the hole at ${score.toFixed(1)}, or fire the next mission from that round.` : `Hole score ${score.toFixed(1)} on a par ${h.par}.`);
-  $('#advanceBtn').hidden = !canAdvance;
-  if (canAdvance) $('#advanceBtn').textContent = `Next mission from your closest round`;
-  $('#nextBtn').textContent = canAdvance ? `Finish hole at ${score.toFixed(1)}` : state.hi === 8 ? 'Finish round' : 'Next hole';
+  $('#doneText').textContent = `${reason ? reason + ' ' : ''}Walked out: your closest round is ${dTxt} from the pole${inRing ? ', inside the ring' : ''}. ` +
+    `Score if you finish here: ${sum}` + (canAdvance ? ', or fire the next mission from that round.' : ` on a par ${h.par}.`);
+  const adv = $('#advanceBtn'), nxt = $('#nextBtn'), res = $('#resumeBtn');
+  adv.hidden = !canAdvance; adv.textContent = 'Next mission from your closest round';
+  nxt.textContent = canAdvance ? `Finish hole at ${score.toFixed(1)}` : state.hi === 8 ? 'Finish round' : 'Next hole';
+  adv.className = preferAdvance ? 'fire' : 'btn'; nxt.className = preferAdvance ? 'btn' : 'fire';
+  // Back to the firing point: same mission, same rounds. Not after the forced cease fire at the round limit.
+  res.hidden = state.rounds >= MAX_ROUNDS;
   $('#done').hidden = false; refresh();
-  $('#nextBtn').focus();
+  (preferAdvance ? adv : nxt).focus();
+}
+function resumeFiring() {
+  if (state.summary || $('#done').hidden || $('#resumeBtn').hidden) return;
+  state.verdict = null; $('#done').hidden = true;
+  toast('Resumed: back at the firing point, same mission.');
+  refresh();
 }
 function finishHole() {
   if (state.summary) { state.summary = false; newRound(); return; }
@@ -1001,7 +1024,8 @@ function finishHole() {
   state.summary = true;
   $('#doneTitle').textContent = 'Round complete';
   $('#doneText').textContent = `Round total ${total.toFixed(1)} against par ${par}.`;
-  $('#advanceBtn').hidden = true; $('#nextBtn').textContent = 'Play again';
+  $('#advanceBtn').hidden = true; $('#resumeBtn').hidden = true;
+  $('#nextBtn').className = 'fire'; $('#nextBtn').textContent = 'Play again';
   refresh();
 }
 
