@@ -2,7 +2,7 @@ import SwiftUI
 import RangingKit
 
 /// Field test for milestone 1: photograph the pole from a taped distance, mark its tip and
-/// base, and log how close the size range comes.
+/// base, and log how close the single-photo size range comes.
 struct SightingView: View {
     @StateObject private var camera = CameraController()
     @State private var frame: FrozenFrame?
@@ -50,112 +50,36 @@ struct SightingView: View {
 }
 
 struct MarkingView: View {
-    enum Target: String, CaseIterable { case tip = "Tip", base = "Base" }
-
     let frame: FrozenFrame
     let retake: () -> Void
 
     @EnvironmentObject private var log: FieldLogStore
     @AppStorage(Settings.poleHeightKey) private var poleHeight = Settings.defaultPoleHeight
     @AppStorage(Settings.cameraHeightKey) private var cameraHeight = Settings.defaultCameraHeight
-    @State private var target: Target = .tip
     @State private var tip: CGPoint?
     @State private var base: CGPoint?
-    @State private var dragStart: CGPoint?
     @State private var trueDistance: Double?
     @State private var note = ""
     @State private var logged = false
 
-    private let loupeSource: CGFloat = 64   // image pixels shown in the loupe
-    private let loupeSize: CGFloat = 220    // points on screen
-
-    private var imageSize: CGSize { CGSize(width: frame.image.width, height: frame.image.height) }
-
     private var sample: FieldSample? {
         guard let tip, let base else { return nil }
+        let t = frame.bufferPoint(tip), b = frame.bufferPoint(base)
         return FieldSample(lens: frame.lens, approximateIntrinsics: frame.approximateIntrinsics, trueDistance: trueDistance,
                            poleHeight: poleHeight, cameraHeight: cameraHeight,
-                           tip: frame.bufferPoint(tip), base: frame.bufferPoint(base),
-                           intrinsics: frame.intrinsics, note: note)
+                           tip: (t.x, t.y), base: (b.x, b.y), intrinsics: frame.intrinsics, note: note)
     }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
-                photo
-                Picker("Marking", selection: $target) {
-                    ForEach(Target.allCases, id: \.self) { Text($0.rawValue) }
-                }
-                .pickerStyle(.segmented)
-                loupe
+                PoleMarker(frame: frame, tip: $tip, base: $base)
                 results
             }
             .padding()
         }
-    }
-
-    // Tap anywhere on the photo to drop the active marker.
-    private var photo: some View {
-        GeometryReader { geo in
-            let scale = min(geo.size.width / imageSize.width, geo.size.height / imageSize.height)
-            let shown = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
-            let origin = CGPoint(x: (geo.size.width - shown.width) / 2, y: (geo.size.height - shown.height) / 2)
-            ZStack(alignment: .topLeading) {
-                Image(decorative: frame.image, scale: 1)
-                    .resizable()
-                    .frame(width: shown.width, height: shown.height)
-                    .offset(x: origin.x, y: origin.y)
-                ForEach([(tip, Color.orange), (base, Color.cyan)].indices, id: \.self) { i in
-                    let pair = [(tip, Color.orange), (base, Color.cyan)][i]
-                    if let p = pair.0 {
-                        Circle().stroke(pair.1, lineWidth: 2).frame(width: 14, height: 14)
-                            .position(x: origin.x + p.x * scale, y: origin.y + p.y * scale)
-                    }
-                }
-            }
-            .contentShape(Rectangle())
-            .onTapGesture(coordinateSpace: .local) { loc in
-                let p = CGPoint(x: (loc.x - origin.x) / scale, y: (loc.y - origin.y) / scale)
-                guard p.x >= 0, p.y >= 0, p.x < imageSize.width, p.y < imageSize.height else { return }
-                set(p)
-            }
-        }
-        .frame(height: 360)
-    }
-
-    // Magnified view of the active marker; drag to nudge it a pixel at a time.
-    @ViewBuilder private var loupe: some View {
-        if let p = current, let crop = crop(around: p) {
-            ZStack {
-                Image(decorative: crop.image, scale: 1)
-                    .interpolation(.none)
-                    .resizable()
-                    .frame(width: loupeSize, height: loupeSize)
-                Path { path in
-                    let c = CGPoint(x: (p.x - crop.origin.x) / loupeSource * loupeSize,
-                                    y: (p.y - crop.origin.y) / loupeSource * loupeSize)
-                    path.move(to: CGPoint(x: c.x - 14, y: c.y)); path.addLine(to: CGPoint(x: c.x + 14, y: c.y))
-                    path.move(to: CGPoint(x: c.x, y: c.y - 14)); path.addLine(to: CGPoint(x: c.x, y: c.y + 14))
-                }
-                .stroke(target == .tip ? Color.orange : Color.cyan, lineWidth: 1.5)
-            }
-            .frame(width: loupeSize, height: loupeSize)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .gesture(DragGesture(minimumDistance: 0)
-                .onChanged { g in
-                    if dragStart == nil { dragStart = p }
-                    let k = loupeSource / loupeSize / 2 // half speed for fine control
-                    if let s = dragStart {
-                        set(CGPoint(x: (s.x + g.translation.width * k).rounded(), y: (s.y + g.translation.height * k).rounded()))
-                    }
-                }
-                .onEnded { _ in dragStart = nil })
-            Text(String(format: "%@ at (%.0f, %.0f). Drag in the loupe to nudge.", target.rawValue, p.x, p.y))
-                .font(.footnote).foregroundStyle(.secondary)
-        } else {
-            Text("Tap the \(target.rawValue.lowercased()) of the pole in the photo.")
-                .font(.footnote).foregroundStyle(.secondary)
-        }
+        .onChange(of: tip) { _, _ in logged = false }
+        .onChange(of: base) { _, _ in logged = false }
     }
 
     @ViewBuilder private var results: some View {
@@ -201,22 +125,5 @@ struct MarkingView: View {
         } else {
             Button("Retake", action: retake).buttonStyle(.bordered)
         }
-    }
-
-    private var current: CGPoint? { target == .tip ? tip : base }
-
-    private func set(_ p: CGPoint) {
-        let clamped = CGPoint(x: min(max(p.x, 0), imageSize.width - 1), y: min(max(p.y, 0), imageSize.height - 1))
-        if target == .tip { tip = clamped } else { base = clamped }
-        logged = false
-    }
-
-    private func crop(around p: CGPoint) -> (image: CGImage, origin: CGPoint)? {
-        let half = loupeSource / 2
-        let x = min(max(p.x - half, 0), imageSize.width - loupeSource)
-        let y = min(max(p.y - half, 0), imageSize.height - loupeSource)
-        let rect = CGRect(x: x.rounded(.down), y: y.rounded(.down), width: loupeSource, height: loupeSource)
-        guard let img = frame.image.cropping(to: rect) else { return nil }
-        return (img, rect.origin)
     }
 }

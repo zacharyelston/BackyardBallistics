@@ -9,23 +9,31 @@
 /* Begin PBXBuildFile section */
 		2689D1FFC142DC580FD916E6 /* PoleHeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79353712A94811FE37ACA5FE /* PoleHeightView.swift */; };
 		2D4BCCC1C504DFB5DC877435 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF2333D0AC6A542A2A76243 /* HomeView.swift */; };
+		747907807D918EAAF7114670 /* RangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BB6A0A727E1D2BD74EA20E /* RangingView.swift */; };
+		783742A9BC4697804EF9E8B4 /* RangingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54C03FF8B59579E70EF39DB7 /* RangingSession.swift */; };
 		833F06491C4DDFF9FDC23AC6 /* RangingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5E31597492CC0E5465EB5069 /* RangingKit */; };
 		876F3F764992A8C51AE61BC9 /* LeanCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B425201901CEBCB9F02D12 /* LeanCheckView.swift */; };
 		8F1AEA5A301F57DC6C3A6D65 /* FieldLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFCA1D9063ED0D520FAA61F9 /* FieldLog.swift */; };
 		98CFC8BF190C087C75B7F89F /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98147AB9E2989F7A57C3ACD5 /* CameraController.swift */; };
+		C23304B83B1AFE1A5A497B86 /* RangingLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD628DC437C9CC26E2445839 /* RangingLog.swift */; };
 		C261031B77559718F55215ED /* SpudGunGolfApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E1D86E4D3FA61A97A688B1 /* SpudGunGolfApp.swift */; };
 		E56B114D737E570029C4400D /* SightingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49053E2218B3B585F16BBC57 /* SightingView.swift */; };
+		FDF7E9BFBE76A80E86007BDA /* PoleMarker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB8AE39E258D9183AC91DAC8 /* PoleMarker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1FF2333D0AC6A542A2A76243 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		49053E2218B3B585F16BBC57 /* SightingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SightingView.swift; sourceTree = "<group>"; };
 		4BBF86E79DD801AAF20E9E85 /* RangingKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RangingKit; path = Packages/RangingKit; sourceTree = SOURCE_ROOT; };
+		54C03FF8B59579E70EF39DB7 /* RangingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingSession.swift; sourceTree = "<group>"; };
+		57BB6A0A727E1D2BD74EA20E /* RangingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingView.swift; sourceTree = "<group>"; };
 		79353712A94811FE37ACA5FE /* PoleHeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleHeightView.swift; sourceTree = "<group>"; };
 		98147AB9E2989F7A57C3ACD5 /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
 		A7B425201901CEBCB9F02D12 /* LeanCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeanCheckView.swift; sourceTree = "<group>"; };
+		BB8AE39E258D9183AC91DAC8 /* PoleMarker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleMarker.swift; sourceTree = "<group>"; };
 		BFCA1D9063ED0D520FAA61F9 /* FieldLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldLog.swift; sourceTree = "<group>"; };
 		D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SpudGunGolf.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD628DC437C9CC26E2445839 /* RangingLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingLog.swift; sourceTree = "<group>"; };
 		F0E1D86E4D3FA61A97A688B1 /* SpudGunGolfApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpudGunGolfApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -82,6 +90,10 @@
 				1FF2333D0AC6A542A2A76243 /* HomeView.swift */,
 				A7B425201901CEBCB9F02D12 /* LeanCheckView.swift */,
 				79353712A94811FE37ACA5FE /* PoleHeightView.swift */,
+				BB8AE39E258D9183AC91DAC8 /* PoleMarker.swift */,
+				DD628DC437C9CC26E2445839 /* RangingLog.swift */,
+				54C03FF8B59579E70EF39DB7 /* RangingSession.swift */,
+				57BB6A0A727E1D2BD74EA20E /* RangingView.swift */,
 				49053E2218B3B585F16BBC57 /* SightingView.swift */,
 				F0E1D86E4D3FA61A97A688B1 /* SpudGunGolfApp.swift */,
 			);
@@ -153,6 +165,10 @@
 				2D4BCCC1C504DFB5DC877435 /* HomeView.swift in Sources */,
 				876F3F764992A8C51AE61BC9 /* LeanCheckView.swift in Sources */,
 				2689D1FFC142DC580FD916E6 /* PoleHeightView.swift in Sources */,
+				FDF7E9BFBE76A80E86007BDA /* PoleMarker.swift in Sources */,
+				C23304B83B1AFE1A5A497B86 /* RangingLog.swift in Sources */,
+				783742A9BC4697804EF9E8B4 /* RangingSession.swift in Sources */,
+				747907807D918EAAF7114670 /* RangingView.swift in Sources */,
 				E56B114D737E570029C4400D /* SightingView.swift in Sources */,
 				C261031B77559718F55215ED /* SpudGunGolfApp.swift in Sources */,
 			);

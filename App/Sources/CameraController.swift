@@ -5,17 +5,25 @@ import UIKit
 import RangingKit
 
 /// A still frame captured for marking, with the intrinsics of the buffer it came from.
-struct FrozenFrame {
+struct FrozenFrame: Identifiable {
+    let id = UUID()
     /// Upright (portrait) image for display and marking.
     let image: CGImage
     let intrinsics: Intrinsics
     let lens: String
     let approximateIntrinsics: Bool
+    /// ARKit camera pose when the frame came from an AR session.
+    var pose: CameraPose? = nil
 
     /// Converts a point in the upright image to the camera's native (landscape) buffer pixel.
     /// The buffer is rotated 90° clockwise for display, so x comes from the displayed y.
     func bufferPoint(_ p: CGPoint) -> (x: Double, y: Double) {
         (Double(p.y), Double(intrinsics.height) - 1 - Double(p.x))
+    }
+
+    func bufferPixel(_ p: CGPoint) -> Pixel {
+        let b = bufferPoint(p)
+        return Pixel(x: b.x, y: b.y)
     }
 }
 

@@ -35,8 +35,8 @@ cd Packages/RangingKit && swift test
 
 ## Milestone status
 
-1. **Flag kit guide and setup flow** — in progress: lean check, pole height and the sighting field-test tool are built; field results pending.
-2. Ranging prototype (multi-photo)
+1. **Flag kit guide and setup flow** — built: lean check, pole height and the sighting field-test tool. Field results pending.
+2. **Ranging prototype** — built: multi-photo AR ranging with fused size range and triangulation, outlier drop, height difference, and the 10 m flag check. Device tuning pending.
 3. Course file and validator
 4. Firing computer in Swift
 5. Calibration shots

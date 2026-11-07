@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject private var log: FieldLogStore
+    @EnvironmentObject private var rangingLog: RangingLogStore
     @AppStorage(Settings.poleHeightKey) private var poleHeight = Settings.defaultPoleHeight
     @AppStorage(Settings.cameraHeightKey) private var cameraHeight = Settings.defaultCameraHeight
 
@@ -19,6 +20,20 @@ struct HomeView: View {
                     Text("Flag setup")
                 } footer: {
                     Text("Guy the pole until the lean check reads under 0.5°, then measure its height.")
+                }
+
+                Section {
+                    NavigationLink { RangingView() } label: {
+                        Label("Range the flag", systemImage: "camera.metering.multispot")
+                    }
+                    NavigationLink { RangingLogView() } label: {
+                        Label("Ranging log", systemImage: "list.number")
+                            .badge(rangingLog.records.count)
+                    }
+                } header: {
+                    Text("Ranging")
+                } footer: {
+                    Text("Three to five photos of the pole from a short arc give distance, height difference and a cross-check.")
                 }
 
                 Section {
