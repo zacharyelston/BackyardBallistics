@@ -236,23 +236,23 @@ function inEll(x, y, e) { const a = (x - e.x) / e.rx, b = (y - e.y) / e.ry; retu
 // ---------- course (meters; y runs up the screen) ----------
 const E = (x, y, rx, ry) => ({ x, y, rx, ry }), T = (x, y, r, h) => ({ x, y, r, h });
 const HOLES = [
-  { name: 'The Driveway', par: 4, desc: 'Straight shot. One tree on the left, a sand trap guarding the right of the green.', w: 80, h: 120, tee: { x: 40, y: 10 }, cup: { x: 42, y: 100 }, greenR: 10, fw: 22, downrange: false,
+  { name: 'The Driveway', par: 6, desc: 'Straight shot. One tree on the left, a sand trap guarding the right of the green.', w: 80, h: 120, tee: { x: 40, y: 10 }, fp: { x: 40.3, y: 25 }, cup: { x: 42, y: 100 }, greenR: 10, fw: 22, downrange: false,
     fairway: [[[40, 10], [42, 100]]], water: [], sand: [E(55, 93, 7, 4)], trees: [T(25, 60, 4, 9)] },
-  { name: 'Garden Hose', par: 5, desc: 'Dogleg right around the ornamental pond. Lay up short or carry it.', w: 110, h: 190, tee: { x: 30, y: 10 }, cup: { x: 80, y: 175 }, greenR: 10, fw: 24, downrange: true,
+  { name: 'Garden Hose', par: 6, desc: 'Dogleg right around the ornamental pond. Lay up short or carry it.', w: 110, h: 190, tee: { x: 30, y: 10 }, cup: { x: 80, y: 175 }, greenR: 10, fw: 24, downrange: true,
     fairway: [[[30, 10], [35, 90], [80, 175]]], water: [E(62, 100, 14, 10)], sand: [E(92, 166, 6, 5), E(68, 171, 5, 4)], trees: [T(15, 120, 5, 11), T(22, 136, 4, 10)] },
-  { name: 'Shed Shot', par: 4, desc: 'A big maple stands between you and the green. Go over it or bend around it.', w: 90, h: 110, tee: { x: 20, y: 10 }, fp: { x: 27.6, y: 22.9 }, cup: { x: 70, y: 95 }, greenR: 9, fw: 18, downrange: false,
+  { name: 'Shed Shot', par: 6, desc: 'A big maple stands between you and the green. Go over it or bend around it.', w: 90, h: 110, tee: { x: 20, y: 10 }, fp: { x: 31.9, y: 30.1 }, cup: { x: 70, y: 95 }, greenR: 9, fw: 18, downrange: false,
     fairway: [[[20, 10], [70, 95]]], water: [], sand: [E(60, 84, 6, 4), E(81, 91, 4, 5)], trees: [T(45, 54, 7, 15)] },
-  { name: 'Over the Pond', par: 4, desc: 'Forced carry. Anything short gets wet.', w: 90, h: 130, tee: { x: 45, y: 10 }, fp: { x: 45, y: 28 }, cup: { x: 45, y: 115 }, greenR: 10, fw: 20, downrange: false,
+  { name: 'Over the Pond', par: 7, desc: 'Forced carry. Anything short gets wet.', w: 90, h: 130, tee: { x: 45, y: 10 }, fp: { x: 45, y: 40 }, cup: { x: 45, y: 115 }, greenR: 10, fw: 20, downrange: false,
     fairway: [[[45, 10], [45, 40]], [[45, 90], [45, 115]]], water: [E(45, 65, 32, 20)], sand: [E(31, 111, 5, 4)], trees: [] },
-  { name: 'Dogleg Fence', par: 6, desc: 'Long dogleg right. Trees on the corner, a puddle short of the green.', w: 140, h: 240, tee: { x: 20, y: 10 }, cup: { x: 120, y: 225 }, greenR: 11, fw: 26, downrange: true,
+  { name: 'Dogleg Fence', par: 7, desc: 'Long dogleg right. Trees on the corner, a puddle short of the green.', w: 140, h: 240, tee: { x: 20, y: 10 }, cup: { x: 120, y: 225 }, greenR: 11, fw: 26, downrange: true,
     fairway: [[[20, 10], [25, 120], [70, 150], [120, 225]]], water: [E(95, 172, 12, 9)], sand: [E(108, 214, 6, 4), E(132, 213, 4, 5)], trees: [T(50, 90, 6, 14), T(55, 110, 6, 13), T(45, 70, 5, 12)] },
-  { name: 'Clothesline', par: 5, desc: 'Thread the gap between two trees, then watch for the sapling in the middle.', w: 100, h: 200, tee: { x: 50, y: 10 }, cup: { x: 50, y: 185 }, greenR: 10, fw: 20, downrange: true,
+  { name: 'Clothesline', par: 6, desc: 'Thread the gap between two trees, then watch for the sapling in the middle.', w: 100, h: 200, tee: { x: 50, y: 10 }, cup: { x: 50, y: 185 }, greenR: 10, fw: 20, downrange: true,
     fairway: [[[50, 10], [50, 185]]], water: [], sand: [E(39, 175, 5, 4), E(62, 178, 5, 4)], trees: [T(30, 100, 6, 12), T(70, 100, 6, 12), T(50, 140, 3, 8)] },
-  { name: 'Kiddie Pool', par: 4, desc: 'Short, but the pool sits right in front of the green.', w: 80, h: 92, tee: { x: 15, y: 10 }, cup: { x: 60, y: 75 }, greenR: 9, fw: 18, downrange: false,
+  { name: 'Kiddie Pool', par: 6, desc: 'Short, but the pool sits right in front of the green.', w: 80, h: 92, tee: { x: 15, y: 10 }, fp: { x: 19, y: 15.8 }, cup: { x: 60, y: 75 }, greenR: 9, fw: 18, downrange: false,
     fairway: [[[15, 10], [60, 75]]], water: [E(45, 56, 10, 8)], sand: [E(67, 86, 7, 3)], trees: [] },
   { name: "Neighbor's Fence", par: 5, desc: 'The fence on the right is out of bounds. A pond waits on the left.', w: 100, h: 180, tee: { x: 50, y: 10 }, cup: { x: 80, y: 165 }, greenR: 9, fw: 20, downrange: true,
     fairway: [[[50, 10], [78, 90], [80, 165]]], water: [E(25, 60, 10, 14)], sand: [E(68, 155, 5, 4)], trees: [T(42, 120, 7, 13)] },
-  { name: 'The Deck', par: 5, desc: 'S-shaped finishing hole with two ponds. Plan all three shots.', w: 130, h: 250, tee: { x: 65, y: 10 }, cup: { x: 65, y: 235 }, greenR: 11, fw: 24, downrange: true,
+  { name: 'The Deck', par: 7, desc: 'S-shaped finishing hole with two ponds. Plan all three shots.', w: 130, h: 250, tee: { x: 65, y: 10 }, cup: { x: 65, y: 235 }, greenR: 11, fw: 24, downrange: true,
     fairway: [[[65, 10], [40, 90], [90, 170], [65, 235]]], water: [E(88, 108, 14, 12), E(28, 182, 12, 10)], sand: [E(51, 226, 5, 4), E(80, 227, 5, 4), E(65, 246, 7, 2.5)], trees: [T(20, 40, 6, 12), T(110, 60, 6, 13), T(66, 140, 5, 12)] },
 ];
 
@@ -381,6 +381,22 @@ function solveWithRoll(h, from, target, v, wind, useRoll) {
   }
 }
 
+// Lay-up point when the hole is out of range (75 m by default, leaving room for wind): the safe spot (fairway or green, else rough) within
+// a fan of the line to the hole that leaves the shortest next shot.
+function layupPoint(h, from, maxD = 75) {
+  const base = Math.atan2(h.cup.x - from.x, h.cup.y - from.y);
+  let best = null;
+  for (const d of [85, 78, 70, 62, 55, 45, 35].filter(d => d <= maxD)) for (const a of [0, -8, 8, -16, 16, -24, 24, -32, 32]) {
+    const ang = base + a * D2R, p = { x: from.x + Math.sin(ang) * d, y: from.y + Math.cos(ang) * d };
+    const s = surfaceAt(h, p.x, p.y);
+    if (s === 'water' || s === 'ob' || s === 'sand') continue;
+    if (h.trees.some(t => Math.hypot(p.x - t.x, p.y - t.y) < t.r + 2)) continue;
+    const score = Math.hypot(h.cup.x - p.x, h.cup.y - p.y) + (s === 'rough' ? 12 : 0);
+    if (!best || score < best.score) best = { p, score };
+  }
+  return best ? best.p : { x: from.x + Math.sin(base) * Math.min(60, maxD), y: from.y + Math.cos(base) * Math.min(60, maxD) };
+}
+
 // ---------- state ----------
 const state = {
   hi: 0, rounds: 0, scores: Array(9).fill(null), pos: null, surf: 'tee',
@@ -412,8 +428,7 @@ function startHole(i) {
 function defaultTarget() {
   const h = H(), dx = h.cup.x - state.pos.x, dy = h.cup.y - state.pos.y, d = Math.hypot(dx, dy);
   if (d <= MAX_RANGE_M) return { ...h.cup }; // within the 100 yd limit: the pole is the target
-  const reach = 85; // otherwise aim at a lay-up point on the line to the hole
-  return { x: state.pos.x + dx / d * reach, y: state.pos.y + dy / d * reach };
+  return layupPoint(h, state.pos); // otherwise lay up to the safest spot that leaves the shortest next shot
 }
 // Spot a round from the firing point. Left/right is an angle times a known range, so it is
 // accurate; short/long comes from how far below the horizon the potato sits, about ±0.6 m at 60 m.
@@ -801,7 +816,7 @@ function drawScore() {
     r3 += `<td${cur}>${s == null ? '·' : `<span class="${s < h.par ? 'under' : s > h.par ? 'over' : ''}">${s.toFixed(1)}</span>`}</td>`;
   });
   t.innerHTML = r1 + '<th>Tot</th></tr>' + r2 + `<td>${tp}</td></tr>` + r3 + `<td>${played ? ts.toFixed(1) : '·'}</td></tr>`;
-  let best = null; try { best = JSON.parse(localStorage.getItem('sgg-best-v6')); } catch (e) {}
+  let best = null; try { best = JSON.parse(localStorage.getItem('sgg-best-v7')); } catch (e) {}
   $('#bestTxt').textContent = best ? `Best round on this device: ${best.total.toFixed(1)} against par ${best.par}.` : 'Each hole scores rounds fired plus metres outside the ring for your closest round. Finish all nine to set a best round.';
 }
 // The mission log: every round as it was spotted, and fire control's correction.
@@ -900,7 +915,7 @@ function finishHole() {
   if (state.verdict) state.scores[state.hi] = state.verdict.score;
   if (state.hi < 8) { startHole(state.hi + 1); return; }
   const total = Math.round(state.scores.reduce((a, b) => a + (b || 0), 0) * 10) / 10, par = HOLES.reduce((a, b) => a + b.par, 0);
-  try { const best = JSON.parse(localStorage.getItem('sgg-best-v6')); if (!best || total < best.total) localStorage.setItem('sgg-best-v6', JSON.stringify({ total, par })); } catch (e) {}
+  try { const best = JSON.parse(localStorage.getItem('sgg-best-v7')); if (!best || total < best.total) localStorage.setItem('sgg-best-v7', JSON.stringify({ total, par })); } catch (e) {}
   state.summary = true;
   $('#doneTitle').textContent = 'Round complete';
   $('#doneText').textContent = `Round total ${total.toFixed(1)} against par ${par}.`;

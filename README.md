@@ -11,6 +11,10 @@
 
 v2 drives the app's requirements; v1 stays as an optional ruleset on the same engine.
 
+![SpudGunGolf v2 Fire Missions: two spotted rounds on the map, the mission log with fire-control corrections, and the cease-fire result](docs/image-v2.png)
+
+v2 pars (6, 6, 6, 7, 7, 6, 6, 5, 7; par 56) come from simulating a player who uses fire control, prefers lobs, and ceases fire when a round stops improving on the best by a metre.
+
 SpudGunGolf: a backyard trajectory game played with a low-power launcher on published courses. Each hole is a guyed furring-strip pole, and the pole is the hole: every hole is played as fire missions: range the pole from photos, fire, spot each round from the firing point, adjust, and score rounds fired plus metres outside the ring.
 
 Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
