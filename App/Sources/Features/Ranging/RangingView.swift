@@ -6,7 +6,7 @@ import SafetyKit
 
 /// Milestone 2: range the hole (the pole's base) from a few photos of the pole taken along a short arc.
 struct RangingView: View {
-    @StateObject private var session = RangingSession()
+    @StateObject private var session = RangingSession.make()
     @EnvironmentObject private var rangingLog: RangingLogStore
     @AppStorage(Settings.poleHeightKey) private var poleHeight = Settings.defaultPoleHeight
     @AppStorage(Settings.cameraHeightKey) private var cameraHeight = Settings.defaultCameraHeight
@@ -39,10 +39,10 @@ struct RangingView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                ARCameraView(session: session)
+                CaptureFeedView(session: session)
                 Rectangle().fill(.orange).frame(width: 1).opacity(0.6)
                 VStack {
-                    Text(session.tracking)
+                    Text(session.source.isSimulated ? "Simulated · \(session.tracking.label)" : session.tracking.label)
                         .font(.footnote.weight(.semibold))
                         .padding(.horizontal, 10).padding(.vertical, 4)
                         .background(.ultraThinMaterial, in: Capsule())
@@ -71,6 +71,7 @@ struct RangingView: View {
                 pending = nil
             } cancel: { pending = nil }
         }
+        .onAppear { session.start() }
         .onDisappear { session.pause() }
     }
 
@@ -173,13 +174,19 @@ struct RangingView: View {
             }
             Button("Save my GPS position as the flag point") {
                 if let c = session.currentLocation {
-                    flagLat = c.coordinate.latitude
-                    flagLon = c.coordinate.longitude
+                    flagLat = c.latitude
+                    flagLon = c.longitude
                 }
             }
             .disabled(session.currentLocation == nil)
-            if let c = session.currentLocation {
-                Text(String(format: "GPS accuracy now ±%.0f m", c.horizontalAccuracy))
+            if let sim = session.source as? SimulatedRangingSource {
+                Button("Use the simulated scene's flag point") {
+                    flagLat = sim.flagPoint.latitude
+                    flagLon = sim.flagPoint.longitude
+                }
+            }
+            if let a = session.horizontalAccuracy {
+                Text(String(format: "GPS accuracy now ±%.0f m", a))
                     .font(.footnote).foregroundStyle(.secondary)
             }
         } header: {
@@ -243,14 +250,25 @@ struct MarkPhotoSheet: View {
     }
 }
 
-struct ARCameraView: UIViewRepresentable {
-    let session: RangingSession
+/// The live view: the AR camera on a phone, or the simulated scene from the phone's current spot.
+struct CaptureFeedView: View {
+    @ObservedObject var session: RangingSession
 
-    func makeUIView(context: Context) -> ARView {
-        let view = ARView(frame: .zero, cameraMode: .ar, automaticallyConfigureSession: false)
-        session.attach(view)
-        return view
+    var body: some View {
+        if let ar = session.source as? ARKitRangingSource {
+            ARViewContainer(arView: ar.arView)
+        } else if let sim = session.source as? SimulatedRangingSource, let image = sim.preview() {
+            // Re-rendered whenever the session changes, e.g. after each photo moves the phone.
+            Image(decorative: image, scale: 1).resizable().scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: .infinity).background(Color.black)
+        } else {
+            Color.black
+        }
     }
+}
 
+struct ARViewContainer: UIViewRepresentable {
+    let arView: ARView
+    func makeUIView(context: Context) -> ARView { arView }
     func updateUIView(_ uiView: ARView, context: Context) {}
 }

@@ -41,6 +41,20 @@ public struct CameraPose: Codable, Equatable, Sendable {
         self.init(m)
     }
 
+    /// A level phone held upright in portrait, at `eye`, facing `target` horizontally.
+    ///
+    /// ARKit's camera axes follow the sensor, which is landscape: with the phone in portrait the
+    /// camera's +X points at the ground, +Y to the viewer's right, and it looks down −Z. This is the
+    /// pose a player actually produces, so tests and the simulated capture source use it.
+    public static func portrait(eye: SIMD3<Double>, facing target: SIMD3<Double>) -> CameraPose {
+        var f = SIMD3(target.x - eye.x, 0, target.z - eye.z)
+        f = simd_length(f) > 0 ? simd_normalize(f) : SIMD3(0, 0, -1)
+        let up = SIMD3<Double>(0, 1, 0)
+        let right = simd_cross(f, up)
+        let m = simd_double4x4(columns: (SIMD4(-up, 0), SIMD4(right, 0), SIMD4(-f, 0), SIMD4(eye, 1)))
+        return CameraPose(m)
+    }
+
     public var matrix: simd_double4x4 {
         let c = columns
         return simd_double4x4(columns: (SIMD4(c[0], c[1], c[2], c[3]), SIMD4(c[4], c[5], c[6], c[7]),

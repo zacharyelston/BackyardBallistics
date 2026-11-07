@@ -83,6 +83,24 @@ final class PoleSolverTests: XCTestCase {
         XCTAssertFalse(report.confident)
     }
 
+    /// The real-world case: a phone held in portrait, where the pole runs along the image's long
+    /// (x) axis rather than up the buffer. The solver must not care how the phone was held.
+    func testPortraitHeldPhonesGiveTheSameFix() {
+        let k = Intrinsics(fx: 1450, fy: 1450, cx: 960, cy: 720, width: 1920, height: 1440)
+        let truth = SIMD3(3.0, -0.3, -40)
+        let photos = (0..<4).map { i -> PoleSighting in
+            let pose = CameraPose.portrait(eye: SIMD3(Double(i), 1.5, 0), facing: truth)
+            let tip = pose.project(truth + SIMD3(0, H, 0), intrinsics: k)!
+            let base = pose.project(truth, intrinsics: k)!
+            // In portrait the pole is near-vertical on screen, which is along buffer x.
+            XCTAssertGreaterThan(abs(base.x - tip.x), 10 * abs(base.y - tip.y))
+            XCTAssertGreaterThan(base.x, tip.x) // the base is lower on screen: larger buffer x
+            return PoleSighting(pose: pose, intrinsics: k, tip: tip, base: base)
+        }
+        let fix = try! XCTUnwrap(PoleSolver.solve(photos, poleHeight: H))
+        XCTAssertLessThan(simd_length(fix.base - truth), 1e-6)
+    }
+
     func testHeightDifferenceDownhill() {
         let truth = SIMD3(0.0, -0.8, -25)
         let report = try! XCTUnwrap(PoleSolver.report(scene(base: truth), poleHeight: H, cameraHeight: 1.5))
