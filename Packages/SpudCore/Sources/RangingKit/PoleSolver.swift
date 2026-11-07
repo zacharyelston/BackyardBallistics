@@ -55,6 +55,26 @@ public struct CameraPose: Codable, Equatable, Sendable {
         return CameraPose(m)
     }
 
+    /// A portrait phone at `eye` whose optical axis points straight at `target`, pitched up or down
+    /// as needed with no roll. This is the pose of a player holding the reticle's crosshair on a pole's base.
+    public static func portrait(eye: SIMD3<Double>, lookingAt target: SIMD3<Double>) -> CameraPose {
+        let d = target - eye
+        let f = simd_length(d) > 0 ? simd_normalize(d) : SIMD3(0, 0, -1)
+        var right = simd_cross(f, SIMD3<Double>(0, 1, 0))
+        right = simd_length(right) > 1e-9 ? simd_normalize(right) : SIMD3(1, 0, 0)
+        let up = simd_cross(right, f)
+        let m = simd_double4x4(columns: (SIMD4(-up, 0), SIMD4(right, 0), SIMD4(-f, 0), SIMD4(eye, 1)))
+        return CameraPose(m)
+    }
+
+    /// Compass bearing of the optical axis (degrees from north) and its angle below level (degrees),
+    /// in a world frame aligned with gravity and heading (+X east, −Z north, +Y up).
+    public var aim: (bearing: Double, angleBelowLevel: Double) {
+        let fwd = -SIMD3(columns[8], columns[9], columns[10])
+        let b = RangeMath.degrees(atan2(fwd.x, -fwd.z))
+        return (b < 0 ? b + 360 : b, RangeMath.degrees(asin(max(-1, min(1, -fwd.y / simd_length(fwd))))))
+    }
+
     public var matrix: simd_double4x4 {
         let c = columns
         return simd_double4x4(columns: (SIMD4(c[0], c[1], c[2], c[3]), SIMD4(c[4], c[5], c[6], c[7]),

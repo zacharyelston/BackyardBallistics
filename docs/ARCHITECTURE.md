@@ -8,7 +8,7 @@ SpudGunGolf is a thin SwiftUI/ARKit shell around a platform-free core. Everythin
 graph BT
   CoreGeo["CoreGeo<br/>GPS points, offsets, polygons"]
   SafetyKit["SafetyKit<br/>limits, checks, Cleared&lt;T&gt;"]
-  RangingKit["RangingKit<br/>rays, lean, pole solver"]
+  RangingKit["RangingKit<br/>reticle range, spotting, rays, lean, pole solver"]
   CourseKit["CourseKit (m3)<br/>course file, validator"]
   FireControlKit["FireControlKit (m4–5)<br/>initial data, spotting, corrections, calibration"]
   RoundKit["RoundKit (m6)<br/>missions, turns, scoring"]
@@ -32,9 +32,9 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 | --- | --- | --- | --- |
 | CoreGeo | `GeoPoint`, east/north offsets, bearings, `GeoPolygon` | nothing | `swift test` |
 | SafetyKit | Every safety limit, the checks, `Cleared<T>`, `DownrangeLog`, launcher conformance, `safety-limits.json` | CoreGeo | `swift test`, including a check that the browser prototype uses the same numbers |
-| RangingKit | Camera intrinsics and rays, size ranging, lean, pole height, multi-photo `PoleSolver` | CoreGeo | `swift test` on synthetic scenes |
+| RangingKit | `ReticleRange` and `ReticleLock` (the main ranging method), the spotting model (`Spot`, `RangeCall`, `FireControl` bracketing and left/right), camera intrinsics and rays, lean, pole height, the multi-photo `PoleSolver` cross-check | CoreGeo | `swift test` on synthetic scenes and the spec's reticle table |
 | CourseKit (m3) | Course file format, loading, validator (calls `Safety.checkFan`) | SafetyKit | planned |
-| FireControlKit (m4–5) | Trajectory and roll-out model, initial data, spotting a round from the firing point, round-by-round corrections, calibration fitting | SafetyKit, RangingKit | planned |
+| FireControlKit (m4–5) | Trajectory and roll-out model, initial data, calibration fitting; takes over the spotting model from RangingKit when it lands | SafetyKit, RangingKit | planned |
 | RoundKit (m6) | Fire missions per hole, turns, cease fire and verify, the downrange-play switch, scoring (rounds + metres outside the ring) | SafetyKit | planned |
 
 ### Dependency rules
@@ -43,7 +43,23 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 2. A module may only use modules below it in the graph. CoreGeo depends on nothing.
 3. Safety numbers live only in `SafetyKit/SafetyLimits.swift` and its bundled `safety-limits.json`. Nothing else restates them; tests pin both and the prototype.
 4. Accuracy thresholds (lean under 0.5°, photo agreement within 3%) stay with the module that measures them. They are not safety rules.
-5. Camera hardware stays behind a seam. Only `ARKitRangingSource` touches ARKit and Core Location; `RangingSession` and the views talk to the `RangingCaptureSource` protocol. `SimulatedRangingSource` renders a pole from known poses (a phone held in portrait, ARKit's camera conventions), so the ranging flow runs in the Simulator and with the Tools toggle on a phone. New capture paths, such as spotting rounds in milestone 4, follow the same pattern.
+5. Camera hardware stays behind a seam. Only `ARKitRangingSource` touches ARKit and Core Location; `RangingSession` and the views talk to the `RangingCaptureSource` protocol. `SimulatedRangingSource` renders a pole from known poses (a phone held in portrait, ARKit's camera conventions), so the ranging flow runs in the Simulator and with the Tools toggle on a phone. The seam also gives the live feed's intrinsics and aim (compass bearing, angle below level) for the reticle; the simulated source holds its crosshair on the pole's base. New capture paths follow the same pattern.
+6. The reticle works in sensor pixels. The dial sets the plumb line's length in pixels of the camera's native buffer, and only the view converts that to screen points, so pinch zoom and screen size never touch the range.
+
+### Ranging with the reticle
+
+Ranging is a stadia reading, not a tap. The crosshair sits on the pole's base, a plumb line rises from it (kept plumb by CoreMotion gravity), and the range dial is turned until the line's top meets the top of the pole's orange band. Then **Lock**.
+
+- **Range.** `d = f·H/h`, with `f` the focal length in sensor pixels, `H` the known pole height (8, 10 or 12 ft) and `h` the line length in sensor pixels. When the phone looks down at the base, `ReticleRange` corrects for the tilt exactly (`d = H / (tanθ + tan(atan(h/f) − θ))`); at level that is the plain formula. Uncorrected, the tilt reads about 14 cm short at 10 m and nothing that matters past 30 m.
+- **Error.** ±1 px at the base and at the top, in quadrature: `σ = √2·d²/(f·H)`. On the 4K wide camera (`f` ≈ 3320 px) an 8 ft pole is about 811/270/135/90 px at 10/30/60/90 m, so σ is about 2 cm, 16 cm, 63 cm and 1.4 m.
+- **Height difference.** Camera height − `d·tan(angle below level to the base)`, + uphill.
+- **Pole position.** GPS + compass bearing + range (`Geo.destination`); the lock then runs SafetyKit's 10 m flag check.
+
+Lock records range, bearing, angle below level, GPS position and accuracy (`ReticleLock`). The multi-photo `PoleSolver` stays in Tools as an optional cross-check.
+
+### Spotting
+
+From the firing point, left/right is measured: the crosshair angle from the pole to the round, times the range. Long/short is only called (short, over or range correct), because from eye height the ground near the pole is seen at about 1° and a measured long/short miss would swing by metres with every bump. `FireControl` brackets the range from the calls, starting with a step of max(2 m, 6% of range) and halving it each round once bracketed (after a range-correct call or a change of call; never below 0.5 m), and corrects left/right by the mean measured miss. This matches `lockRange`, `spotRound` and `finishShot` in the v2 prototype.
 
 ## Services
 
@@ -91,19 +107,19 @@ sequenceDiagram
   participant R as RangingKit
   participant S as SafetyKit
   participant F as FireControlKit
-  P->>A: Photos of the pole from the firing point
-  A->>R: PoleSolver.report(sightings)
-  R-->>A: distance, ±, height difference, line
-  A->>S: clearRange(report, firing point GPS, course flag)
+  P->>A: Crosshair on the base, dial the plumb line to the pole's top, Lock
+  A->>R: ReticleLock(range, bearing, angle below level, GPS)
+  R-->>A: distance, ±, height difference, pole position
+  A->>S: clearRange(lock, firing point GPS, course flag)
   S-->>A: Cleared range, or reasons
   A->>F: initialData(cleared range, wind, launcher profile)
   F->>S: clearSolution(distance, velocity, launcher, downrange)
   S-->>F: Cleared solution, or reasons
   F-->>A: charge, elevation, aim
   loop until a round is in the ring or the player ceases fire
-    P->>A: Fire, then one photo: tap the potato and the pole base
-    A->>F: spot(miss vector)
-    F-->>A: correction (add/drop, left/right), wind and velocity updated
+    P->>A: Fire, call short, over or range correct, crosshair on the round
+    A->>F: spot(call, left/right miss)
+    F-->>A: correction (add/drop by bracketing, left/right by mean miss)
   end
   P->>A: Cease fire, everyone walks out, range the pole from the closest round
   A->>A: score = rounds + metres outside the ring
@@ -114,14 +130,14 @@ sequenceDiagram
 | Folder | What goes there |
 | --- | --- |
 | `App/Sources/App` | Entry point, tabs, settings and units |
-| `App/Sources/Shared` | Camera capture, the tip/base marker with loupe, `JSONStore` |
+| `App/Sources/Shared` | Camera capture, the capture-source seam, CoreMotion gravity (`MotionReader`), the tip/base marker with loupe, `JSONStore` |
 | `App/Sources/Features/<Feature>` | One folder per feature: its views, its session object, its log |
 
 Features talk to SpudCore, not to each other. Shared UI that two features need moves to `Shared`.
 
 ### Persistence
 
-Each log is a `JSONStore<Item>` file in Documents (`fieldlog.json`, `ranginglog.json`). Ranging records keep every photo's pose and marks so field data can be re-solved on a Mac when the solver changes. Courses and launcher profiles will follow the same pattern.
+Each log is a `JSONStore<Item>` file in Documents (`reticlelog.json`, `ranginglog.json`, `fieldlog.json`). Reticle records keep the whole lock (line pixels, focal length, tilt, bearing, GPS); multi-photo records keep every photo's pose and marks so field data can be re-solved on a Mac when the solver changes. Courses and launcher profiles will follow the same pattern.
 
 ## Checking work
 

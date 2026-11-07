@@ -6,7 +6,7 @@ import PackageDescription
 // Dependency order (each module may use only the ones above it):
 //   CoreGeo    – GPS points, local east/north offsets, polygons
 //   SafetyKit  – every safety limit and check; nothing below may bypass it
-//   RangingKit – camera rays, lean, pole height, multi-photo pole solver
+//   RangingKit – reticle (stadia) ranging, spotting model, camera rays, lean, pole height, multi-photo cross-check
 let package = Package(
     name: "SpudCore",
     platforms: [.iOS(.v17), .macOS(.v14)],
