@@ -1,6 +1,6 @@
 # Backyard Ballistics
 
-![SpudGunGolf browser prototype: a top-down hole with range rings, the launcher controls and the firing computer](docs/image.png)
+![SpudGunGolf browser prototype: a top-down hole with the lid and flag, range rings, the launcher controls and the firing computer](docs/image.png)
 
 *The browser prototype in [`prototype/spudgungolf.html`](prototype/spudgungolf.html).*
 
