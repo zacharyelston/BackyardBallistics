@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpudGunGolf</title>
+<meta name="description" content="Browser prototypes of SpudGunGolf, a low-power backyard trajectory game played as fire missions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=Chakra+Petch:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#e9efe8; --panel:#ffffff; --ink:#18241b; --muted:#56655a; --line:#cfd9cf;
+  --accent:#2c7a3a; --accent-ink:#ffffff; --spud:#a8692c; --warn:#b4440f;
+  --f-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,sans-serif;
+  --f-data:"Chakra Petch",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101612; --panel:#18201a; --ink:#e3ece4; --muted:#97a69a; --line:#2b372e;
+  --accent:#6cc27a; --accent-ink:#0d1a10; --spud:#d89a5a; --warn:#f08a54; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101612; --panel:#18201a; --ink:#e3ece4; --muted:#97a69a; --line:#2b372e;
+  --accent:#6cc27a; --accent-ink:#0d1a10; --spud:#d89a5a; --warn:#f08a54; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body);padding:28px 16px 40px}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1{font:800 clamp(34px,6vw,56px)/1 var(--f-display);letter-spacing:-.02em;margin:0}
+h1 span{color:var(--spud)}
+.lede{color:var(--muted);max-width:62ch;margin:10px 0 0;font-size:17px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;
+  text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+.card:hover,.card:focus-visible{border-color:var(--accent);transform:translateY(-2px)}
+.card img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;border-bottom:1px solid var(--line);background:var(--bg)}
+.card .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.ver{font:600 13px var(--f-data);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.card h2{font:800 26px/1.1 var(--f-display);margin:0}
+.card p{margin:0;color:var(--muted)}
+.go{margin-top:auto;padding-top:8px;font-weight:700;color:var(--accent)}
+.note{border-left:3px solid var(--warn);padding:4px 0 4px 14px;color:var(--muted);max-width:70ch;margin:0}
+footer{color:var(--muted);font-size:14px}
+footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Spud<span>Gun</span>Golf</h1>
+    <p class="lede">A backyard trajectory game for a low-power launcher. Each hole is a guyed pole: range it from photos, fire, spot each round from the firing point, let fire control correct, and score rounds fired plus metres outside the ring.</p>
+  </header>
+
+  <section class="cards" aria-label="Prototypes">
+    <a class="card" href="v2/">
+      <img src="img/v2.png" alt="v2 Fire Missions: a hole seen from above with the firing point, spotted rounds and the fire control panel" width="2320" height="1740" loading="lazy">
+      <div class="body">
+        <span class="ver">v2 · Fire Missions</span>
+        <h2>Fire from the firing point</h2>
+        <p>Fire, spot each round, adjust by the mean error, cease fire and verify. Four fixed-firing-point holes and five downrange-play holes. Par 56.</p>
+        <span class="go">Play v2 →</span>
+      </div>
+    </a>
+    <a class="card" href="v1/">
+      <img src="img/v1.png" alt="v1 Classic: a hole seen from above with the flag pole, range rings, launcher controls and the firing computer" width="2320" height="1740" loading="lazy">
+      <div class="body">
+        <span class="ver">v1 · Classic</span>
+        <h2>Walk to every round</h2>
+        <p>The original game: play each shot from where the last one stopped, finish within 1 m of the pole, pick up at par + 3.</p>
+        <span class="go">Play v1 →</span>
+      </div>
+    </a>
+  </section>
+
+  <p class="note">The game is a simulation. Real play is low power only: inanimate targets on your own property, within the limits in SafetyKit (45 m/s, 100 yd, a clear ±30° fan).</p>
+
+  <footer>Source, course format and the iOS app: <a href="https://github.com/zacharyelston/BackyardBallistics">github.com/zacharyelston/BackyardBallistics</a></footer>
+</main>
+</body>
+</html>

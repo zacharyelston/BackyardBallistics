@@ -4,6 +4,8 @@
 
 *v1 Classic, the original browser game: walk to every round and finish within a metre of the pole.*
 
+**Play in the browser:** [zacharyelston.github.io/BackyardBallistics](https://zacharyelston.github.io/BackyardBallistics/) · [v1 Classic](https://zacharyelston.github.io/BackyardBallistics/v1/) · [v2 Fire Missions](https://zacharyelston.github.io/BackyardBallistics/v2/)
+
 | Prototype | Ruleset | How it plays |
 | --- | --- | --- |
 | [`prototype/spudgungolf.html`](prototype/spudgungolf.html) | v1 Classic | Walk to every round; shots to rest within 1 m of the pole; pick up for par + 3 |
@@ -31,6 +33,7 @@ Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 | `docs/COURSE_FORMAT.md` | The flat-key YAML course file a course's web server serves |
 | `courses/sample-course.yaml` | Example course file |
 | `prototype/` | Browser prototypes: v1 Classic and v2 Fire Missions |
+| `site/`, `scripts/build-pages.sh` | GitHub Pages landing page and build; `.github/workflows/pages.yml` checks every PR and deploys `main` |
 | `scripts/typecheck-ios.sh` | Typechecks everything against the iPhone SDK without signing or a simulator |
 | `project.yml` | XcodeGen spec for `SpudGunGolf.xcodeproj` |
 
