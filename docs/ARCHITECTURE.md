@@ -50,10 +50,10 @@ Three pieces, each running on its own:
 | Service | Where it runs | What it does |
 | --- | --- | --- |
 | iPhone app | Each player's phone | Ranging, firing computer, scoring; works offline once a course is loaded |
-| Course server | On the course, reached over the course's local Wi-Fi | Serves that course's file (flags, start spots, hazards, boundary) and collects rounds played there |
-| Course registry | Internet | Lists courses and where they are, so players can find one before they arrive; receives synced rounds |
+| Course server | Any plain static web server on the course's local Wi-Fi | Serves one file, `course.yaml`, with flat dotted keys ([COURSE_FORMAT.md](COURSE_FORMAT.md)). No logic, no accounts |
+| Course registry | Internet | Lists courses, where they are and their file address, so players can find one before they arrive |
 
-The app never needs internet during play: it joins the course Wi-Fi at the first start spot, downloads the course file, and keeps it. CourseKit (m3) owns the course file format; the server and registry are milestone 8. What runs the course server on site, and how it syncs to the registry, is still open.
+The app never needs internet during play: it joins the course Wi-Fi at the first start spot, fetches `http://spudgungolf.local/course.yaml`, and keeps it. Rounds stay on the players' phones. CourseKit (m3) owns parsing and validating the file; the course tool and registry are milestone 8.
 
 ## The safety gate
 

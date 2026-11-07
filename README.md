@@ -13,6 +13,8 @@ Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 | `docs/ARCHITECTURE.md` | Modules, dependency rules, the safety gate and the app design |
 | `docs/FLAG_KIT.md` | How to build and set up a flag |
 | `docs/FIELD_TEST.md` | Field-test protocols for milestones 1 and 2 |
+| `docs/COURSE_FORMAT.md` | The flat-key YAML course file a course's web server serves |
+| `courses/sample-course.yaml` | Example course file |
 | `prototype/spudgungolf.html` | Browser prototype of the game and firing computer |
 | `scripts/typecheck-ios.sh` | Typechecks everything against the iPhone SDK without signing or a simulator |
 | `project.yml` | XcodeGen spec for `SpudGunGolf.xcodeproj` |
