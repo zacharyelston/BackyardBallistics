@@ -19,17 +19,19 @@ final class SafetyLimitsTests: XCTestCase {
         XCTAssertEqual(SafetyLimits.bundled(), SafetyLimits.current)
     }
 
-    /// The browser prototype carries its own copy of the limits; it must not drift.
+    /// Both browser prototypes carry their own copy of the limits; they must not drift.
     func testPrototypeMatchesLimits() throws {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent()
-        let html = try String(contentsOf: root.appendingPathComponent("prototype/spudgungolf.html"), encoding: .utf8)
         let l = SafetyLimits.current
-        XCTAssertTrue(html.contains("const V_CAP = \(Int(l.maxMuzzleVelocity));"), "prototype velocity cap drifted")
-        XCTAssertTrue(html.contains("const MAX_RANGE_M = \(l.maxSolutionRange);"), "prototype range ceiling drifted")
-        XCTAssertTrue(html.contains("const MASS = \(l.projectile.massKg), DIA = \(l.projectile.diameterM)"), "prototype projectile drifted")
+        for file in ["prototype/spudgungolf.html", "prototype/spudgungolf-v2.html"] {
+            let html = try String(contentsOf: root.appendingPathComponent(file), encoding: .utf8)
+            XCTAssertTrue(html.contains("const V_CAP = \(Int(l.maxMuzzleVelocity));"), "\(file): velocity cap drifted")
+            XCTAssertTrue(html.contains("const MAX_RANGE_M = \(l.maxSolutionRange);"), "\(file): range ceiling drifted")
+            XCTAssertTrue(html.contains("const MASS = \(l.projectile.massKg), DIA = \(l.projectile.diameterM)"), "\(file): projectile drifted")
+        }
     }
 }
 

@@ -1,0 +1,948 @@
+<title>SpudGunGolf Fire Missions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=Chakra+Petch:wght@500;600&display=swap">
+<style>
+/* Layout: course map is the stage on the left; a clipboard-style panel (lie, launcher, firing computer, scorecard) on the right; stacks on phones. */
+:root{
+  --bg:#e9efe8; --panel:#ffffff; --ink:#18241b; --muted:#56655a; --line:#cfd9cf;
+  --accent:#2c7a3a; --accent-ink:#ffffff; --spud:#a8692c; --target:#dd5f24; --warn:#b4440f; --good:#2c7a3a;
+  --chip:#eef3ed; --plot:#f6f9f5;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  --f-data:"Chakra Petch", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101612; --panel:#18201a; --ink:#e3ece4; --muted:#97a69a; --line:#2b372e;
+  --accent:#6cc27a; --accent-ink:#0d1a10; --spud:#d89a5a; --target:#f27d45; --warn:#f08a54; --good:#6cc27a;
+  --chip:#1f2a22; --plot:#141b16; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101612; --panel:#18201a; --ink:#e3ece4; --muted:#97a69a; --line:#2b372e;
+  --accent:#6cc27a; --accent-ink:#0d1a10; --spud:#d89a5a; --target:#f27d45; --warn:#f08a54; --good:#6cc27a;
+  --chip:#1f2a22; --plot:#141b16; color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px}
+.app{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,4vw,40px);letter-spacing:-.02em;margin:0;line-height:1}
+h1 span{color:var(--spud)}
+h1 .ver{font:600 14px var(--f-data);color:var(--muted);letter-spacing:.04em;vertical-align:middle}
+.tag{color:var(--muted);margin:4px 0 0;font-size:14px}
+.hstats{display:flex;gap:18px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column}
+.stat b{font-family:var(--f-data);font-weight:600;font-size:22px;font-variant-numeric:tabular-nums;line-height:1.1}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.course{display:flex;flex-direction:column;gap:10px;min-width:0}
+.holehead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.holehead h2{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0;text-wrap:balance}
+.holehead p{margin:0;color:var(--muted);font-size:14px;max-width:60ch}
+.mapwrap{position:relative;border-radius:10px;overflow:hidden;background:#3e6e35;touch-action:manipulation}
+#map{display:block;width:100%;cursor:crosshair}
+#profile{display:block;width:100%;height:150px;border:1px solid var(--line);border-radius:8px;background:var(--plot)}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:rgba(16,22,18,.86);color:#fff;
+  padding:7px 14px;border-radius:999px;font-weight:700;font-size:14px;pointer-events:none;white-space:nowrap;transition:opacity .3s}
+.toast.hide{opacity:0}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,16,12,.55);padding:16px}
+.overlay .box{background:var(--panel);color:var(--ink);border-radius:12px;padding:20px 22px;max-width:340px;width:100%;text-align:center;display:flex;flex-direction:column;gap:10px}
+.overlay h3{font-family:var(--f-display);font-weight:800;font-size:30px;margin:0;color:var(--target)}
+.overlay p{margin:0;color:var(--muted)}
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h3{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.liegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.liegrid .v{font-family:var(--f-data);font-weight:600;font-size:18px;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:700;background:var(--chip);color:var(--ink)}
+.pill.sand{background:#e7cf94;color:#4b3a12}.pill.rough{background:#9fbf8c;color:#1f3317}.pill.green{background:#9fe0a2;color:#103a14}
+.pill.fairway{background:#c3e3a8;color:#21401a}.pill.tee{background:#cdd8f0;color:#1b2a4a}
+.ctl{display:grid;grid-template-columns:78px minmax(0,1fr) 64px;align-items:center;gap:8px}
+.ctl label{font-weight:700;font-size:14px}
+.ctl output{font-family:var(--f-data);font-weight:600;font-size:16px;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;color:var(--ink);padding:7px 0;font:600 14px var(--f-data);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+.seg.text button{font:700 13px var(--f-body)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--target);outline-offset:2px}
+.nudge{display:flex;gap:6px}
+.nudge .btn{flex:1;padding:5px 0;font:600 12px var(--f-data);white-space:nowrap}
+.fire{border:0;border-radius:10px;padding:12px;font:800 18px var(--f-display);letter-spacing:.02em;background:var(--target);color:#fff;cursor:pointer}
+.fire:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.small{font-size:13px;color:var(--muted);margin:0}
+.btn{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:8px;padding:6px 10px;font:700 13px var(--f-body);cursor:pointer}
+.btn:disabled{opacity:.45;cursor:default}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.sol th,.sol td{padding:5px 6px;text-align:right;font-family:var(--f-data);font-size:13px;border-bottom:1px solid var(--line);white-space:nowrap}
+.sol th{font-family:var(--f-body);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.sol th:first-child,.sol td:first-child{text-align:left}
+.sol tr.pick{cursor:pointer}
+.sol tr.pick:hover td,.sol tr.pick:focus-visible td{background:var(--chip)}
+.sol td.na{color:var(--muted)}
+.flag{color:var(--warn);font-weight:600}
+.okc{color:var(--good);font-weight:600}
+.score th,.score td{padding:4px 3px;text-align:center;font-size:13px;border-bottom:1px solid var(--line)}
+.score td{font-family:var(--f-data)}
+.score th:first-child,.score td:first-child{text-align:left;font-family:var(--f-body);font-weight:700;font-size:12px;color:var(--muted)}
+.score .cur{background:var(--chip)}
+.under{color:var(--good);font-weight:600}.over{color:var(--warn)}
+.mlog{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:3px;font:500 13px var(--f-data);font-variant-numeric:tabular-nums}
+.mlog:empty{display:none}
+.mlog .best{color:var(--good);font-weight:600}
+.mlog .corr{color:var(--muted)}
+.check{display:flex;gap:8px;align-items:center;font-size:14px}
+.keys{font-size:12px;color:var(--muted);margin:0}
+kbd{font-family:var(--f-data);font-size:11px;border:1px solid var(--line);border-radius:4px;padding:0 4px;background:var(--chip)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<div class="app">
+  <header>
+    <div>
+      <h1>SpudGun<span>Golf</span> <small class="ver">v2 · Fire Missions</small></h1>
+      <p class="tag">Nine backyard holes played as fire missions: fire, spot, adjust, and land a round within a metre of the pole.</p>
+    </div>
+    <div class="hstats">
+      <div class="stat"><span class="lbl">Hole</span><b id="sHole">1/9</b></div>
+      <div class="stat"><span class="lbl">Par</span><b id="sPar">3</b></div>
+      <div class="stat"><span class="lbl">Rounds</span><b id="sStrokes">0</b></div>
+      <div class="stat"><span class="lbl">Total</span><b id="sRound">E</b></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="course">
+      <div class="holehead">
+        <h2 id="hName">The Driveway</h2>
+        <p id="hDesc"></p>
+      </div>
+      <div class="mapwrap" id="mapwrap">
+        <canvas id="map" aria-label="Top-down course map. Tap to set a target."></canvas>
+        <div class="toast hide" id="toast"></div>
+        <div class="overlay" id="done" hidden>
+          <div class="box">
+            <h3 id="doneTitle">Birdie</h3>
+            <p id="doneText"></p>
+            <button class="btn" id="advanceBtn" hidden>Next mission from your closest round</button>
+            <button class="fire" id="nextBtn">Next hole</button>
+          </div>
+        </div>
+      </div>
+      <canvas id="profile" aria-label="Side view of the last shot's trajectory"></canvas>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <h3>Firing point</h3>
+        <div class="liegrid">
+          <div><div class="lbl">Surface</div><span class="pill" id="lieSurf">Tee</span></div>
+          <div><div class="lbl">To hole</div><div class="v" id="lieDist">0 yd</div></div>
+          <div><div class="lbl">Wind</div><div class="v" id="windTxt">0 mph</div></div>
+        </div>
+        <p class="small" id="lieNote"></p>
+      </div>
+
+      <div class="card">
+        <h3>Launcher</h3>
+        <div class="ctl"><label for="brg">Aim</label><input type="range" id="brg" min="-90" max="90" step="0.1" value="0"><output id="brgOut">On line</output></div>
+        <div class="nudge" id="aimNudge" role="group" aria-label="Nudge aim">
+          <button class="btn" data-a="-1">◂ 1°</button><button class="btn" data-a="-0.1">◂ 0.1°</button><button class="btn" data-a="0">On hole</button><button class="btn" data-a="0.1">0.1° ▸</button><button class="btn" data-a="1">1° ▸</button>
+        </div>
+        <p class="small" id="brgAbs">Aim is left or right of the line to the hole.</p>
+        <div class="ctl"><label for="elev">Elevation</label><input type="range" id="elev" min="0" max="88" step="0.1" value="38"><output id="elevOut">38°</output></div>
+        <div class="nudge" id="elevNudge" role="group" aria-label="Nudge elevation">
+          <button class="btn" data-e="-1">▾ 1°</button><button class="btn" data-e="-0.1">▾ 0.1°</button><button class="btn" data-e="0.1">▴ 0.1°</button><button class="btn" data-e="1">▴ 1°</button>
+        </div>
+        <div>
+          <div class="lbl" style="margin-bottom:4px">Charge setting</div>
+          <div class="seg" id="charge" role="group" aria-label="Charge"></div>
+        </div>
+        <button class="fire" id="fireBtn">Fire</button>
+        <button class="btn" id="ceaseBtn">Cease fire &amp; verify</button>
+        <p class="keys"><kbd>←</kbd><kbd>→</kbd> aim · <kbd>↑</kbd><kbd>↓</kbd> elevation (hold <kbd>Shift</kbd> for 0.1°) · <kbd>0</kbd>–<kbd>5</kbd> charge · <kbd>Space</kbd> fire · <kbd>C</kbd> cease fire</p>
+      </div>
+
+      <div class="card">
+        <h3>Fire mission <span class="pill" id="modePill">Fixed firing point</span></h3>
+        <p class="small" id="missionTxt"></p>
+        <ol class="mlog" id="mlog"></ol>
+      </div>
+
+      <div class="card">
+        <h3>Fire control</h3>
+        <div class="seg text" id="mode" role="group" aria-label="Computer mode">
+          <button data-m="full" aria-pressed="true">Full</button>
+          <button data-m="card" aria-pressed="false">Range card</button>
+          <button data-m="off" aria-pressed="false">Off</button>
+        </div>
+        <p class="small" id="tgtTxt">Tap the course to set a target.</p>
+        <div class="row">
+          <button class="btn" id="pointBtn">Point at target</button>
+          <button class="btn" id="tgtCup">Target hole</button>
+          <label class="check"><input type="checkbox" id="rollChk" checked> Allow for roll-out</label>
+        </div>
+        <div class="tablewrap" id="solWrap"></div>
+        <p class="small" id="modeNote"></p>
+      </div>
+
+      <div class="card">
+        <h3>Scorecard <button class="btn" id="newRound">New round</button></h3>
+        <div class="tablewrap"><table class="score" id="score"></table></div>
+        <p class="small" id="bestTxt"></p>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(() => {
+// ---------- physics ----------
+const G = 9.81, D2R = Math.PI / 180;
+const MASS = 0.2, DIA = 0.07, CD = 0.6, RHO = 1.2;
+const K = 0.5 * RHO * CD * Math.PI * (DIA / 2) ** 2 / MASS; // drag accel = K * |v|^2
+const MUZZLE_H = 1.0;
+// Safety limits: must match Packages/SpudCore/Sources/SafetyKit/safety-limits.json (a test checks this).
+const V_CAP = 45; // hard ceiling, m/s: game never models anything hotter
+const MAX_RANGE_M = 91.44; // 100 yd: the computer never solves past this
+const CHARGES = [
+  { n: 'Puff', v: 8 }, { n: '1', v: 13 }, { n: '2', v: 19 },
+  { n: '3', v: 26 }, { n: '4', v: 33 }, { n: '5', v: 41 }
+].map(c => ({ ...c, v: Math.min(c.v, V_CAP) }));
+const LIE_V = { tee: 1, fairway: 1, green: 1, rough: 0.9, sand: 0.72 };
+const RET = { tee: .35, fairway: .35, rough: .15, sand: .03, green: .45 };
+const DEC = { tee: 3.5, fairway: 3.5, rough: 9, sand: 40, green: 2.2 };
+// Optional trash can lid at the pole's base: it only clangs, it doesn't score.
+const LID = { r: 0.29, rim: 0.05, touch: 0.29 + 0.035 }; // m: radius, rim height, radius + potato radius
+const POLE = { r: 0.02 + 0.035, h: 2.44 };                // m: half-width + potato radius, 8 ft pole
+// The pole is the hole: a hole is finished when the potato rests within this distance of it.
+const IN_R = 1.0; // m
+const MAX_ROUNDS = 10; // per hole; the tenth round forces a cease fire
+const MAX_EL = 88;
+// Wind is stronger with height (shear), so lobs that hang high drift more.
+const shear = z => Math.min(1.7, Math.max(0.6, Math.pow(Math.max(z, 0.3) / 2, 0.25)));
+const M2YD = 1 / 0.9144, yd = m => Math.round(m * M2YD);
+const SURF_NAME = { tee: 'Tee', fairway: 'Fairway', rough: 'Rough', sand: 'Sand', green: 'Green', water: 'Water', ob: 'Out of bounds' };
+
+function gauss() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function distSeg(px, py, ax, ay, bx, by) { const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy; let t = L ? ((px - ax) * dx + (py - ay) * dy) / L : 0; t = Math.max(0, Math.min(1, t)); return Math.hypot(px - ax - t * dx, py - ay - t * dy); }
+function inEll(x, y, e) { const a = (x - e.x) / e.rx, b = (y - e.y) / e.ry; return a * a + b * b <= 1; }
+
+// ---------- course (meters; y runs up the screen) ----------
+const E = (x, y, rx, ry) => ({ x, y, rx, ry }), T = (x, y, r, h) => ({ x, y, r, h });
+const HOLES = [
+  { name: 'The Driveway', par: 6, desc: 'Straight shot. One tree on the left, a sand trap guarding the right of the green.', w: 80, h: 120, tee: { x: 40, y: 10 }, fp: { x: 40.3, y: 25 }, cup: { x: 42, y: 100 }, greenR: 10, fw: 22, downrange: false,
+    fairway: [[[40, 10], [42, 100]]], water: [], sand: [E(55, 93, 7, 4)], trees: [T(25, 60, 4, 9)] },
+  { name: 'Garden Hose', par: 6, desc: 'Dogleg right around the ornamental pond. Lay up short or carry it.', w: 110, h: 190, tee: { x: 30, y: 10 }, cup: { x: 80, y: 175 }, greenR: 10, fw: 24, downrange: true,
+    fairway: [[[30, 10], [35, 90], [80, 175]]], water: [E(62, 100, 14, 10)], sand: [E(92, 166, 6, 5), E(68, 171, 5, 4)], trees: [T(15, 120, 5, 11), T(22, 136, 4, 10)] },
+  { name: 'Shed Shot', par: 6, desc: 'A big maple stands between you and the green. Go over it or bend around it.', w: 90, h: 110, tee: { x: 20, y: 10 }, fp: { x: 31.9, y: 30.1 }, cup: { x: 70, y: 95 }, greenR: 9, fw: 18, downrange: false,
+    fairway: [[[20, 10], [70, 95]]], water: [], sand: [E(60, 84, 6, 4), E(81, 91, 4, 5)], trees: [T(45, 54, 7, 15)] },
+  { name: 'Over the Pond', par: 7, desc: 'Forced carry. Anything short gets wet.', w: 90, h: 130, tee: { x: 45, y: 10 }, fp: { x: 45, y: 40 }, cup: { x: 45, y: 115 }, greenR: 10, fw: 20, downrange: false,
+    fairway: [[[45, 10], [45, 40]], [[45, 90], [45, 115]]], water: [E(45, 65, 32, 20)], sand: [E(31, 111, 5, 4)], trees: [] },
+  { name: 'Dogleg Fence', par: 7, desc: 'Long dogleg right. Trees on the corner, a puddle short of the green.', w: 140, h: 240, tee: { x: 20, y: 10 }, cup: { x: 120, y: 225 }, greenR: 11, fw: 26, downrange: true,
+    fairway: [[[20, 10], [25, 120], [70, 150], [120, 225]]], water: [E(95, 172, 12, 9)], sand: [E(108, 214, 6, 4), E(132, 213, 4, 5)], trees: [T(50, 90, 6, 14), T(55, 110, 6, 13), T(45, 70, 5, 12)] },
+  { name: 'Clothesline', par: 6, desc: 'Thread the gap between two trees, then watch for the sapling in the middle.', w: 100, h: 200, tee: { x: 50, y: 10 }, cup: { x: 50, y: 185 }, greenR: 10, fw: 20, downrange: true,
+    fairway: [[[50, 10], [50, 185]]], water: [], sand: [E(39, 175, 5, 4), E(62, 178, 5, 4)], trees: [T(30, 100, 6, 12), T(70, 100, 6, 12), T(50, 140, 3, 8)] },
+  { name: 'Kiddie Pool', par: 6, desc: 'Short, but the pool sits right in front of the green.', w: 80, h: 92, tee: { x: 15, y: 10 }, fp: { x: 19, y: 15.8 }, cup: { x: 60, y: 75 }, greenR: 9, fw: 18, downrange: false,
+    fairway: [[[15, 10], [60, 75]]], water: [E(45, 56, 10, 8)], sand: [E(67, 86, 7, 3)], trees: [] },
+  { name: "Neighbor's Fence", par: 5, desc: 'The fence on the right is out of bounds. A pond waits on the left.', w: 100, h: 180, tee: { x: 50, y: 10 }, cup: { x: 80, y: 165 }, greenR: 9, fw: 20, downrange: true,
+    fairway: [[[50, 10], [78, 90], [80, 165]]], water: [E(25, 60, 10, 14)], sand: [E(68, 155, 5, 4)], trees: [T(42, 120, 7, 13)] },
+  { name: 'The Deck', par: 7, desc: 'S-shaped finishing hole with two ponds. Plan all three shots.', w: 130, h: 250, tee: { x: 65, y: 10 }, cup: { x: 65, y: 235 }, greenR: 11, fw: 24, downrange: true,
+    fairway: [[[65, 10], [40, 90], [90, 170], [65, 235]]], water: [E(88, 108, 14, 12), E(28, 182, 12, 10)], sand: [E(51, 226, 5, 4), E(80, 227, 5, 4), E(65, 246, 7, 2.5)], trees: [T(20, 40, 6, 12), T(110, 60, 6, 13), T(66, 140, 5, 12)] },
+];
+
+function surfaceAt(h, x, y) {
+  if (x < 0 || y < 0 || x > h.w || y > h.h) return 'ob';
+  for (const e of h.water) if (inEll(x, y, e)) return 'water';
+  for (const e of h.sand) if (inEll(x, y, e)) return 'sand';
+  if (Math.hypot(x - h.cup.x, y - h.cup.y) <= h.greenR) return 'green';
+  if (Math.abs(x - h.tee.x) <= 3.5 && Math.abs(y - h.tee.y) <= 2.5) return 'tee';
+  for (const pl of h.fairway) for (let i = 0; i < pl.length - 1; i++)
+    if (distSeg(x, y, pl[i][0], pl[i][1], pl[i + 1][0], pl[i + 1][1]) <= h.fw / 2) return 'fairway';
+  return 'rough';
+}
+
+// Point-mass flight with quadratic drag relative to a height-sheared wind.
+// o.lid: note a clang off the lid or the pole (no effect on scoring). o.landZ: stop when descending through this height.
+// o.knuckle: small random sideways push from a lumpy potato; it grows with time aloft.
+function fly(h, x0, y0, v, elevDeg, brgDeg, wind, o = {}) {
+  const e = elevDeg * D2R, b = brgDeg * D2R, dt = o.dt || 0.005, landZ = o.landZ || 0, kn = o.knuckle || { x: 0, y: 0 }, cup = h.cup;
+  let x = x0, y = y0, z = MUZZLE_H, t = 0, apex = z, tree = null, lastRec = 0, clang = null;
+  let vx = v * Math.cos(e) * Math.sin(b), vy = v * Math.cos(e) * Math.cos(b), vz = v * Math.sin(e);
+  const path = o.rec ? [{ x, y, z, t: 0 }] : null;
+  while (t < 40) {
+    const f = shear(z), rx = vx - wind.x * f, ry = vy - wind.y * f, s = Math.hypot(rx, ry, vz);
+    vx += (-K * s * rx + kn.x) * dt; vy += (-K * s * ry + kn.y) * dt; vz += (-G - K * s * vz) * dt;
+    const nx = x + vx * dt, ny = y + vy * dt, nz = z + vz * dt;
+    if (o.lid) {
+      const dn = Math.hypot(nx - cup.x, ny - cup.y);
+      if (!clang && nz < POLE.h && dn < POLE.r) { clang = 'pole'; vx *= 0.1; vy *= 0.1; } // off the pole: drops at its base
+      else if (!clang && nz < LID.rim && dn < LID.touch) clang = 'lid';
+    }
+    if (nz <= landZ && vz < 0) {
+      const f2 = (z - landZ) / (z - nz); x += (nx - x) * f2; y += (ny - y) * f2; t += dt * f2; z = landZ; break;
+    }
+    x = nx; y = ny; z = nz; t += dt; if (z > apex) apex = z;
+    if (o.trees && !tree) for (const tr of h.trees) {
+      if (z < tr.h && Math.hypot(x - tr.x, y - tr.y) < tr.r) { tree = tr; vx *= 0.12; vy *= 0.12; vz = Math.min(vz, 0) * 0.2; break; }
+    }
+    if (path && t - lastRec >= 0.02) { path.push({ x, y, z, t }); lastRec = t; }
+  }
+  if (path) path.push({ x, y, z, t });
+  return { x, y, t, apex, vx, vy, vz, tree, path, clang };
+}
+
+function rollOut(h, land, noise) {
+  const path = [{ x: land.x, y: land.y, t: 0 }];
+  let s = surfaceAt(h, land.x, land.y);
+  let clang = land.clang || null;
+  if (s === 'water' || s === 'ob') return { x: land.x, y: land.y, result: s, path };
+  let sp = Math.hypot(land.vx, land.vy) * RET[s], dir = Math.atan2(land.vx, land.vy);
+  if (noise) dir += gauss() * 0.12;
+  let x = land.x, y = land.y, t = 0; const dt = 0.01;
+  while (sp > 0.02 && t < 25) {
+    s = surfaceAt(h, x, y);
+    if (s === 'water' || s === 'ob') { path.push({ x, y, t }); return { x, y, result: s, path }; }
+    sp = Math.max(0, sp - DEC[s] * dt);
+    x += Math.sin(dir) * sp * dt; y += Math.cos(dir) * sp * dt; t += dt;
+    if (!clang && Math.hypot(x - h.cup.x, y - h.cup.y) < LID.touch) clang = 'lid'; // rolls over the lid: clang
+    if (t - path[path.length - 1].t >= 0.03) path.push({ x, y, t });
+  }
+  path.push({ x, y, t });
+  s = surfaceAt(h, x, y);
+  if (s === 'water' || s === 'ob') return { x, y, result: s, path };
+  const dHole = Math.hypot(x - h.cup.x, y - h.cup.y);
+  return { x, y, result: dHole <= IN_R ? 'holed' : 'rest', path, surf: s, clang, dHole };
+}
+
+// ---------- firing computer ----------
+const rangeAt = (h, from, v, el, b, wind, lz = 0) => { const r = fly(h, from.x, from.y, v, el, b, wind, { dt: 0.01, landZ: lz }); return { r, d: Math.hypot(r.x - from.x, r.y - from.y) }; };
+const wrap180 = a => ((a % 360) + 540) % 360 - 180;
+const isLid = (h, p) => Math.hypot(p.x - h.cup.x, p.y - h.cup.y) < 0.6;
+
+function solveCharge(h, from, target, v, wind) {
+  const lz = 0; // the hole is at ground level
+  const b0 = Math.atan2(target.x - from.x, target.y - from.y) / D2R;
+  let lo = 0, hi = 80;
+  for (let i = 0; i < 24; i++) {
+    const m1 = lo + (hi - lo) * 0.382, m2 = lo + (hi - lo) * 0.618;
+    if (rangeAt(h, from, v, m1, b0, wind, lz).d < rangeAt(h, from, v, m2, b0, wind, lz).d) lo = m1; else hi = m2;
+  }
+  const em = (lo + hi) / 2;
+  return { low: solveArc(h, from, target, v, wind, 'low', em, b0, lz), high: solveArc(h, from, target, v, wind, 'high', em, b0, lz) };
+}
+function solveArc(h, from, target, v, wind, arc, em, b0, lz) {
+  const d = Math.hypot(target.x - from.x, target.y - from.y);
+  if (d > MAX_RANGE_M) return { ok: false, why: 'limit' };
+  let b = b0, el = 0;
+  for (let it = 0; it < 6; it++) {
+    const rmax = rangeAt(h, from, v, em, b, wind, lz).d;
+    if (d > rmax) return { ok: false, why: 'long', rmax };
+    let a = arc === 'low' ? 0 : em, c = arc === 'low' ? em : MAX_EL;
+    const ra = rangeAt(h, from, v, a, b, wind, lz).d, rc = rangeAt(h, from, v, c, b, wind, lz).d;
+    if (arc === 'low' && d < ra) return { ok: false, why: 'short' };
+    if (arc === 'high' && d < rc) return { ok: false, why: 'short' };
+    for (let i = 0; i < 24; i++) { const m = (a + c) / 2, dm = rangeAt(h, from, v, m, b, wind, lz).d; if ((dm < d) === (arc === 'low')) a = m; else c = m; }
+    el = (a + c) / 2;
+    const L = rangeAt(h, from, v, el, b, wind, lz).r;
+    if (Math.hypot(L.x - target.x, L.y - target.y) < 0.05) break;
+    b += wrap180(b0 - Math.atan2(L.x - from.x, L.y - from.y) / D2R);
+  }
+  const f = fly(h, from.x, from.y, v, el, b, wind, { dt: 0.005, trees: true, lid: true });
+  return { ok: true, el, b: (b + 360) % 360, t: f.t, apex: f.apex, tree: !!f.tree, land: f };
+}
+// Optionally aim short/long so the predicted roll-out finishes on the target.
+function solveWithRoll(h, from, target, v, wind, useRoll) {
+  let aim = { ...target }, sol = solveCharge(h, from, aim, v, wind);
+  if (!useRoll) return decorate(sol);
+  for (let k = 0; k < 3; k++) {
+    const s = sol.low.ok ? sol.low : null; if (!s) break;
+    const ro = rollOut(h, s.land, false);
+    if (ro.result === 'holed') break;
+    const ex = target.x - ro.x, ey = target.y - ro.y;
+    if (Math.hypot(ex, ey) < 0.3) break;
+    aim = { x: aim.x + ex, y: aim.y + ey };
+    const ns = solveCharge(h, from, aim, v, wind);
+    if (!ns.low.ok) break; // roll-adjusted aim is out of reach: keep the plain solution
+    sol = { low: ns.low, high: sol.high };
+  }
+  return decorate(sol);
+  function decorate(S) {
+    for (const k of ['low', 'high']) if (S[k].ok) {
+      const ro = rollOut(h, S[k].land, false);
+      S[k].rest = ro; S[k].miss = ro.result === 'holed' ? 0 : Math.hypot(ro.x - target.x, ro.y - target.y);
+    }
+    return S;
+  }
+}
+
+// Lay-up point when the hole is out of range (75 m by default, leaving room for wind): the safe spot (fairway or green, else rough) within
+// a fan of the line to the hole that leaves the shortest next shot.
+function layupPoint(h, from, maxD = 75) {
+  const base = Math.atan2(h.cup.x - from.x, h.cup.y - from.y);
+  let best = null;
+  for (const d of [85, 78, 70, 62, 55, 45, 35].filter(d => d <= maxD)) for (const a of [0, -8, 8, -16, 16, -24, 24, -32, 32]) {
+    const ang = base + a * D2R, p = { x: from.x + Math.sin(ang) * d, y: from.y + Math.cos(ang) * d };
+    const s = surfaceAt(h, p.x, p.y);
+    if (s === 'water' || s === 'ob' || s === 'sand') continue;
+    if (h.trees.some(t => Math.hypot(p.x - t.x, p.y - t.y) < t.r + 2)) continue;
+    const score = Math.hypot(h.cup.x - p.x, h.cup.y - p.y) + (s === 'rough' ? 12 : 0);
+    if (!best || score < best.score) best = { p, score };
+  }
+  return best ? best.p : { x: from.x + Math.sin(base) * Math.min(60, maxD), y: from.y + Math.cos(base) * Math.min(60, maxD) };
+}
+
+// ---------- state ----------
+const state = {
+  hi: 0, rounds: 0, scores: Array(9).fill(null), pos: null, surf: 'tee',
+  brg: 0, elev: 38, charge: 4, mode: 'full', target: null, wind: { x: 0, y: 0 },
+  busy: false, lastShot: null, anim: null, useRoll: true, solCache: null,
+  mission: null, verdict: null, summary: false
+};
+const H = () => HOLES[state.hi];
+const firingPoint = h => h.fp || h.tee;
+
+function newWind() {
+  const sp = Math.random() * 4.5, dir = Math.random() * 2 * Math.PI; // m/s, direction it blows toward
+  state.wind = { x: Math.sin(dir) * sp, y: Math.cos(dir) * sp };
+}
+// A fire mission: one firing point, its rounds, and fire control's current aim point.
+function startMission(from, surf) {
+  const n = state.mission && state.mission.hole === state.hi ? state.mission.n + 1 : 1;
+  state.mission = { n, hole: state.hi, from: { ...from }, surf, rounds: [], errs: [] };
+  state.pos = { ...from }; state.surf = surf;
+  state.target = defaultTarget(); state.mission.intended = { ...state.target }; setAim(0);
+  state.lastShot = null; state.anim = null; state.verdict = null;
+}
+function startHole(i) {
+  state.hi = i; state.rounds = 0; state.mission = null; state.summary = false;
+  newWind(); $('#done').hidden = true;
+  startMission(firingPoint(H()), 'tee');
+  layoutMap(); refresh();
+}
+function defaultTarget() {
+  const h = H(), dx = h.cup.x - state.pos.x, dy = h.cup.y - state.pos.y, d = Math.hypot(dx, dy);
+  if (d <= MAX_RANGE_M) return { ...h.cup }; // within the 100 yd limit: the pole is the target
+  return layupPoint(h, state.pos); // otherwise lay up to the safest spot that leaves the shortest next shot
+}
+// Spot a round from the firing point. Left/right is an angle times a known range, so it is
+// accurate; short/long comes from how far below the horizon the potato sits, about ±0.6 m at 60 m.
+function spotRound(h, from, rest) {
+  const px = h.cup.x - from.x, py = h.cup.y - from.y, d = Math.hypot(px, py);
+  const u = { x: px / d, y: py / d }, n = { x: u.y, y: -u.x }; // along the line, and to its right
+  const mx = rest.x - h.cup.x, my = rest.y - h.cup.y;
+  const sA = Math.max(0.15, 0.6 * d / 60), sL = Math.max(0.05, d * 0.0017);
+  const along = mx * u.x + my * u.y + gauss() * sA, lat = mx * n.x + my * n.y + gauss() * sL;
+  return { along, lat, dist: Math.hypot(along, lat), u, n };
+}
+const fmtM = v => `${Math.abs(v).toFixed(1)} m`;
+const fmtMiss = sp => `${Math.abs(sp.along) < 0.05 ? 'on range' : (sp.along < 0 ? 'short ' : 'long ') + fmtM(sp.along)}, ${Math.abs(sp.lat) < 0.05 ? 'on line' : (sp.lat < 0 ? 'left ' : 'right ') + fmtM(sp.lat)}`;
+function fmtCorr(c, sp) {
+  const a = c.x * sp.u.x + c.y * sp.u.y, l = c.x * sp.n.x + c.y * sp.n.y;
+  return `${a >= 0 ? 'add' : 'drop'} ${fmtM(a)}, ${l >= 0 ? 'right' : 'left'} ${fmtM(l)}`;
+}
+const fmtDist = d => d < 9 ? `${d.toFixed(1)} m` : `${yd(d)} yd`;
+function closestRound(by) {
+  let best = null;
+  for (const r of state.mission.rounds) if (!r.lost && (!best || r[by] < best[by])) best = r;
+  return best;
+}
+const $ = s => document.querySelector(s);
+
+// ---------- UI wiring ----------
+const brgEl = $('#brg'), elevEl = $('#elev');
+const chargeSeg = $('#charge');
+CHARGES.forEach((c, i) => { const b = document.createElement('button'); b.textContent = c.n; b.dataset.i = i; b.title = `${c.v} m/s muzzle velocity`; chargeSeg.appendChild(b); });
+chargeSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || state.busy) return; state.charge = +b.dataset.i; refresh(); });
+// Aim is an offset from the line to the hole: negative = left, positive = right.
+const lineBrg = () => (Math.atan2(H().cup.x - state.pos.x, H().cup.y - state.pos.y) / D2R + 360) % 360;
+const aimOff = () => wrap180(state.brg - lineBrg());
+const r1 = v => Math.round(v * 10) / 10;
+function setAim(off) { state.brg = (lineBrg() + Math.max(-90, Math.min(90, r1(off))) + 360) % 360; }
+function setElev(e) { state.elev = Math.max(0, Math.min(MAX_EL, r1(e))); }
+const fmtAim = off => Math.abs(off) < 0.05 ? 'On line' : `${Math.abs(off).toFixed(1)}° ${off < 0 ? 'L' : 'R'}`;
+brgEl.addEventListener('input', () => { setAim(+brgEl.value); refresh(true); });
+elevEl.addEventListener('input', () => { setElev(+elevEl.value); refresh(true); });
+$('#aimNudge').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || state.busy) return; const d = +b.dataset.a; setAim(d === 0 ? 0 : aimOff() + d); refresh(true); });
+$('#elevNudge').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || state.busy) return; setElev(state.elev + +b.dataset.e); refresh(true); });
+$('#mode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.mode = b.dataset.m; refresh(); });
+$('#rollChk').addEventListener('change', e => { state.useRoll = e.target.checked; refresh(); });
+$('#pointBtn').addEventListener('click', () => { if (!state.target) return; state.brg = (Math.atan2(state.target.x - state.pos.x, state.target.y - state.pos.y) / D2R + 360) % 360; refresh(true); });
+$('#tgtCup').addEventListener('click', () => { state.target = { ...H().cup }; refresh(); });
+$('#fireBtn').addEventListener('click', fire);
+$('#ceaseBtn').addEventListener('click', () => { if (!state.busy && $('#done').hidden && state.mission.rounds.length) ceaseFire(''); });
+$('#nextBtn').addEventListener('click', finishHole);
+$('#advanceBtn').addEventListener('click', () => {
+  const best = state.verdict && state.verdict.best; if (!best) return;
+  $('#done').hidden = true;
+  startMission({ x: best.x, y: best.y }, surfaceAt(H(), best.x, best.y));
+  refresh();
+});
+$('#newRound').addEventListener('click', newRound);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input[type=checkbox]') && e.key === ' ') return;
+  if (state.busy) return;
+  if (e.target.matches('input[type=range]') && e.key.startsWith('Arrow')) return; // let the focused slider handle it
+  const fine = e.shiftKey ? 0.1 : 1;
+  if (e.key === 'ArrowLeft') setAim(aimOff() - fine);
+  else if (e.key === 'ArrowRight') setAim(aimOff() + fine);
+  else if (e.key === 'ArrowUp') setElev(state.elev + fine);
+  else if (e.key === 'ArrowDown') setElev(state.elev - fine);
+  else if (/^[0-5]$/.test(e.key)) { state.charge = +e.key; }
+  else if (e.key === ' ' && !$('#done').hidden) { e.preventDefault(); $('#nextBtn').click(); return; }
+  else if ((e.key === 'c' || e.key === 'C') && $('#done').hidden) { e.preventDefault(); $('#ceaseBtn').click(); return; }
+  else if (e.key === ' ') { e.preventDefault(); fire(); return; }
+  else return;
+  e.preventDefault(); refresh(true);
+});
+
+function newRound() { state.scores = Array(9).fill(null); startHole(0); }
+
+// ---------- map rendering ----------
+const map = $('#map'), mctx = map.getContext('2d');
+const prof = $('#profile'), pctx = prof.getContext('2d');
+let scale = 1, dpr = 1, cw = 0, ch = 0;
+function layoutMap() {
+  const h = H(), wrap = $('#mapwrap');
+  dpr = window.devicePixelRatio || 1;
+  const availW = wrap.clientWidth;
+  const maxH = Math.max(320, Math.min(window.innerHeight * 0.68, 720));
+  scale = Math.min(availW / h.w, maxH / h.h);
+  cw = Math.round(h.w * scale); ch = Math.round(h.h * scale);
+  // fill width; center the hole horizontally
+  map.style.height = ch + 'px';
+  map.width = availW * dpr; map.height = ch * dpr;
+  mapOffX = (availW - cw) / 2;
+  const pw = prof.clientWidth; prof.width = pw * dpr; prof.height = prof.clientHeight * dpr;
+}
+let mapOffX = 0;
+const sx = x => mapOffX + x * scale, sy = y => (H().h - y) * scale;
+
+function drawMap() {
+  const h = H(), c = mctx;
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.fillStyle = '#2f5a29'; c.fillRect(0, 0, map.width / dpr, map.height / dpr);
+  // rough
+  c.fillStyle = '#4c7f3f'; c.fillRect(sx(0), 0, h.w * scale, h.h * scale);
+  // fairway with mowing stripes
+  c.save(); c.beginPath();
+  for (const pl of h.fairway) for (let i = 0; i < pl.length - 1; i++) capsulePath(c, pl[i], pl[i + 1], h.fw / 2);
+  c.clip();
+  for (let y = 0; y < h.h; y += 8) { c.fillStyle = (y / 8) % 2 ? '#79b25c' : '#6ea853'; c.fillRect(sx(0), sy(y + 8), h.w * scale, 8 * scale + 1); }
+  c.restore();
+  // green
+  c.fillStyle = '#8fd27a'; circle(c, h.cup.x, h.cup.y, h.greenR); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,.25)'; c.lineWidth = 1; c.stroke();
+  // sand & water
+  for (const e of h.sand) { c.fillStyle = '#e6d199'; ell(c, e); c.fill(); }
+  for (const e of h.water) { c.fillStyle = '#3d86b8'; ell(c, e); c.fill(); c.strokeStyle = 'rgba(255,255,255,.35)'; c.stroke(); }
+  // tee box
+  c.fillStyle = '#9fcf7f'; c.fillRect(sx(h.tee.x - 3.5), sy(h.tee.y + 2.5), 7 * scale, 5 * scale);
+  // range rings (25 yd) from the lie
+  if (state.mode !== 'off') {
+    c.save(); c.setLineDash([3, 5]); c.strokeStyle = 'rgba(255,255,255,.28)'; c.lineWidth = 1;
+    c.font = '600 10px "Chakra Petch", monospace'; c.fillStyle = 'rgba(255,255,255,.6)';
+    for (let r = 25; r <= 100; r += 25) { const m = r / M2YD; circle(c, state.pos.x, state.pos.y, m); c.stroke(); c.fillText(r + ' yd', sx(state.pos.x) + 3, sy(state.pos.y + m) - 3); }
+    c.restore();
+  }
+  // trees (with shadow)
+  for (const t of h.trees) {
+    c.fillStyle = 'rgba(0,0,0,.22)'; circle(c, t.x + t.h * 0.15, t.y - t.h * 0.15, t.r); c.fill();
+    c.fillStyle = '#25502a'; circle(c, t.x, t.y, t.r); c.fill();
+    c.fillStyle = '#2f6434'; circle(c, t.x - t.r * .25, t.y + t.r * .25, t.r * .6); c.fill();
+    label(c, Math.round(t.h * 3.28) + ' ft', sx(t.x), sy(t.y) + 4, 10);
+  }
+  // OB stakes
+  c.save(); c.setLineDash([6, 6]); c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 2;
+  c.strokeRect(sx(0) + 1, 1, h.w * scale - 2, h.h * scale - 2); c.restore();
+  // lid and pole
+  drawLid(c, sx(h.cup.x), sy(h.cup.y), Math.max(LID.r * scale, 6.5), true);
+  // firing point
+  const F = state.mission.from;
+  c.fillStyle = '#dd5f24'; c.strokeStyle = '#ffffff'; c.lineWidth = 1.5;
+  c.beginPath(); c.rect(sx(F.x) - 6, sy(F.y) - 6, 12, 12); c.fill(); c.stroke();
+  // this mission's rounds, numbered
+  const best = closestRound('spotDist');
+  state.mission.rounds.forEach(r => { if (!r.lost) drawRound(c, sx(r.x), sy(r.y), r.n, r === best); });
+  // aim line
+  const b = state.brg * D2R, L = 18;
+  c.save(); c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 2; c.setLineDash([5, 4]);
+  c.beginPath(); c.moveTo(sx(state.pos.x), sy(state.pos.y)); c.lineTo(sx(state.pos.x + Math.sin(b) * L), sy(state.pos.y + Math.cos(b) * L)); c.stroke(); c.restore();
+  // predicted path (full mode only)
+  if (state.mode === 'full' && !state.busy && state.pred) {
+    const p = state.pred;
+    c.save(); c.strokeStyle = 'rgba(255,240,200,.55)'; c.lineWidth = 1.5; c.setLineDash([2, 4]); c.beginPath();
+    p.fl.path.forEach((q, i) => i ? c.lineTo(sx(q.x), sy(q.y)) : c.moveTo(sx(q.x), sy(q.y))); c.stroke();
+    if (p.ro.path.length > 1) { c.beginPath(); p.ro.path.forEach((q, i) => i ? c.lineTo(sx(q.x), sy(q.y)) : c.moveTo(sx(q.x), sy(q.y))); c.stroke(); }
+    c.restore();
+    x(c, p.ro.x, p.ro.y, '#fff3c4', 5);
+  }
+  // last shot trail
+  const sh = state.anim || state.lastShot;
+  if (sh) {
+    c.save(); c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 1.5; c.beginPath();
+    const fp = sh.fl.path, upto = state.anim ? state.anim.i : fp.length - 1;
+    for (let i = 0; i <= Math.min(upto, fp.length - 1); i++) i ? c.lineTo(sx(fp[i].x), sy(fp[i].y)) : c.moveTo(sx(fp[i].x), sy(fp[i].y));
+    if (!state.anim || state.anim.phase === 'roll') { const rp = sh.ro.path, ru = state.anim ? state.anim.j : rp.length - 1; for (let i = 0; i <= Math.min(ru, rp.length - 1); i++) c.lineTo(sx(rp[i].x), sy(rp[i].y)); }
+    c.stroke(); c.restore();
+  }
+  // target crosshair
+  if (state.target && state.mode !== 'off') {
+    const tx = sx(state.target.x), ty = sy(state.target.y);
+    c.save(); c.strokeStyle = '#ffffff'; c.lineWidth = 1.5;
+    c.beginPath(); c.arc(tx, ty, 12, 0, Math.PI * 2); c.moveTo(tx - 18, ty); c.lineTo(tx - 9, ty); c.moveTo(tx + 9, ty); c.lineTo(tx + 18, ty); c.moveTo(tx, ty - 18); c.lineTo(tx, ty - 9); c.moveTo(tx, ty + 9); c.lineTo(tx, ty + 18); c.stroke(); c.restore();
+  }
+  // round in flight
+  if (state.anim) {
+  let { x: px, y: py, z: pz } = state.anim.cur;
+  if (pz > 0) { c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(sx(px) + pz * scale * .25, sy(py) - pz * scale * .25 + 0, 4, 3, 0, 0, Math.PI * 2); c.fill(); }
+  const r = 4.5 + Math.min(pz, 30) * 0.18;
+  c.fillStyle = '#c89254'; c.strokeStyle = '#5a3412'; c.lineWidth = 1.5;
+  c.beginPath(); c.ellipse(sx(px), sy(py), r * 1.25, r, 0.5, 0, Math.PI * 2); c.fill(); c.stroke();
+  }
+  // wind arrow
+  drawWind(c);
+  drawInset(c);
+}
+function drawRound(c, X, Y, n, best) {
+  c.fillStyle = '#c89254'; c.strokeStyle = best ? '#fff3c4' : '#5a3412'; c.lineWidth = best ? 2.5 : 1.5;
+  c.beginPath(); c.ellipse(X, Y, 5.5, 4.2, 0.5, 0, Math.PI * 2); c.fill(); c.stroke();
+  label(c, String(n), X + 9, Y - 6, 10);
+}
+function drawLid(c, X, Y, r, ring) {
+  if (ring) { c.strokeStyle = '#dd5f24'; c.lineWidth = 2; c.beginPath(); c.arc(X, Y, r + 4, 0, Math.PI * 2); c.stroke(); }
+  c.fillStyle = 'rgba(0,0,0,.22)'; c.beginPath(); c.arc(X + r * .25, Y + r * .25, r, 0, Math.PI * 2); c.fill();
+  const g = c.createRadialGradient(X - r * .3, Y - r * .3, r * .1, X, Y, r);
+  g.addColorStop(0, '#d9dee2'); g.addColorStop(1, '#8e999f');
+  c.fillStyle = g; c.beginPath(); c.arc(X, Y, r, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = '#5d676d'; c.lineWidth = Math.max(1, r * 0.08); c.stroke();
+  // pole and its orange tip, seen from above
+  const p = Math.max(2.5, r * 0.12);
+  c.fillStyle = '#c9a36b'; c.beginPath(); c.arc(X, Y, p, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#f26b1d'; c.beginPath(); c.arc(X, Y, p * 0.6, 0, Math.PI * 2); c.fill();
+}
+// Close-up of the hole once you are on approach: 4 m across.
+function drawInset(c) {
+  const h = H(), M = state.mission;
+  const near = Math.hypot(h.cup.x - M.from.x, h.cup.y - M.from.y) <= 30 || M.rounds.some(r => !r.lost && r.trueDist <= 12);
+  if (!near) return;
+  const W = map.width / dpr, Hc = map.height / dpr, S = Math.min(160, W * 0.38, Hc * 0.42), X0 = 10, Y0 = Hc - S - 10, span = 8, k = S / span;
+  const ix = wx => X0 + S / 2 + (wx - h.cup.x) * k, iy = wy => Y0 + S / 2 - (wy - h.cup.y) * k;
+  c.save();
+  c.fillStyle = '#8fd27a'; c.strokeStyle = '#ffffff'; c.lineWidth = 2;
+  c.beginPath(); c.rect(X0, Y0, S, S); c.fill(); c.stroke(); c.clip();
+  c.strokeStyle = 'rgba(0,0,0,.12)'; c.lineWidth = 1;
+  for (let m = -4; m <= 4; m++) { c.beginPath(); c.moveTo(ix(h.cup.x + m), Y0); c.lineTo(ix(h.cup.x + m), Y0 + S); c.moveTo(X0, iy(h.cup.y + m)); c.lineTo(X0 + S, iy(h.cup.y + m)); c.stroke(); }
+  // line toward the firing point
+  const a = Math.atan2(M.from.x - h.cup.x, M.from.y - h.cup.y);
+  c.strokeStyle = 'rgba(255,255,255,.7)'; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(ix(h.cup.x), iy(h.cup.y));
+  c.lineTo(ix(h.cup.x + Math.sin(a) * 6), iy(h.cup.y + Math.cos(a) * 6)); c.stroke(); c.setLineDash([]);
+  c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.5; c.setLineDash([4, 3]);
+  c.beginPath(); c.arc(ix(h.cup.x), iy(h.cup.y), IN_R * k, 0, Math.PI * 2); c.stroke(); c.setLineDash([]);
+  drawLid(c, ix(h.cup.x), iy(h.cup.y), LID.r * k, false);
+  const best = closestRound('spotDist');
+  M.rounds.forEach(r => { if (!r.lost) drawRound(c, ix(r.x), iy(r.y), r.n, r === best); });
+  if (state.anim) { const q = state.anim.cur; c.fillStyle = '#c89254'; c.beginPath(); c.ellipse(ix(q.x), iy(q.y), 6, 4.5, .5, 0, Math.PI * 2); c.fill(); }
+  c.restore();
+  label(c, 'Hole close-up · 8 m · ring = 1 m', X0 + S / 2, Y0 - 6, 10);
+}
+function capsulePath(c, a, b, r) {
+  const ax = sx(a[0]), ay = sy(a[1]), bx = sx(b[0]), by = sy(b[1]), ang = Math.atan2(by - ay, bx - ax), R = r * scale;
+  c.moveTo(ax + Math.cos(ang + Math.PI / 2) * R, ay + Math.sin(ang + Math.PI / 2) * R);
+  c.arc(ax, ay, R, ang + Math.PI / 2, ang + 3 * Math.PI / 2);
+  c.arc(bx, by, R, ang - Math.PI / 2, ang + Math.PI / 2);
+  c.closePath();
+}
+function circle(c, x, y, r) { c.beginPath(); c.arc(sx(x), sy(y), r * scale, 0, Math.PI * 2); }
+function ell(c, e) { c.beginPath(); c.ellipse(sx(e.x), sy(e.y), e.rx * scale, e.ry * scale, 0, 0, Math.PI * 2); }
+function x(c, wx, wy, col, s) { const X = sx(wx), Y = sy(wy); c.strokeStyle = col; c.lineWidth = 2; c.beginPath(); c.moveTo(X - s, Y - s); c.lineTo(X + s, Y + s); c.moveTo(X + s, Y - s); c.lineTo(X - s, Y + s); c.stroke(); }
+function label(c, t, X, Y, size) { c.font = `600 ${size}px "Chakra Petch", monospace`; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.55)'; c.strokeText(t, X, Y); c.fillStyle = '#fff'; c.fillText(t, X, Y); c.textAlign = 'left'; }
+function drawWind(c) {
+  const w = state.wind, sp = Math.hypot(w.x, w.y), X = map.width / dpr - 44, Y = 44;
+  c.fillStyle = 'rgba(16,22,18,.6)'; c.beginPath(); c.arc(X, Y, 30, 0, Math.PI * 2); c.fill();
+  if (sp > 0.2) {
+    const a = Math.atan2(w.x, w.y), L = 10 + sp * 3;
+    const ex = X + Math.sin(a) * L, ey = Y - Math.cos(a) * L, bx = X - Math.sin(a) * L, by = Y + Math.cos(a) * L;
+    c.strokeStyle = '#fff'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(bx, by); c.lineTo(ex, ey); c.stroke();
+    c.save(); c.translate(ex, ey); c.rotate(a); c.fillStyle = '#fff'; c.beginPath(); c.moveTo(0, -6); c.lineTo(-5, 3); c.lineTo(5, 3); c.closePath(); c.fill(); c.restore();
+  }
+  label(c, (sp * 2.237).toFixed(0) + ' mph', X, Y + 46, 11);
+}
+
+// ---------- profile (side view) ----------
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function drawProfile() {
+  const c = pctx, W = prof.width / dpr, Hh = prof.height / dpr;
+  c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, Hh);
+  const sh = state.anim || state.lastShot || (state.mode === 'full' ? state.pred : null);
+  const ink = cssVar('--muted'), line = cssVar('--line'), spud = cssVar('--spud'), acc = cssVar('--accent');
+  const padL = 40, padB = 22, padT = 10, padR = 10;
+  let maxD = 110, maxZ = 60; // yd, ft
+  const pts = sh ? sh.fl.path.map(q => ({ d: Math.hypot(q.x - sh.from.x, q.y - sh.from.y) * M2YD, z: q.z * 3.281 })) : [];
+  for (const p of pts) { maxD = Math.max(maxD, p.d * 1.05); maxZ = Math.max(maxZ, p.z * 1.15); }
+  const X = d => padL + d / maxD * (W - padL - padR), Y = z => Hh - padB - z / maxZ * (Hh - padB - padT);
+  c.font = '500 10px "Chakra Petch", monospace'; c.fillStyle = ink; c.strokeStyle = line; c.lineWidth = 1;
+  for (let d = 0; d <= maxD; d += 25) { c.beginPath(); c.moveTo(X(d), Y(0)); c.lineTo(X(d), padT); c.stroke(); c.fillText(d + ' yd', X(d) + 2, Hh - 6); }
+  const zs = maxZ > 100 ? 40 : 20;
+  for (let z = zs; z <= maxZ; z += zs) { c.beginPath(); c.moveTo(padL, Y(z)); c.lineTo(W - padR, Y(z)); c.stroke(); c.fillText(z + ' ft', 4, Y(z) + 3); }
+  c.strokeStyle = acc; c.lineWidth = 2; c.beginPath(); c.moveTo(padL, Y(0)); c.lineTo(W - padR, Y(0)); c.stroke();
+  if (!pts.length) { c.fillStyle = ink; c.fillText('Side view appears here after a shot', padL + 8, padT + 14); return; }
+  const upto = state.anim ? state.anim.i : pts.length - 1;
+  const isPred = !state.anim && !state.lastShot;
+  c.strokeStyle = spud; c.lineWidth = 2; if (isPred) c.setLineDash([3, 4]);
+  c.beginPath(); for (let i = 0; i <= Math.min(upto, pts.length - 1); i++) i ? c.lineTo(X(pts[i].d), Y(pts[i].z)) : c.moveTo(X(pts[i].d), Y(pts[i].z)); c.stroke(); c.setLineDash([]);
+  const last = pts[Math.min(upto, pts.length - 1)];
+  c.fillStyle = spud; c.beginPath(); c.arc(X(last.d), Y(last.z), 4, 0, Math.PI * 2); c.fill();
+  const ap = Math.max(...pts.map(p => p.z));
+  c.fillStyle = ink; c.textAlign = 'right';
+  c.fillText(`${isPred ? 'predicted · ' : ''}apex ${ap.toFixed(0)} ft · carry ${pts[pts.length - 1].d.toFixed(0)} yd · ${sh.fl.t.toFixed(1)} s`, W - padR - 2, padT + 10);
+  c.textAlign = 'left';
+}
+
+// ---------- computer panel ----------
+function lieV(i) { return CHARGES[i].v * LIE_V[state.surf]; }
+let solTimer = 0;
+function updateComputer() {
+  const wrap = $('#solWrap'), m = state.mode, t = state.target;
+  $('#pointBtn').disabled = m === 'off' || !t; $('#tgtCup').disabled = m === 'off';
+  $('#rollChk').disabled = m !== 'full';
+  if (m === 'off') {
+    $('#tgtTxt').textContent = 'Computer off. Aim by eye, feel and the side view.';
+    wrap.innerHTML = ''; $('#modeNote').textContent = 'Off mode: no range rings, target readout or predicted path.'; return;
+  }
+  if (!t) { $('#tgtTxt').textContent = 'Tap the course to set a target.'; wrap.innerHTML = ''; return; }
+  const d = Math.hypot(t.x - state.pos.x, t.y - state.pos.y), b = Math.atan2(t.x - state.pos.x, t.y - state.pos.y) / D2R;
+  const ts = surfaceAt(H(), t.x, t.y), onLid = isLid(H(), t);
+  const dTxt = d < 9 ? `${(d * 3.281).toFixed(0)} ft` : `${yd(d)} yd`;
+  $('#tgtTxt').innerHTML = `Target: <b>${dTxt}</b>, aim <b>${fmtAim(wrap180(b - lineBrg()))}</b> · ${onLid ? '<span class="pill">Hole</span>' : `<span class="pill ${ts}">${SURF_NAME[ts]}</span>`}`;
+  if (m === 'card') {
+    wrap.innerHTML = rangeCard();
+    $('#modeNote').textContent = 'Range card: flat-ground carry at each elevation, no wind. Correcting for wind and roll is up to you.';
+    return;
+  }
+  $('#modeNote').textContent = 'Mean-wind solution. Each potato is lumpy and gusts vary, so expect some scatter. Tap a row to load it.';
+  wrap.innerHTML = '<p class="small">Solving…</p>';
+  clearTimeout(solTimer);
+  solTimer = setTimeout(() => {
+    const rows = CHARGES.map((c, i) => ({ i, c, s: solveWithRoll(H(), state.pos, t, lieV(i), state.wind, state.useRoll) }));
+    state.solCache = rows;
+    const verdict = s => s.tree ? '<span class="flag">tree</span>' : s.rest.result === 'water' ? '<span class="flag">wet</span>'
+      : s.rest.result === 'ob' ? '<span class="flag">OB</span>' : s.rest.result === 'holed' ? '<span class="okc">in!</span>' : '<span class="okc">clear</span>';
+    const cell = (s) => s.ok
+      ? `<td>${s.el.toFixed(1)}°</td><td>${fmtAim(wrap180(s.b - lineBrg())).replace('On line', '0°')}</td><td>${s.t.toFixed(1)}s</td><td>${verdict(s)}</td>`
+      : `<td class="na" colspan="4">${s.why === 'long' ? 'out of range' : s.why === 'limit' ? 'past 100 yd limit' : 'too close'}</td>`;
+    let html = '<table class="sol"><thead><tr><th>Charge</th><th>Elev</th><th>Aim</th><th>Time</th><th>Result</th></tr></thead><tbody>';
+    for (const r of rows) for (const arc of ['low', 'high']) {
+      const s = r.s[arc]; if (!s.ok && arc === 'high' && !r.s.low.ok) continue;
+      if (!s.ok && arc === 'high') continue;
+      html += `<tr ${s.ok ? `class="pick" tabindex="0" data-i="${r.i}" data-arc="${arc}"` : ''}><td>${r.c.n}${arc === 'high' ? ' ↑' : ''}</td>${cell(s)}</tr>`;
+    }
+    html += `</tbody></table><p class="small">↑ = lob. The hole is done when the potato stops within 1 m of the pole. Lobs hang longer and drift more in the wind.</p>`;
+    wrap.innerHTML = html;
+  }, 30);
+}
+$('#solWrap').addEventListener('click', e => applyRow(e.target.closest('tr.pick')));
+$('#solWrap').addEventListener('keydown', e => { if (e.key === 'Enter') applyRow(e.target.closest('tr.pick')); });
+function applyRow(tr) {
+  if (!tr || !state.solCache || state.busy) return;
+  const s = state.solCache[+tr.dataset.i].s[tr.dataset.arc];
+  state.charge = +tr.dataset.i; setElev(s.el); setAim(wrap180(s.b - lineBrg()));
+  refresh(true);
+}
+function rangeCard() {
+  const els = [5, 10, 15, 20, 25, 30, 35, 40, 50, 60];
+  const still = { x: 0, y: 0 };
+  let html = '<table class="sol"><thead><tr><th>Elev</th>' + CHARGES.map(c => `<th>${c.n}</th>`).join('') + '</tr></thead><tbody>';
+  for (const e of els) {
+    html += `<tr><td>${e}°</td>` + CHARGES.map((c, i) => `<td>${yd(rangeAt(H(), { x: 0, y: 0 }, lieV(i), e, 0, still).d)}</td>`).join('') + '</tr>';
+  }
+  return html + '</tbody></table><p class="small">Carry in yards from this lie.</p>';
+}
+
+// ---------- refresh ----------
+function refresh(aimOnly) {
+  const h = H();
+  const off = aimOff();
+  brgEl.value = off; elevEl.value = state.elev;
+  $('#brgOut').textContent = fmtAim(off); $('#elevOut').textContent = state.elev.toFixed(1) + '°';
+  $('#brgAbs').textContent = `Left or right of the line to the hole · compass ${state.brg.toFixed(1)}°`;
+  [...$('#aimNudge').children, ...$('#elevNudge').children].forEach(b => b.disabled = state.busy);
+  [...chargeSeg.children].forEach((b, i) => b.setAttribute('aria-pressed', i === state.charge));
+  [...$('#mode').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.m === state.mode));
+  $('#fireBtn').disabled = state.busy;
+  $('#ceaseBtn').disabled = state.busy || !state.mission.rounds.length;
+  // predicted path
+  state.pred = null;
+  if (state.mode === 'full' && !state.busy) {
+    const fl = fly(h, state.pos.x, state.pos.y, lieV(state.charge), state.elev, state.brg, state.wind, { rec: true, trees: true, lid: true });
+    state.pred = { fl, ro: rollOut(h, fl, false), from: { ...state.pos } };
+  }
+  if (!aimOnly) {
+    $('#sHole').textContent = `${state.hi + 1}/9`; $('#sPar').textContent = h.par; $('#sStrokes').textContent = state.rounds;
+    $('#hName').textContent = `${state.hi + 1}. ${h.name}`;
+    const F = firingPoint(h);
+    $('#hDesc').textContent = `${h.desc} ${yd(Math.hypot(h.cup.x - F.x, h.cup.y - F.y))} yd from the firing point.${h.downrange ? ' Downrange play allowed.' : ''}`;
+    const s = $('#lieSurf'); s.textContent = SURF_NAME[state.surf]; s.className = 'pill ' + state.surf;
+    $('#lieDist').textContent = yd(Math.hypot(h.cup.x - state.pos.x, h.cup.y - state.pos.y)) + ' yd';
+    const w = state.wind, ws = Math.hypot(w.x, w.y);
+    $('#windTxt').textContent = (ws * 2.237).toFixed(0) + ' mph';
+    const dB = Math.hypot(h.cup.x - state.pos.x, h.cup.y - state.pos.y);
+    $('#lieNote').textContent = (state.surf === 'sand' ? 'Sand: the potato sits down, so every charge loses about 28% velocity. ' : state.surf === 'rough' ? 'Rough: about 10% velocity loss. ' : '') +
+      (dB < 25 ? 'Close in: a low running round can beat a lob in the wind. ' : '') +
+      (ws > 0.2 ? `Wind blowing toward ${compass(Math.atan2(w.x, w.y) / D2R)}.` : 'Dead calm.');
+    updateRound(); drawScore();
+  }
+  renderMission();
+  updateComputer();
+  drawMap(); drawProfile();
+}
+function compass(deg) { const n = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest']; return n[Math.round(((deg + 360) % 360) / 45) % 8]; }
+function updateRound() {
+  let diff = 0, any = false; state.scores.forEach((s, i) => { if (s != null) { diff += s - HOLES[i].par; any = true; } });
+  $('#sRound').textContent = !any || Math.abs(diff) < 0.05 ? 'E' : (diff > 0 ? '+' : '') + diff.toFixed(1);
+}
+function drawScore() {
+  const t = $('#score');
+  let r1 = '<tr><th>Hole</th>', r2 = '<tr><th>Par</th>', r3 = '<tr><th>You</th>'; let tp = 0, ts = 0, played = false;
+  HOLES.forEach((h, i) => {
+    const cur = i === state.hi ? ' class="cur"' : '';
+    r1 += `<th${cur}>${i + 1}</th>`; r2 += `<td${cur}>${h.par}</td>`; tp += h.par;
+    const s = state.scores[i]; if (s != null) { ts += s; played = true; }
+    r3 += `<td${cur}>${s == null ? '·' : `<span class="${s < h.par ? 'under' : s > h.par ? 'over' : ''}">${s.toFixed(1)}</span>`}</td>`;
+  });
+  t.innerHTML = r1 + '<th>Tot</th></tr>' + r2 + `<td>${tp}</td></tr>` + r3 + `<td>${played ? ts.toFixed(1) : '·'}</td></tr>`;
+  let best = null; try { best = JSON.parse(localStorage.getItem('sgg-best-v7')); } catch (e) {}
+  $('#bestTxt').textContent = best ? `Best round on this device: ${best.total.toFixed(1)} against par ${best.par}.` : 'Each hole scores rounds fired plus metres outside the ring for your closest round. Finish all nine to set a best round.';
+}
+// The mission log: every round as it was spotted, and fire control's correction.
+function renderMission() {
+  const h = H(), M = state.mission, best = closestRound('spotDist');
+  $('#modePill').textContent = h.downrange ? 'Downrange play' : 'Fixed firing point';
+  $('#missionTxt').textContent = `Mission ${M.n} · ${state.rounds} round${state.rounds === 1 ? '' : 's'} on this hole · ring ${IN_R.toFixed(0)} m. ` +
+    (M.rounds.length ? '' : state.mode === 'full' ? 'After each spotted round, fire control moves its aim point to correct.' : 'Spot each round and correct by hand.');
+  $('#mlog').innerHTML = M.rounds.map(r => r.lost
+    ? `<li>${r.how === 'water' ? 'Lost in the water' : 'Lost over the fence'}</li>`
+    : `<li${r === best ? ' class="best"' : ''}>${fmtMiss(r.spot)}${r.corr ? ` <span class="corr">→ ${fmtCorr(r.corr, r.spot)}</span>` : ''}</li>`).join('');
+}
+
+// ---------- firing ----------
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.remove('hide'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.add('hide'), 3200); }
+function fire() {
+  if (state.busy || !$('#done').hidden) return;
+  const h = H();
+  // lumpy potato + gusty wind
+  const v = lieV(state.charge) * (1 + gauss() * 0.025);
+  const el = state.elev + gauss() * 0.5, br = state.brg + gauss() * 0.8;
+  const gust = 1 + gauss() * 0.2, rot = gauss() * 10 * D2R, w = state.wind;
+  const wind = { x: (w.x * Math.cos(rot) - w.y * Math.sin(rot)) * gust, y: (w.x * Math.sin(rot) + w.y * Math.cos(rot)) * gust };
+  const knuckle = { x: gauss() * 0.15, y: gauss() * 0.15 }; // m/s², lumpy-potato sideways push
+  const fl = fly(h, state.pos.x, state.pos.y, v, Math.min(MAX_EL, Math.max(0, el)), br, wind, { rec: true, trees: true, lid: true, knuckle });
+  const ro = rollOut(h, fl, true);
+  state.rounds++; state.busy = true;
+  state.anim = { fl, ro, from: { ...state.pos }, aim: state.target ? { ...state.target } : null, phase: 'fly', i: 0, j: 0, t0: performance.now(), cur: { x: state.pos.x, y: state.pos.y, z: MUZZLE_H } };
+  refresh();
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const speed = reduce ? 1000 : 1.6;
+  requestAnimationFrame(function step(now) {
+    const a = state.anim, el = (now - a.t0) / 1000 * speed;
+    if (a.phase === 'fly') {
+      const p = a.fl.path; while (a.i < p.length - 1 && p[a.i + 1].t <= el) a.i++;
+      a.cur = p[a.i];
+      if (a.i >= p.length - 1) { a.phase = 'roll'; a.t0 = now; }
+    } else {
+      const p = a.ro.path; while (a.j < p.length - 1 && p[a.j + 1].t <= el) a.j++;
+      a.cur = { ...p[a.j], z: 0 };
+      if (a.j >= p.length - 1) return finishShot(a);
+    }
+    drawMap(); drawProfile();
+    requestAnimationFrame(step);
+  });
+}
+function finishShot(a) {
+  const h = H(), ro = a.ro, M = state.mission;
+  state.lastShot = { fl: a.fl, ro: a.ro, from: a.from }; state.anim = null; state.busy = false;
+  const round = { n: M.rounds.length + 1, lost: ro.result === 'water' || ro.result === 'ob', how: ro.result, x: ro.x, y: ro.y };
+  let msg;
+  if (round.lost) {
+    msg = ro.result === 'water' ? 'Splash: that round is lost in the water.' : 'Over the fence: that round is lost.';
+  } else {
+    round.trueDist = Math.hypot(ro.x - h.cup.x, ro.y - h.cup.y);
+    round.spot = spotRound(h, M.from, ro);
+    round.spotDist = round.spot.dist;
+    const sp = round.spot;
+    const seen = { x: h.cup.x + sp.along * sp.u.x + sp.lat * sp.n.x, y: h.cup.y + sp.along * sp.u.y + sp.lat * sp.n.y };
+    if (a.aim) M.errs.push({ x: seen.x - a.aim.x, y: seen.y - a.aim.y }); // where it landed vs where we aimed
+    if (state.mode === 'full' && M.errs.length) {
+      // Fire control corrects by the average error so far: random scatter averages out, steady bias doesn't.
+      const bx = M.errs.reduce((t, e) => t + e.x, 0) / M.errs.length, by = M.errs.reduce((t, e) => t + e.y, 0) / M.errs.length;
+      const next = { x: M.intended.x - bx, y: M.intended.y - by };
+      round.corr = { x: next.x - state.target.x, y: next.y - state.target.y };
+      state.target = next;
+    }
+    msg = `Round ${round.n}: ${fmtMiss(sp)}.` + (sp.dist <= IN_R ? ' Looks in! Cease fire to verify.' : '');
+  }
+  const clang = a.fl.tree ? 'Thwack! Off the tree. ' : ro.clang === 'pole' ? 'Clang! Off the pole. ' : ro.clang === 'lid' ? 'Clang! Off the lid. ' : '';
+  M.rounds.push(round);
+  toast(clang + msg);
+  if (state.rounds >= MAX_ROUNDS) return ceaseFire('Ten rounds fired: cease fire.');
+  refresh();
+}
+// Cease fire and walk out: the exact distance of the closest round decides the score.
+function ceaseFire(reason) {
+  if (state.busy) return;
+  const h = H(), M = state.mission, best = closestRound('trueDist');
+  const dist = best ? best.trueDist : Math.hypot(h.cup.x - M.from.x, h.cup.y - M.from.y);
+  const inRing = dist <= IN_R;
+  const score = Math.round((state.rounds + Math.max(0, dist - IN_R)) * 10) / 10;
+  const canAdvance = h.downrange && !inRing && !!best && state.rounds < MAX_ROUNDS;
+  state.verdict = { dist, inRing, score, best };
+  $('#doneTitle').textContent = inRing ? (state.rounds === 1 ? 'First-round hit!' : `Hit on round ${state.rounds}`) : 'Ceased fire';
+  $('#doneText').textContent = `${reason ? reason + ' ' : ''}Walked out: your closest round is ${fmtDist(dist)} from the pole${inRing ? ', inside the ring' : ''}. ` +
+    (canAdvance ? `Finish the hole at ${score.toFixed(1)}, or fire the next mission from that round.` : `Hole score ${score.toFixed(1)} on a par ${h.par}.`);
+  $('#advanceBtn').hidden = !canAdvance;
+  if (canAdvance) $('#advanceBtn').textContent = `Next mission from your closest round`;
+  $('#nextBtn').textContent = canAdvance ? `Finish hole at ${score.toFixed(1)}` : state.hi === 8 ? 'Finish round' : 'Next hole';
+  $('#done').hidden = false; refresh();
+  $('#nextBtn').focus();
+}
+function finishHole() {
+  if (state.summary) { state.summary = false; newRound(); return; }
+  if (state.verdict) state.scores[state.hi] = state.verdict.score;
+  if (state.hi < 8) { startHole(state.hi + 1); return; }
+  const total = Math.round(state.scores.reduce((a, b) => a + (b || 0), 0) * 10) / 10, par = HOLES.reduce((a, b) => a + b.par, 0);
+  try { const best = JSON.parse(localStorage.getItem('sgg-best-v7')); if (!best || total < best.total) localStorage.setItem('sgg-best-v7', JSON.stringify({ total, par })); } catch (e) {}
+  state.summary = true;
+  $('#doneTitle').textContent = 'Round complete';
+  $('#doneText').textContent = `Round total ${total.toFixed(1)} against par ${par}.`;
+  $('#advanceBtn').hidden = true; $('#nextBtn').textContent = 'Play again';
+  refresh();
+}
+
+// map tap → target
+map.addEventListener('pointerdown', e => {
+  if (state.busy || state.mode === 'off') return;
+  const r = map.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const wx = (mx - mapOffX) / scale, wy = H().h - my / scale;
+  if (wx < 0 || wx > H().w) return;
+  state.target = { x: wx, y: wy }; refresh();
+});
+window.addEventListener('resize', () => { layoutMap(); drawMap(); drawProfile(); });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => drawProfile());
+
+// hot-reload state carry-over
+window.claude?.hot?.snapshot?.(() => ({ hi: state.hi, scores: state.scores, mode: state.mode }));
+function start(d) {
+  if (d && typeof d.hi === 'number') {
+    state.scores = d.scores || state.scores; state.mode = d.mode || 'full';
+    startHole(d.hi);
+  } else startHole(0);
+}
+const boot = () => window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+if (document.fonts?.ready) document.fonts.ready.then(boot); else boot();
+})();
+</script>

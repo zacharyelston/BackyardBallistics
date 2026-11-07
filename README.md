@@ -2,7 +2,18 @@
 
 ![SpudGunGolf browser prototype: a top-down hole with the flag pole, range rings, the launcher controls and the firing computer](docs/image.png)
 
-*The browser prototype in [`prototype/spudgungolf.html`](prototype/spudgungolf.html). It plays the downrange-play variant (walk to your round and fire again); the fixed-firing-point mission loop comes with fire control (milestone 4).*
+*v1 Classic, the original browser game: walk to every round and finish within a metre of the pole.*
+
+| Prototype | Ruleset | How it plays |
+| --- | --- | --- |
+| [`prototype/spudgungolf.html`](prototype/spudgungolf.html) | v1 Classic | Walk to every round; shots to rest within 1 m of the pole; pick up for par + 3 |
+| [`prototype/spudgungolf-v2.html`](prototype/spudgungolf-v2.html) | v2 Fire Missions | Fire from a firing point, spot each round, let fire control correct, cease fire and verify; rounds plus metres outside the ring. Four fixed-firing-point holes and five downrange-play holes |
+
+v2 drives the app's requirements; v1 stays as an optional ruleset on the same engine.
+
+![SpudGunGolf v2 Fire Missions: two spotted rounds on the map, the mission log with fire-control corrections, and the cease-fire result](docs/image-v2.png)
+
+v2 pars (6, 6, 6, 7, 7, 6, 6, 5, 7; par 56) come from simulating a player who uses fire control, prefers lobs, and ceases fire when a round stops improving on the best by a metre.
 
 SpudGunGolf: a backyard trajectory game played with a low-power launcher on published courses. Each hole is a guyed furring-strip pole, and the pole is the hole: every hole is played as fire missions: range the pole from photos, fire, spot each round from the firing point, adjust, and score rounds fired plus metres outside the ring.
 
@@ -19,7 +30,7 @@ Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 | `docs/FIELD_TEST.md` | Field-test protocols for milestones 1 and 2 |
 | `docs/COURSE_FORMAT.md` | The flat-key YAML course file a course's web server serves |
 | `courses/sample-course.yaml` | Example course file |
-| `prototype/spudgungolf.html` | Browser prototype of the game and firing computer |
+| `prototype/` | Browser prototypes: v1 Classic and v2 Fire Missions |
 | `scripts/typecheck-ios.sh` | Typechecks everything against the iPhone SDK without signing or a simulator |
 | `project.yml` | XcodeGen spec for `SpudGunGolf.xcodeproj` |
 
