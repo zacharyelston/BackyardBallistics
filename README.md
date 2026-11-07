@@ -8,11 +8,13 @@ Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 
 | Path | What it is |
 | --- | --- |
-| `App/` | SwiftUI iPhone app (iOS 17+) |
-| `Packages/RangingKit/` | Ranging, lean and pole-height math, with unit tests |
+| `App/` | SwiftUI iPhone app (iOS 17+): `App/` tabs and settings, `Shared/` capture and marking, `Features/` one folder per feature |
+| `Packages/SpudCore/` | Platform-free core: `CoreGeo`, `SafetyKit`, `RangingKit`, with unit tests |
+| `docs/ARCHITECTURE.md` | Modules, dependency rules, the safety gate and the app design |
 | `docs/FLAG_KIT.md` | How to build and set up a flag |
-| `docs/FIELD_TEST.md` | Milestone 1 sighting field test |
+| `docs/FIELD_TEST.md` | Field-test protocols for milestones 1 and 2 |
 | `prototype/spudgungolf.html` | Browser prototype of the game and firing computer |
+| `scripts/typecheck-ios.sh` | Typechecks everything against the iPhone SDK without signing or a simulator |
 | `project.yml` | XcodeGen spec for `SpudGunGolf.xcodeproj` |
 
 ## Build
@@ -27,10 +29,16 @@ open SpudGunGolf.xcodeproj
 
 Set your signing team on the SpudGunGolf target, then run on an iPhone. The camera and ARKit tools need a real device.
 
-Run the math tests on the Mac:
+Run the core tests on the Mac:
 
 ```bash
-cd Packages/RangingKit && swift test
+cd Packages/SpudCore && swift test
+```
+
+Typecheck the app for iPhone without signing:
+
+```bash
+scripts/typecheck-ios.sh
 ```
 
 ## Milestone status
@@ -46,4 +54,4 @@ cd Packages/RangingKit && swift test
 
 ## Safety line
 
-Low-power launchers only, inanimate targets on your own property, solutions capped at 100 yd and 45 m/s. The app measures; it never covers building, fuelling or tuning a launcher.
+Low-power launchers only, inanimate targets on your own property, solutions capped at 100 yd and 45 m/s. Every limit lives in `SafetyKit` and nowhere else; see [ARCHITECTURE.md](docs/ARCHITECTURE.md#the-safety-gate). The app measures; it never covers building, fuelling or tuning a launcher.

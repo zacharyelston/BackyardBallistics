@@ -1,18 +1,4 @@
-import SwiftUI
-
-@main
-struct SpudGunGolfApp: App {
-    @StateObject private var log = FieldLogStore()
-    @StateObject private var rangingLog = RangingLogStore()
-
-    var body: some Scene {
-        WindowGroup {
-            HomeView()
-                .environmentObject(log)
-                .environmentObject(rangingLog)
-        }
-    }
-}
+import Foundation
 
 enum Settings {
     /// Measured pole height in metres. 8 ft standard until measured.

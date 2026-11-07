@@ -1,7 +1,8 @@
 import SwiftUI
 
-struct HomeView: View {
-    @EnvironmentObject private var log: FieldLogStore
+/// Setup, ranging and field-test tools. During a round the Play tab drives these same features.
+struct ToolsView: View {
+    @EnvironmentObject private var fieldLog: FieldLogStore
     @EnvironmentObject private var rangingLog: RangingLogStore
     @AppStorage(Settings.poleHeightKey) private var poleHeight = Settings.defaultPoleHeight
     @AppStorage(Settings.cameraHeightKey) private var cameraHeight = Settings.defaultCameraHeight
@@ -28,7 +29,7 @@ struct HomeView: View {
                     }
                     NavigationLink { RangingLogView() } label: {
                         Label("Ranging log", systemImage: "list.number")
-                            .badge(rangingLog.records.count)
+                            .badge(rangingLog.items.count)
                     }
                 } header: {
                     Text("Ranging")
@@ -42,7 +43,7 @@ struct HomeView: View {
                     }
                     NavigationLink { FieldLogView() } label: {
                         Label("Field log", systemImage: "list.bullet.rectangle")
-                            .badge(log.samples.count)
+                            .badge(fieldLog.items.count)
                     }
                 } header: {
                     Text("Field test")
@@ -72,7 +73,7 @@ struct HomeView: View {
                     }
                 }
             }
-            .navigationTitle("SpudGunGolf")
+            .navigationTitle("Tools")
         }
     }
 }

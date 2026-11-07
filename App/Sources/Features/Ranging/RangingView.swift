@@ -1,6 +1,8 @@
 import SwiftUI
 import RealityKit
 import RangingKit
+import CoreGeo
+import SafetyKit
 
 /// Milestone 2: range the lid from a few photos of the pole taken along a short arc.
 struct RangingView: View {
@@ -27,9 +29,11 @@ struct RangingView: View {
         PoleSolver.report(session.sightings, poleHeight: poleHeight, cameraHeight: cameraHeight)
     }
 
-    private var gate: FlagGate.Result? {
-        guard let r = report, let lie = session.lieLocation, let flag = flagPoint else { return nil }
-        return FlagGate.check(lie: lie, report: r, flag: flag)
+    /// The safety gate: a range only counts if it lands near a course flag.
+    private var gate: Safety.FlagCheck? {
+        guard let r = report, let lie = session.lieLocation, flagPoint != nil else { return nil }
+        let en = r.eastNorth
+        return Safety.checkFlag(lie: lie, east: en.east, north: en.north, flag: flagPoint)
     }
 
     var body: some View {
@@ -151,16 +155,15 @@ struct RangingView: View {
 
     private var flagSection: some View {
         Section {
-            if let g = gate {
+            if let g = gate, let miss = g.miss {
                 HStack {
-                    Text(String(format: "Ranged lid is %.1f m from the flag point", g.missMetres))
+                    Text(String(format: "Ranged lid is %.1f m from the flag point", miss))
                     Spacer()
-                    Image(systemName: g.passed ? "checkmark.circle.fill" : "xmark.octagon.fill")
-                        .foregroundStyle(g.passed ? .green : .red)
+                    Image(systemName: g.verdict.isAllowed ? "checkmark.circle.fill" : "xmark.octagon.fill")
+                        .foregroundStyle(g.verdict.isAllowed ? .green : .red)
                 }
-                if !g.passed {
-                    Text("More than 10 m off. In play this range would be rejected: check the marks or the flag point.")
-                        .font(.footnote).foregroundStyle(.red)
+                ForEach(Array(g.verdict.reasons.enumerated()), id: \.offset) { _, reason in
+                    Text(reason.description).font(.footnote).foregroundStyle(.red)
                 }
             } else if flagPoint == nil {
                 Text("No flag point saved. Stand at the lid and save one to test the flag check.")
@@ -182,7 +185,7 @@ struct RangingView: View {
         } header: {
             Text("Flag check")
         } footer: {
-            Text("In play, flag points come from the course file. A range more than 10 m from a published flag is refused.")
+            Text(String(format: "In play, flag points come from the course file. A range more than %.0f m from a published flag is refused.", Safety.limits.flagGateTolerance))
         }
     }
 
@@ -204,7 +207,7 @@ struct RangingView: View {
             Button(logged ? "Logged" : "Log this ranging") {
                 guard let r = report else { return }
                 rangingLog.add(RangingRecord(report: r, sightings: session.sightings, trueDistance: trueDistance,
-                                             gateMiss: gate?.missMetres, poleHeight: poleHeight,
+                                             gateMiss: gate?.miss, poleHeight: poleHeight,
                                              cameraHeight: cameraHeight, note: note))
                 logged = true
             }

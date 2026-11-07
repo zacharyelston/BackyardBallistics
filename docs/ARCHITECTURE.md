@@ -1,0 +1,111 @@
+# Architecture and app design
+
+SpudGunGolf is a thin SwiftUI/ARKit shell around a platform-free core. Everything that decides a number (ranges, solutions, limits, scores) lives in `Packages/SpudCore` and is tested on a Mac; the app only captures input, shows results and stores logs.
+
+## Modules
+
+```mermaid
+graph BT
+  CoreGeo["CoreGeo<br/>GPS points, offsets, polygons"]
+  SafetyKit["SafetyKit<br/>limits, checks, Cleared&lt;T&gt;"]
+  RangingKit["RangingKit<br/>rays, lean, pole solver"]
+  CourseKit["CourseKit (m3)<br/>course file, validator"]
+  BallisticsKit["BallisticsKit (m4–5)<br/>solver, roll-out, calibration"]
+  RoundKit["RoundKit (m6)<br/>players, strokes, scorecard"]
+  App["SpudGunGolf app<br/>SwiftUI, ARKit, AVFoundation"]
+  SafetyKit --> CoreGeo
+  RangingKit --> CoreGeo
+  CourseKit --> SafetyKit
+  BallisticsKit --> SafetyKit
+  RoundKit --> SafetyKit
+  App --> RangingKit
+  App --> SafetyKit
+  App --> CourseKit
+  App --> BallisticsKit
+  App --> RoundKit
+```
+
+Modules marked with a milestone don't exist yet; they slot in at the place shown.
+
+| Module | Owns | Depends on | Tested by |
+| --- | --- | --- | --- |
+| CoreGeo | `GeoPoint`, east/north offsets, bearings, `GeoPolygon` | nothing | `swift test` |
+| SafetyKit | Every safety limit, the checks, `Cleared<T>`, `DownrangeLog`, `safety-limits.json` | CoreGeo | `swift test`, including a check that the browser prototype uses the same numbers |
+| RangingKit | Camera intrinsics and rays, size ranging, lean, pole height, multi-photo `PoleSolver` | CoreGeo | `swift test` on synthetic scenes |
+| CourseKit (m3) | Course file format, loading, validator (calls `Safety.checkFan`) | SafetyKit | planned |
+| BallisticsKit (m4–5) | Trajectory and roll-out model, firing solutions, calibration fitting | SafetyKit | planned |
+| RoundKit (m6) | Players, honours, strokes, penalties, scorecard | SafetyKit | planned |
+
+### Dependency rules
+
+1. Nothing in SpudCore imports UIKit, SwiftUI, ARKit or AVFoundation.
+2. A module may only use modules below it in the graph. CoreGeo depends on nothing.
+3. Safety numbers live only in `SafetyKit/SafetyLimits.swift` and its bundled `safety-limits.json`. Nothing else restates them; tests pin both and the prototype.
+4. Accuracy thresholds (lean under 0.5°, photo agreement within 3%) stay with the module that measures them. They are not safety rules.
+
+## The safety gate
+
+`Cleared<T>` can only be created inside SafetyKit. Any API that hands something to the player takes or returns a `Cleared` value, so the compiler won't let a caller skip the checks.
+
+| Gate | Check | Blocks when |
+| --- | --- | --- |
+| `Safety.clearRange` | Ranged lid vs. published flag | No course flag, or more than 10 m off |
+| `Safety.clearSolution` | Distance, muzzle velocity, downrange confirmation | Past 100 yd, any setting over 45 m/s, or the player hasn't confirmed the fan for this hole |
+| `Safety.checkCalibration` | A charge setting's fitted velocity | Over 45 m/s |
+| `Safety.checkFan` | Course publishing | A start spot's 105 yd, ±30° fan leaves the boundary, or there is no boundary |
+
+Each check returns readable reasons, so the app can explain a refusal instead of failing silently.
+
+## App design
+
+Three tabs, one per job:
+
+| Tab | For | Now | Later |
+| --- | --- | --- | --- |
+| Play | Playing a round | The hole loop, with ranging live | Course loading (m3), solutions (m4), scoring (m6) |
+| Launcher | Your launcher's profile and the limits | Fixed safety limits | Calibration shots and per-setting velocities (m5), sight mode (m7) |
+| Tools | Setting up flags and testing | Lean check, pole height, ranging, sighting test, logs | Course authoring and publishing (m3, m8) |
+
+### One shot, end to end
+
+```mermaid
+sequenceDiagram
+  participant P as Player
+  participant A as App
+  participant R as RangingKit
+  participant S as SafetyKit
+  participant B as BallisticsKit
+  P->>A: Photos of the pole from a short arc
+  A->>R: PoleSolver.report(sightings)
+  R-->>A: distance, ±, height difference, line
+  A->>S: clearRange(report, lie GPS, course flag)
+  S-->>A: Cleared range, or reasons
+  A->>B: solve(cleared range, wind, launcher profile)
+  B->>S: clearSolution(distance, velocity, downrange)
+  S-->>B: Cleared solution, or reasons
+  B-->>A: charge, elevation, aim
+  P->>A: Fire, walk to the potato, tap the lie, range again
+  A->>B: shot vector updates the wind estimate
+```
+
+### App folder layout
+
+| Folder | What goes there |
+| --- | --- |
+| `App/Sources/App` | Entry point, tabs, settings and units |
+| `App/Sources/Shared` | Camera capture, the tip/base marker with loupe, `JSONStore` |
+| `App/Sources/Features/<Feature>` | One folder per feature: its views, its session object, its log |
+
+Features talk to SpudCore, not to each other. Shared UI that two features need moves to `Shared`.
+
+### Persistence
+
+Each log is a `JSONStore<Item>` file in Documents (`fieldlog.json`, `ranginglog.json`). Ranging records keep every photo's pose and marks so field data can be re-solved on a Mac when the solver changes. Courses and launcher profiles will follow the same pattern.
+
+## Checking work
+
+| Check | Command | Covers |
+| --- | --- | --- |
+| Core tests | `cd Packages/SpudCore && swift test` | All math and safety rules |
+| iOS typecheck | `scripts/typecheck-ios.sh` | App and packages against the iPhone SDK, no signing or simulator needed |
+| Device | Xcode, signed build | Camera, ARKit, GPS: the field tests in `FIELD_TEST.md` |

@@ -10,8 +10,8 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
 packages:
-  RangingKit:
-    path: Packages/RangingKit
+  SpudCore:
+    path: Packages/SpudCore
 targets:
   SpudGunGolf:
     type: application
@@ -19,7 +19,12 @@ targets:
     sources:
       - App/Sources
     dependencies:
-      - package: RangingKit
+      - package: SpudCore
+        product: CoreGeo
+      - package: SpudCore
+        product: SafetyKit
+      - package: SpudCore
+        product: RangingKit
     info:
       path: App/Resources/Info.plist
       properties:

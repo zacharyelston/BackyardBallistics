@@ -1,6 +1,7 @@
 import XCTest
 import simd
 @testable import RangingKit
+import CoreGeo
 
 final class PoleSolverTests: XCTestCase {
     let H = 2.438
@@ -91,22 +92,11 @@ final class PoleSolverTests: XCTestCase {
     }
 }
 
-final class GeoTests: XCTestCase {
-    let lie = GeoPoint(latitude: 42.3601, longitude: -71.0589)
-
-    func testOffsetRoundTrip() {
-        let p = Geo.offset(lie, east: 30, north: 40)
-        XCTAssertEqual(Geo.distance(lie, p), 50, accuracy: 0.01)
-    }
-
-    func testGatePassesNearFlagAndFailsFar() {
-        // Lid ranged 60 m north of the lie (ARKit -Z is north).
-        let report = RangeReport(distance: 60, distanceSigma: 0.5, heightDifference: 0, offset: SIMD2(0, -60),
-                                 baseline: 3, sizeRanges: [:], maxDisagreementPercent: 0, photoCount: 3, droppedCount: 0)
-        let flagNear = Geo.offset(lie, east: 3, north: 64)
-        let flagFar = Geo.offset(lie, east: 30, north: 60)
-        XCTAssertTrue(FlagGate.check(lie: lie, report: report, flag: flagNear).passed)
-        XCTAssertFalse(FlagGate.check(lie: lie, report: report, flag: flagFar).passed)
-        XCTAssertEqual(FlagGate.check(lie: lie, report: report, flag: flagNear).missMetres, 5, accuracy: 0.01)
+final class RangeReportGeoTests: XCTestCase {
+    func testEastNorthFromAROffset() {
+        let r = RangeReport(distance: 60, distanceSigma: 0.5, heightDifference: 0, offset: SIMD2(3, -60),
+                            baseline: 3, sizeRanges: [:], maxDisagreementPercent: 0, photoCount: 3, droppedCount: 0)
+        XCTAssertEqual(r.eastNorth.east, 3)
+        XCTAssertEqual(r.eastNorth.north, 60)
     }
 }

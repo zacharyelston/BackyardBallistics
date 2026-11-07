@@ -1,41 +1,11 @@
 import SwiftUI
 import RangingKit
 
-/// Sighting-test samples, saved as JSON in the app's Documents folder.
-final class FieldLogStore: ObservableObject {
-    @Published private(set) var samples: [FieldSample] = []
+/// Sighting-test samples.
+typealias FieldLogStore = JSONStore<FieldSample>
 
-    private var fileURL: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("fieldlog.json")
-    }
-
-    init() {
-        if let data = try? Data(contentsOf: fileURL),
-           let saved = try? JSONDecoder().decode([FieldSample].self, from: data) {
-            samples = saved
-        }
-    }
-
-    func add(_ s: FieldSample) {
-        samples.insert(s, at: 0)
-        save()
-    }
-
-    func delete(at offsets: IndexSet) {
-        samples.remove(atOffsets: offsets)
-        save()
-    }
-
-    private func save() {
-        try? JSONEncoder().encode(samples).write(to: fileURL, options: .atomic)
-    }
-
-    /// Writes the log as CSV to a temporary file for sharing.
-    func csvFile() -> URL {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("spudgungolf-sighting-log.csv")
-        try? FieldCSV.make(samples).write(to: url, atomically: true, encoding: .utf8)
-        return url
-    }
+extension JSONStore where Item == FieldSample {
+    func csvFile() -> URL { exportFile(named: "spudgungolf-sighting-log.csv", contents: FieldCSV.make(items)) }
 }
 
 struct FieldLogView: View {
@@ -43,7 +13,7 @@ struct FieldLogView: View {
 
     var body: some View {
         List {
-            if log.samples.isEmpty {
+            if log.items.isEmpty {
                 Text("No samples yet. Run the sighting test from a few taped distances: 10, 30, 60 and 90 m.")
                     .foregroundStyle(.secondary)
             } else {
@@ -55,7 +25,7 @@ struct FieldLogView: View {
                     }
                 }
                 Section("Samples") {
-                    ForEach(log.samples) { s in
+                    ForEach(log.items) { s in
                         VStack(alignment: .leading, spacing: 2) {
                             HStack {
                                 Text(s.lens).font(.headline)
@@ -78,7 +48,7 @@ struct FieldLogView: View {
         }
         .navigationTitle("Field log")
         .toolbar {
-            if !log.samples.isEmpty {
+            if !log.items.isEmpty {
                 ShareLink(item: log.csvFile()) { Label("Export CSV", systemImage: "square.and.arrow.up") }
             }
         }
@@ -86,7 +56,7 @@ struct FieldLogView: View {
 
     private var summary: [(lens: String, count: Int, meanAbsPct: Double)] {
         var groups: [String: [Double]] = [:]
-        for s in log.samples {
+        for s in log.items {
             if let pct = s.errorPercent { groups[s.lens, default: []].append(abs(pct)) }
         }
         var rows: [(lens: String, count: Int, meanAbsPct: Double)] = []

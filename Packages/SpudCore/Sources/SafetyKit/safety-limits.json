@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "maxMuzzleVelocity": 45,
+  "maxSolutionRange": 91.44,
+  "flagGateTolerance": 10,
+  "fanRange": 96.012,
+  "fanHalfAngle": 30,
+  "projectile": {
+    "name": "Potato",
+    "massKg": 0.2,
+    "diameterM": 0.07
+  }
+}

@@ -1,0 +1,30 @@
+import SwiftUI
+
+@main
+struct SpudGunGolfApp: App {
+    @StateObject private var fieldLog = FieldLogStore(fileName: "fieldlog.json")
+    @StateObject private var rangingLog = RangingLogStore(fileName: "ranginglog.json")
+
+    var body: some Scene {
+        WindowGroup {
+            RootView()
+                .environmentObject(fieldLog)
+                .environmentObject(rangingLog)
+        }
+    }
+}
+
+/// Three tabs, one per job: play a round, look after your launcher, and set up or test kit.
+struct RootView: View {
+    var body: some View {
+        TabView {
+            PlayView()
+                .tabItem { Label("Play", systemImage: "flag.fill") }
+            LauncherView()
+                .tabItem { Label("Launcher", systemImage: "scope") }
+            ToolsView()
+                .tabItem { Label("Tools", systemImage: "wrench.and.screwdriver") }
+        }
+        .tint(.orange)
+    }
+}

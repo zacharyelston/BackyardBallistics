@@ -1,0 +1,142 @@
+import Foundation
+import CoreGeo
+
+/// Why something was blocked, in words a player can read.
+public enum SafetyReason: Equatable, Sendable, CustomStringConvertible {
+    case muzzleVelocityOverCap(measured: Double, cap: Double)
+    case beyondSolutionRange(distance: Double, limit: Double)
+    case noFlag
+    case flagTooFar(miss: Double, tolerance: Double)
+    case noBoundary
+    case fanLeavesBoundary(pointsOutside: Int)
+    case downrangeNotConfirmed
+
+    public var description: String {
+        switch self {
+        case let .muzzleVelocityOverCap(v, cap):
+            return String(format: "This charge setting measured %.1f m/s, over the %.0f m/s limit. Solutions for it are blocked.", v, cap)
+        case let .beyondSolutionRange(d, limit):
+            return String(format: "The lid is %.0f m away, past the %.0f m (100 yd) limit. Lay up closer first.", d, limit)
+        case .noFlag:
+            return "No published flag here. Ranging only works on a loaded course's flags."
+        case let .flagTooFar(miss, tol):
+            return String(format: "The range lands %.0f m from the published flag, more than %.0f m. Re-mark the photos or re-range.", miss, tol)
+        case .noBoundary:
+            return "The course has no boundary, so its safety fans can't be checked."
+        case let .fanLeavesBoundary(n):
+            return "The safety fan from this start spot leaves the course boundary (\(n) check points outside). Move the start spot or the flag."
+        case .downrangeNotConfirmed:
+            return "Confirm the fan is clear of people and animals before the first shot on this hole."
+        }
+    }
+}
+
+public enum Verdict: Equatable, Sendable {
+    case allowed
+    case blocked([SafetyReason])
+
+    public var isAllowed: Bool { if case .allowed = self { return true } else { return false } }
+    public var reasons: [SafetyReason] { if case let .blocked(r) = self { return r } else { return [] } }
+
+    init(_ reasons: [SafetyReason]) { self = reasons.isEmpty ? .allowed : .blocked(reasons) }
+}
+
+public struct SafetyBlock: Error, Equatable, Sendable {
+    public let reasons: [SafetyReason]
+}
+
+/// A value that has passed the safety checks. Only SafetyKit can create one, so any API that
+/// demands a `Cleared` value cannot be reached without going through these checks.
+public struct Cleared<Value> {
+    public let value: Value
+    public let limitsVersion: Int
+    fileprivate init(_ value: Value) {
+        self.value = value
+        self.limitsVersion = SafetyLimits.current.version
+    }
+}
+
+extension Cleared: Sendable where Value: Sendable {}
+
+/// Which players have confirmed the downrange fan is clear, per hole.
+public struct DownrangeLog: Codable, Equatable, Sendable {
+    public static let prompt = "Is the whole fan downrange clear of people and animals?"
+    private var confirmed: Set<String> = []
+
+    public init() {}
+
+    private static func key(_ player: String, _ hole: Int) -> String { "\(hole)|\(player)" }
+    public mutating func confirm(player: String, hole: Int) { confirmed.insert(Self.key(player, hole)) }
+    public func isConfirmed(player: String, hole: Int) -> Bool { confirmed.contains(Self.key(player, hole)) }
+}
+
+public enum Safety {
+    public static var limits: SafetyLimits { .current }
+
+    // MARK: Launcher calibration
+
+    /// A calibrated charge setting is usable only at or under the velocity cap.
+    public static func checkCalibration(muzzleVelocity v: Double) -> Verdict {
+        Verdict(v > limits.maxMuzzleVelocity ? [.muzzleVelocityOverCap(measured: v, cap: limits.maxMuzzleVelocity)] : [])
+    }
+
+    // MARK: Firing solutions
+
+    /// The only way to turn a firing solution into something the app may show.
+    public static func clearSolution<S>(_ solution: S, distance: Double, muzzleVelocity: Double,
+                                        downrange: DownrangeLog, player: String, hole: Int) -> Result<Cleared<S>, SafetyBlock> {
+        var reasons: [SafetyReason] = []
+        if distance > limits.maxSolutionRange {
+            reasons.append(.beyondSolutionRange(distance: distance, limit: limits.maxSolutionRange))
+        }
+        reasons += checkCalibration(muzzleVelocity: muzzleVelocity).reasons
+        if !downrange.isConfirmed(player: player, hole: hole) { reasons.append(.downrangeNotConfirmed) }
+        return reasons.isEmpty ? .success(Cleared(solution)) : .failure(SafetyBlock(reasons: reasons))
+    }
+
+    // MARK: Ranging (course flags only)
+
+    public struct FlagCheck: Equatable, Sendable {
+        public var rangedLid: GeoPoint
+        /// Distance from the ranged lid to the published flag, or nil without a flag.
+        public var miss: Double?
+        public var verdict: Verdict
+    }
+
+    /// - Parameters:
+    ///   - lie: GPS position of the player when ranging.
+    ///   - east, north: ranged offset from the lie to the lid, metres.
+    ///   - flag: the published flag point from the loaded course.
+    public static func checkFlag(lie: GeoPoint, east: Double, north: Double, flag: GeoPoint?) -> FlagCheck {
+        let lid = Geo.offset(lie, east: east, north: north)
+        guard let flag else { return FlagCheck(rangedLid: lid, miss: nil, verdict: .blocked([.noFlag])) }
+        let miss = Geo.distance(lid, flag)
+        let verdict = Verdict(miss > limits.flagGateTolerance ? [.flagTooFar(miss: miss, tolerance: limits.flagGateTolerance)] : [])
+        return FlagCheck(rangedLid: lid, miss: miss, verdict: verdict)
+    }
+
+    /// The only way to turn a range into something the firing computer may use.
+    public static func clearRange<R>(_ range: R, lie: GeoPoint, east: Double, north: Double,
+                                     flag: GeoPoint?) -> Result<Cleared<R>, SafetyBlock> {
+        let check = checkFlag(lie: lie, east: east, north: north, flag: flag)
+        return check.verdict.isAllowed ? .success(Cleared(range)) : .failure(SafetyBlock(reasons: check.verdict.reasons))
+    }
+
+    // MARK: Course publishing
+
+    /// Every point of the fan from `start` toward `lid` (radius `fanRange`, ± `fanHalfAngle`)
+    /// must lie inside the course boundary.
+    public static func checkFan(start: GeoPoint, lid: GeoPoint, boundary: GeoPolygon?) -> Verdict {
+        guard let boundary, boundary.vertices.count >= 3 else { return .blocked([.noBoundary]) }
+        let centre = Geo.bearing(from: start, to: lid)
+        let radii = Array(stride(from: 5.0, to: limits.fanRange, by: 5)) + [limits.fanRange]
+        let angles = Array(stride(from: -limits.fanHalfAngle, through: limits.fanHalfAngle, by: 1))
+        var outside = 0
+        for a in angles {
+            for r in radii where !boundary.contains(Geo.destination(start, bearing: centre + a, distance: r)) {
+                outside += 1
+            }
+        }
+        return Verdict(outside > 0 ? [.fanLeavesBoundary(pointsOutside: outside)] : [])
+    }
+}

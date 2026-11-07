@@ -1,5 +1,6 @@
 import Foundation
 import simd
+import CoreGeo
 
 public struct Pixel: Codable, Equatable, Sendable {
     public var x: Double
@@ -187,6 +188,9 @@ public struct RangeReport: Sendable {
     public static let disagreementLimitPercent = 3.0
 
     public var confident: Bool { maxDisagreementPercent <= Self.disagreementLimitPercent }
+
+    /// Offset lie → lid in metres east and north, for a `.gravityAndHeading` AR session.
+    public var eastNorth: (east: Double, north: Double) { Geo.eastNorth(arOffset: offset.x, offset.y) }
 }
 
 extension PoleSolver {

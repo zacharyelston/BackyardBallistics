@@ -3,6 +3,7 @@ import CoreImage
 import CoreLocation
 import RealityKit
 import RangingKit
+import CoreGeo
 
 /// Owns the AR session for one ranging: keeps the world frame steady across photos,
 /// tracks how far the phone has moved from the first photo, and knows where the lie is by GPS.

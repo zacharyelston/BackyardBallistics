@@ -193,7 +193,9 @@ const G = 9.81, D2R = Math.PI / 180;
 const MASS = 0.2, DIA = 0.07, CD = 0.6, RHO = 1.2;
 const K = 0.5 * RHO * CD * Math.PI * (DIA / 2) ** 2 / MASS; // drag accel = K * |v|^2
 const MUZZLE_H = 1.0;
+// Safety limits: must match Packages/SpudCore/Sources/SafetyKit/safety-limits.json (a test checks this).
 const V_CAP = 45; // hard ceiling, m/s: game never models anything hotter
+const MAX_RANGE_M = 91.44; // 100 yd: the computer never solves past this
 const CHARGES = [
   { n: 'Puff', v: 8 }, { n: '1', v: 13 }, { n: '2', v: 19 },
   { n: '3', v: 26 }, { n: '4', v: 33 }, { n: '5', v: 41 }
@@ -335,6 +337,7 @@ function solveCharge(h, from, target, v, wind) {
 }
 function solveArc(h, from, target, v, wind, arc, em, b0, lz) {
   const d = Math.hypot(target.x - from.x, target.y - from.y);
+  if (d > MAX_RANGE_M) return { ok: false, why: 'limit' };
   let b = b0, el = 0, drop = 0;
   for (let it = 0; it < 6; it++) {
     const rmax = rangeAt(h, from, v, em, b, wind, lz).d;
@@ -664,7 +667,7 @@ function updateComputer() {
       : s.rest.result === 'ob' ? '<span class="flag">OB</span>' : s.rest.result === 'holed' ? '<span class="okc">in!</span>' : '<span class="okc">clear</span>';
     const cell = (s) => s.ok
       ? `<td>${s.el.toFixed(1)}°</td><td>${fmtAim(wrap180(s.b - lineBrg())).replace('On line', '0°')}</td><td>${s.t.toFixed(1)}s</td><td>${s.drop.toFixed(0)}°</td><td>${verdict(s)}</td>`
-      : `<td class="na" colspan="5">${s.why === 'long' ? 'out of range' : 'too close'}</td>`;
+      : `<td class="na" colspan="5">${s.why === 'long' ? 'out of range' : s.why === 'limit' ? 'past 100 yd limit' : 'too close'}</td>`;
     let html = '<table class="sol"><thead><tr><th>Charge</th><th>Elev</th><th>Aim</th><th>Time</th><th>Drop</th><th>Result</th></tr></thead><tbody>';
     for (const r of rows) for (const arc of ['low', 'high']) {
       const s = r.s[arc]; if (!s.ok && arc === 'high' && !r.s.low.ok) continue;
