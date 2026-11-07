@@ -6,7 +6,7 @@ One flag per hole. About $6 plus a trash can lid.
 
 | Part | Spec | Approx. cost |
 | --- | --- | --- |
-| Pole | 1×2 furring strip, 8 ft (standard). Courses may use 4–12 ft; splice two strips above 8 ft. | $3 |
+| Pole | 1×2 furring strip, 8, 10 or 12 ft as the lumber yard sells them. The course designer chooses. | $3–$6 |
 | Tip band | Bright orange tape, top 4 in of the pole | $1 |
 | Guy lines | Three lengths of string, each about 1.25 × the pole height | $1 |
 | Stakes | Three tent stakes | from a cheap pack |
@@ -33,5 +33,6 @@ One flag per hole. About $6 plus a trash can lid.
 ## Notes
 
 - A 2° lean shifts the lid about 6 cm from the point under the tip. Under 0.5° keeps it near 2 cm.
-- A potato that hits a guy line is played where it stops.
+- A potato scores the moment it touches the lid. One that hits a guy line is played where it stops.
+- Taller poles are easier to spot and range more precisely; 10 and 12 ft poles suit longer holes.
 - The telltales also mark the lines so nobody trips on them.

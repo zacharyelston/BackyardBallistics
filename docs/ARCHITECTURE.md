@@ -43,6 +43,18 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 3. Safety numbers live only in `SafetyKit/SafetyLimits.swift` and its bundled `safety-limits.json`. Nothing else restates them; tests pin both and the prototype.
 4. Accuracy thresholds (lean under 0.5°, photo agreement within 3%) stay with the module that measures them. They are not safety rules.
 
+## Services
+
+Three pieces, each running on its own:
+
+| Service | Where it runs | What it does |
+| --- | --- | --- |
+| iPhone app | Each player's phone | Ranging, firing computer, scoring; works offline once a course is loaded |
+| Course server | On the course, reached over the course's local Wi-Fi | Serves that course's file (flags, start spots, hazards, boundary) and collects rounds played there |
+| Course registry | Internet | Lists courses and where they are, so players can find one before they arrive; receives synced rounds |
+
+The app never needs internet during play: it joins the course Wi-Fi at the first start spot, downloads the course file, and keeps it. CourseKit (m3) owns the course file format; the server and registry are milestone 8. What runs the course server on site, and how it syncs to the registry, is still open.
+
 ## The safety gate
 
 `Cleared<T>` can only be created inside SafetyKit. Any API that hands something to the player takes or returns a `Cleared` value, so the compiler won't let a caller skip the checks.

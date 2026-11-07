@@ -17,7 +17,7 @@ Goal: check the fused range, its ± estimate, the height difference and the flag
 
 What to look for: error within about 2σ of the shown ±; "Photo agreement" Good on clean marks; flag check under 10 m; height difference sign and size on sloped ground.
 
-Known limit: AR sessions use the 1× camera only. Telephoto ranging needs its own capture path (later).
+Ranging uses the 1× camera only, by design. If you have poles of different heights, repeat at 60 and 90 m with each to confirm taller poles range better.
 
 # Milestone 1 field test: sighting the pole
 
@@ -32,7 +32,7 @@ Goal: find out how precisely a player can mark a pole's tip and base, and how go
 ## Procedure
 
 1. Mark taped distances from the pole: **10, 30, 60 and 90 m**. Keep the ground as level as you can for now; slope correction comes later.
-2. At each distance, for each lens the phone has (0.5×, 1×, Telephoto):
+2. At each distance, on the 1× lens (the app ranges with 1× only):
    1. Open **Sighting test**, pick the lens, fit the whole pole in frame and tap **Capture**.
    2. Tap the tip, then switch to **Base** and tap the base. Use the loupe to nudge each mark onto the pole's edge.
    3. Enter the taped distance, add a note (light, wind, what hides the base), and tap **Log sample**.
@@ -51,4 +51,4 @@ Goal: find out how precisely a player can mark a pole's tip and base, and how go
 
 ## Pass mark
 
-The spec's targets for an 8 ft pole: 1× within about 4 cm at 10 m, 19 cm at 30 m, 65 cm at 60 m and 1.5 m at 90 m; telephoto within about 12 cm at 30 m, 27 cm at 60 m and 45 cm at 90 m. If the base is the weak point, try a white band at the bottom of the pole (open question in the spec).
+The spec's targets for an 8 ft pole on the 1× lens: about 4 cm at 10 m, 19 cm at 30 m, 65 cm at 60 m and 1.5 m at 90 m. A 12 ft pole should cut those by about a third.

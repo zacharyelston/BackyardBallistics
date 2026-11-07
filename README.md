@@ -1,6 +1,6 @@
 # Backyard Ballistics
 
-SpudGunGolf: a backyard trajectory game played with a low-power potato launcher on published courses. Flags are guyed furring-strip poles standing in a trash can lid; the iPhone app ranges the lid from photos of the pole, runs a firing computer and keeps score.
+SpudGunGolf: a backyard trajectory game played with a low-power launcher on published courses. Flags are guyed furring-strip poles standing in a trash can lid; the iPhone app ranges the lid from photos of the pole, runs a firing computer and keeps score.
 
 Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 
@@ -50,7 +50,7 @@ scripts/typecheck-ios.sh
 5. Calibration shots
 6. Play flow and scorecard
 7. Sight mode
-8. Course sharing
+8. Course server and registry
 
 ## Safety line
 

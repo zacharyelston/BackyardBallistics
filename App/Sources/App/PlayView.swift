@@ -13,13 +13,13 @@ struct PlayView: View {
     }
 
     private let steps = [
-        Step(id: 1, title: "Load a course", detail: "From a link or the QR sign at the first start spot.", milestone: 3, ready: false),
+        Step(id: 1, title: "Load a course", detail: "Join the course Wi-Fi; the app downloads it from the course server.", milestone: 3, ready: false),
         Step(id: 2, title: "Confirm downrange", detail: DownrangeLog.prompt, milestone: 6, ready: false),
         Step(id: 3, title: "Read the wind", detail: "Telltales on the guy lines and the windsock on top.", milestone: 4, ready: false),
         Step(id: 4, title: "Range the flag", detail: "Three to five photos of the pole from a short arc.", milestone: 2, ready: true),
         Step(id: 5, title: "Get a solution", detail: "Charge, elevation and aim, cleared by the safety checks.", milestone: 4, ready: false),
         Step(id: 6, title: "Fire, walk, log", detail: "Tap the lie, range again, and the shot teaches the wind.", milestone: 6, ready: false),
-        Step(id: 7, title: "Hole out", detail: "Counts when the potato rests on the lid or against the pole.", milestone: 6, ready: false)
+        Step(id: 7, title: "Hole out", detail: "Scores the moment the potato touches the lid.", milestone: 6, ready: false)
     ]
 
     var body: some View {
