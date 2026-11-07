@@ -1,0 +1,51 @@
+name: Pages
+
+# Builds the browser prototypes (v1 Classic at /v1/, v2 Fire Missions at /v2/) and a landing page.
+# Pull requests build and check the site; pushes to main also deploy it.
+on:
+  push:
+    branches: [main]
+    paths: [prototype/**, site/**, docs/*.png, scripts/build-pages.sh, .github/workflows/pages.yml]
+  pull_request:
+    paths: [prototype/**, site/**, docs/*.png, scripts/build-pages.sh, .github/workflows/pages.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build site
+        run: bash scripts/build-pages.sh _site
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check pages load without script errors
+        run: |
+          npm install --no-save --no-package-lock playwright@1.47.2
+          npx playwright install --with-deps chromium
+          node scripts/smoke-pages.mjs _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -6,3 +6,5 @@ xcuserdata/
 *.xcuserstate
 .swiftpm/
 Packages/RangingKit/.build/
+_site/
+node_modules/
