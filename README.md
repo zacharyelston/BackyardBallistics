@@ -2,9 +2,9 @@
 
 ![SpudGunGolf browser prototype: a top-down hole with the flag pole, range rings, the launcher controls and the firing computer](docs/image.png)
 
-*The browser prototype in [`prototype/spudgungolf.html`](prototype/spudgungolf.html).*
+*The browser prototype in [`prototype/spudgungolf.html`](prototype/spudgungolf.html). It plays the downrange-play variant (walk to your round and fire again); the fixed-firing-point mission loop comes with fire control (milestone 4).*
 
-SpudGunGolf: a backyard trajectory game played with a low-power launcher on published courses. Each hole is a guyed furring-strip pole, and the pole is the hole: the iPhone app ranges it from photos, runs a firing computer, and scores the shots it takes to finish within a set distance of it.
+SpudGunGolf: a backyard trajectory game played with a low-power launcher on published courses. Each hole is a guyed furring-strip pole, and the pole is the hole: every hole is played as fire missions: range the pole from photos, fire, spot each round from the firing point, adjust, and score rounds fired plus metres outside the ring.
 
 Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 
@@ -52,9 +52,9 @@ scripts/typecheck-ios.sh
 1. **Flag kit guide and setup flow** — built: lean check, pole height and the sighting field-test tool. Field results pending.
 2. **Ranging prototype** — built: multi-photo AR ranging with fused size range and triangulation, outlier drop, height difference, and the 10 m flag check. Device tuning pending.
 3. Course file and validator
-4. Firing computer in Swift
+4. Fire control in Swift
 5. Calibration shots
-6. Play flow and scorecard
+6. Missions and scorecard
 7. Sight mode
 8. Course server and registry
 

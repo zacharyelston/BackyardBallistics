@@ -12,8 +12,9 @@ course.boundary.3: 42.361400, -71.057600
 course.boundary.4: 42.361400, -71.059010
 
 hole.1.meta.name: The Driveway
-hole.1.meta.par: 4
-hole.1.start.1: 42.360120, -71.058880
+hole.1.meta.par: 3
+hole.1.meta.downrange_play: no
+hole.1.firing_point.1: 42.360120, -71.058880
 hole.1.flag.position: 42.360950, -71.058810
 hole.1.flag.pole_height_m: 2.438
 hole.1.flag.lean_deg: 0.3
@@ -21,9 +22,10 @@ hole.1.flag.in_radius_m: 1.0
 hole.1.lid.diameter_m: 0.58
 
 hole.2.meta.name: Garden Hose
-hole.2.meta.par: 5
-hole.2.start.1: 42.360150, -71.058200
-hole.2.start.2: 42.360300, -71.058150
+hole.2.meta.par: 4
+hole.2.meta.downrange_play: yes
+hole.2.firing_point.1: 42.360150, -71.058200
+hole.2.firing_point.2: 42.360300, -71.058150
 hole.2.flag.position: 42.361250, -71.057900
 hole.2.flag.pole_height_m: 3.658
 hole.2.flag.lean_deg: 0.2

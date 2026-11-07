@@ -15,11 +15,11 @@ struct PlayView: View {
     private let steps = [
         Step(id: 1, title: "Load a course", detail: "Join the course Wi-Fi; the app downloads it from the course server.", milestone: 3, ready: false),
         Step(id: 2, title: "Confirm downrange", detail: DownrangeLog.prompt, milestone: 6, ready: false),
-        Step(id: 3, title: "Read the wind", detail: "Telltales on the guy lines and the windsock on top.", milestone: 4, ready: false),
-        Step(id: 4, title: "Range the flag", detail: "Three to five photos of the pole from a short arc.", milestone: 2, ready: true),
-        Step(id: 5, title: "Get a solution", detail: "Charge, elevation and aim, cleared by the safety checks.", milestone: 4, ready: false),
-        Step(id: 6, title: "Fire, walk, log", detail: "Tap the lie, range again, and the shot teaches the wind.", milestone: 6, ready: false),
-        Step(id: 7, title: "Hole out", detail: "Range the pole from where it stopped; within the hole's in-radius (1 m) and you're done. Pick up any time for par + 3.", milestone: 6, ready: false)
+        Step(id: 3, title: "Range the pole", detail: "A few photos from the firing point.", milestone: 2, ready: true),
+        Step(id: 4, title: "Initial data", detail: "Charge, elevation and aim, cleared by the safety checks.", milestone: 4, ready: false),
+        Step(id: 5, title: "Fire and spot", detail: "One photo: tap the potato and the pole base to see the miss.", milestone: 4, ready: false),
+        Step(id: 6, title: "Adjust or cease fire", detail: "Add or drop, left or right, until a round rests in the ring.", milestone: 4, ready: false),
+        Step(id: 7, title: "Verify and score", detail: "Walk out together; score is rounds plus metres outside the ring.", milestone: 6, ready: false)
     ]
 
     var body: some View {
@@ -43,7 +43,7 @@ struct PlayView: View {
                         .padding(.vertical, 2)
                     }
                 } header: {
-                    Text("Each hole")
+                    Text("Each hole: a fire mission")
                 } footer: {
                     Text("Ranging works now from the Tools tab. Course loading and scoring come in milestones 3 and 6.")
                 }

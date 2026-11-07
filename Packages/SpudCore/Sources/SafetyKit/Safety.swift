@@ -21,7 +21,7 @@ public enum SafetyReason: Equatable, Sendable, CustomStringConvertible {
         case let .muzzleVelocityOverCap(v, cap):
             return String(format: "This charge setting measured %.1f m/s, over the %.0f m/s limit. Solutions for it are blocked.", v, cap)
         case let .beyondSolutionRange(d, limit):
-            return String(format: "The hole is %.0f m away, past the %.0f m (100 yd) limit. Lay up closer first.", d, limit)
+            return String(format: "The hole is %.0f m away, past the %.0f m (100 yd) limit. Fire from a closer firing point.", d, limit)
         case .noFlag:
             return "No published flag here. Ranging only works on a loaded course's flags."
         case let .flagTooFar(miss, tol):
@@ -29,7 +29,7 @@ public enum SafetyReason: Equatable, Sendable, CustomStringConvertible {
         case .noBoundary:
             return "The course has no boundary, so its safety fans can't be checked."
         case let .fanLeavesBoundary(n):
-            return "The safety fan from this start spot leaves the course boundary (\(n) check points outside). Move the start spot or the flag."
+            return "The safety fan from this firing point leaves the course boundary (\(n) check points outside). Move the firing point or the flag."
         case .downrangeNotConfirmed:
             return "Confirm the fan is clear of people and animals before the first shot on this hole."
         case .unsupportedLauncher:

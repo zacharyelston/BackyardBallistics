@@ -19,7 +19,7 @@ public struct SafetyLimits: Codable, Equatable, Sendable {
     public var maxSolutionRange: Double
     /// How far a ranged hole may land from a published flag point, m.
     public var flagGateTolerance: Double
-    /// Radius of each start spot's safety fan, m (105 yd).
+    /// Radius of each firing point's safety fan, m (105 yd).
     public var fanRange: Double
     /// Half-angle of the safety fan either side of the line to the hole, degrees.
     public var fanHalfAngle: Double

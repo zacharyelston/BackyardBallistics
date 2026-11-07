@@ -17,14 +17,15 @@ Every line is one flat, dotted key with one value, like an SNMP OID. The path sa
 | `course.meta.name` | `Elm Street Backyard` | Yes | |
 | `course.meta.version` | `3` | Yes | Bump whenever anything moves |
 | `course.meta.difficulty` | `easy` | No | The designer's own label |
-| `course.boundary.N` | `42.360010, -71.059010` | Yes | Property-line corners, in order |
+| `course.boundary.N` | `42.360010, -71.059010` | Yes | Property-line corners, in order; include neighbouring land only with its owner's agreement |
 | `hole.N.meta.name` | `The Driveway` | Yes | |
-| `hole.N.meta.par` | `4` | Yes | |
-| `hole.N.start.M` | `42.360120, -71.058880` | Yes | One or more start spots |
+| `hole.N.meta.par` | `3` | Yes | Rounds a good player needs to land one in the ring |
+| `hole.N.meta.downrange_play` | `no` | No | `yes` lets players fire further missions from their closest round; default `no` |
+| `hole.N.firing_point.M` | `42.360120, -71.058880` | Yes | One or more; farther points make harder versions of the hole |
 | `hole.N.flag.position` | `42.360950, -71.058810` | Yes | Base of the pole: the hole |
 | `hole.N.flag.pole_height_m` | `2.438` | Yes | Measured with the app at setup |
 | `hole.N.flag.lean_deg` | `0.3` | Yes | From the lean check |
-| `hole.N.flag.in_radius_m` | `1.0` | No | Finish distance from the pole; default 1.0 m |
+| `hole.N.flag.in_radius_m` | `1.0` | No | Ring radius around the pole; default 1.0 m |
 | `hole.N.lid.diameter_m` | `0.58` | No | Optional lid at the base; audible only |
 | `hole.N.hazard.K.type` | `water` | No | `water`, `sand` or `ob` |
 | `hole.N.hazard.K.points` | `42.36051, -71.05899; …` | No | Corners, separated by semicolons |
@@ -37,7 +38,7 @@ The app validates a course file in the course tool before it's published, and ag
 
 - Every required key is present and parses.
 - Every flag has a measured pole height and a lean under 0.5°.
-- Every start spot has its hole within 100 yd, or a reachable lay-up.
-- The safety fan from every start spot (105 yd, ±30° of the line to the hole) stays inside `course.boundary` (`Safety.checkFan` in SafetyKit).
+- Every firing point has its hole within 100 yd.
+- The safety fan from every firing point (105 yd, ±30° of the line to the hole) stays inside `course.boundary` (`Safety.checkFan` in SafetyKit).
 
 The server only serves the file. Rounds stay on the players' phones.

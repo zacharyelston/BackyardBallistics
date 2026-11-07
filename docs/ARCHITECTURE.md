@@ -10,18 +10,19 @@ graph BT
   SafetyKit["SafetyKit<br/>limits, checks, Cleared&lt;T&gt;"]
   RangingKit["RangingKit<br/>rays, lean, pole solver"]
   CourseKit["CourseKit (m3)<br/>course file, validator"]
-  BallisticsKit["BallisticsKit (m4–5)<br/>solver, roll-out, calibration"]
-  RoundKit["RoundKit (m6)<br/>players, strokes, scorecard"]
+  FireControlKit["FireControlKit (m4–5)<br/>initial data, spotting, corrections, calibration"]
+  RoundKit["RoundKit (m6)<br/>missions, turns, scoring"]
   App["SpudGunGolf app<br/>SwiftUI, ARKit, AVFoundation"]
   SafetyKit --> CoreGeo
   RangingKit --> CoreGeo
   CourseKit --> SafetyKit
-  BallisticsKit --> SafetyKit
+  FireControlKit --> SafetyKit
+  FireControlKit --> RangingKit
   RoundKit --> SafetyKit
   App --> RangingKit
   App --> SafetyKit
   App --> CourseKit
-  App --> BallisticsKit
+  App --> FireControlKit
   App --> RoundKit
 ```
 
@@ -33,8 +34,8 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 | SafetyKit | Every safety limit, the checks, `Cleared<T>`, `DownrangeLog`, launcher conformance, `safety-limits.json` | CoreGeo | `swift test`, including a check that the browser prototype uses the same numbers |
 | RangingKit | Camera intrinsics and rays, size ranging, lean, pole height, multi-photo `PoleSolver` | CoreGeo | `swift test` on synthetic scenes |
 | CourseKit (m3) | Course file format, loading, validator (calls `Safety.checkFan`) | SafetyKit | planned |
-| BallisticsKit (m4–5) | Trajectory and roll-out model, firing solutions, calibration fitting | SafetyKit | planned |
-| RoundKit (m6) | Players, honours, strokes, penalties, scorecard | SafetyKit | planned |
+| FireControlKit (m4–5) | Trajectory and roll-out model, initial data, spotting a round from the firing point, round-by-round corrections, calibration fitting | SafetyKit, RangingKit | planned |
+| RoundKit (m6) | Fire missions per hole, turns, cease fire and verify, the downrange-play switch, scoring (rounds + metres outside the ring) | SafetyKit | planned |
 
 ### Dependency rules
 
@@ -53,7 +54,7 @@ Three pieces, each running on its own:
 | Course server | Any plain static web server on the course's local Wi-Fi | Serves one file, `course.yaml`, with flat dotted keys ([COURSE_FORMAT.md](COURSE_FORMAT.md)). No logic, no accounts |
 | Course registry | Internet | Lists courses, where they are and their file address, so players can find one before they arrive |
 
-The app never needs internet during play: it joins the course Wi-Fi at the first start spot, fetches `http://spudgungolf.local/course.yaml`, and keeps it. Rounds stay on the players' phones. CourseKit (m3) owns parsing and validating the file; the course tool and registry are milestone 8.
+The app never needs internet during play: it joins the course Wi-Fi at the first firing point, fetches `http://spudgungolf.local/course.yaml`, and keeps it. Rounds stay on the players' phones. CourseKit (m3) owns parsing and validating the file; the course tool and registry are milestone 8.
 
 ## The safety gate
 
@@ -66,7 +67,7 @@ The app never needs internet during play: it joins the course Wi-Fi at the first
 | `Safety.checkLauncher` | The Launcher standard's conformance steps and this round's inspection | Unsupported launcher type, a missing step, no inspection this round, or a failed inspection item |
 | `Safety.pressureInhibit` | Live pressure against the launcher's calibrated setpoint (drives the inhibit relay) | Over the setpoint, or no setpoint. Inhibit only; it never starts a shot |
 | `Safety.checkCalibration` | A charge setting's fitted velocity | Over 45 m/s |
-| `Safety.checkFan` | Course publishing | A start spot's 105 yd, ±30° fan leaves the boundary, or there is no boundary |
+| `Safety.checkFan` | Course publishing | A firing point's 105 yd, ±30° fan leaves the boundary, or there is no boundary |
 
 Each check returns readable reasons, so the app can explain a refusal instead of failing silently.
 
@@ -76,11 +77,11 @@ Three tabs, one per job:
 
 | Tab | For | Now | Later |
 | --- | --- | --- | --- |
-| Play | Playing a round | The hole loop, with ranging live | Course loading (m3), solutions (m4), scoring (m6) |
+| Play | Playing a round as fire missions | The mission loop, with ranging live | Course loading (m3), fire control (m4), missions and scoring (m6) |
 | Launcher | Your launcher's profile and the limits | Fixed safety limits | Calibration shots and per-setting velocities (m5), sight mode (m7) |
 | Tools | Setting up flags and testing | Lean check, pole height, ranging, sighting test, logs | Course authoring and publishing (m3, m8) |
 
-### One shot, end to end
+### One fire mission, end to end
 
 ```mermaid
 sequenceDiagram
@@ -88,18 +89,23 @@ sequenceDiagram
   participant A as App
   participant R as RangingKit
   participant S as SafetyKit
-  participant B as BallisticsKit
-  P->>A: Photos of the pole from a short arc
+  participant F as FireControlKit
+  P->>A: Photos of the pole from the firing point
   A->>R: PoleSolver.report(sightings)
   R-->>A: distance, ±, height difference, line
-  A->>S: clearRange(report, lie GPS, course flag)
+  A->>S: clearRange(report, firing point GPS, course flag)
   S-->>A: Cleared range, or reasons
-  A->>B: solve(cleared range, wind, launcher profile)
-  B->>S: clearSolution(distance, velocity, downrange)
-  S-->>B: Cleared solution, or reasons
-  B-->>A: charge, elevation, aim
-  P->>A: Fire, walk to the potato, tap the lie, range again
-  A->>B: shot vector updates the wind estimate
+  A->>F: initialData(cleared range, wind, launcher profile)
+  F->>S: clearSolution(distance, velocity, launcher, downrange)
+  S-->>F: Cleared solution, or reasons
+  F-->>A: charge, elevation, aim
+  loop until a round is in the ring or the player ceases fire
+    P->>A: Fire, then one photo: tap the potato and the pole base
+    A->>F: spot(miss vector)
+    F-->>A: correction (add/drop, left/right); wind and velocity updated
+  end
+  P->>A: Cease fire; everyone walks out; range the pole from the closest round
+  A->>A: score = rounds + metres outside the ring
 ```
 
 ### App folder layout

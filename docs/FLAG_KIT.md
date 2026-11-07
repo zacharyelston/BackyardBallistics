@@ -33,6 +33,6 @@ One flag per hole, about $6. The pole is the hole; a trash can lid at its base i
 ## Notes
 
 - A 2° lean shifts the hole's ground point about 6 cm from the point under the tip. Under 0.5° keeps it near 2 cm.
-- A hole is finished when a potato rests within the in-radius of the pole (1 m unless the course sets another). Hitting the lid or the pole is just a clang. A potato that hits a guy line is played where it stops.
+- A round in the ring (within 1 m of the pole unless the course sets another) is a hit. Hitting the lid or the pole is just a clang. A potato that hits a guy line is played where it stops.
 - Taller poles are easier to spot and range more precisely; 10 and 12 ft poles suit longer holes.
 - The telltales also mark the lines so nobody trips on them.
