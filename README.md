@@ -64,7 +64,7 @@ scripts/typecheck-ios.sh
 ## Milestone status
 
 1. **Flag kit guide and setup flow** — built: lean check, pole height and the sighting field-test tool. Field results pending.
-2. **Ranging prototype** — built: multi-photo AR ranging with fused size range and triangulation, outlier drop, height difference, and the 10 m flag check. Device tuning pending. The spec now makes a single reticle lock the main ranging method, with this multi-photo solve as an optional cross-check; the app's reticle screen is still to build.
+2. **Ranging** — built: reticle (stadia) ranging as the main method: crosshair on the pole's base, a CoreMotion-plumb line sized by the range dial, and a lock that records range, bearing, angle below level and GPS, then runs the 10 m flag check. The multi-photo AR solve (triangulation, outlier drop, height difference) stays as an optional cross-check. The spotting model (called long/short, measured left/right, bracketing) is in RangingKit. Device tuning pending.
 3. Course file and validator
 4. Fire control in Swift
 5. Calibration shots

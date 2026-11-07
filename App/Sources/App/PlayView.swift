@@ -15,9 +15,9 @@ struct PlayView: View {
     private let steps = [
         Step(id: 1, title: "Load a course", detail: "Join the course Wi-Fi; the app downloads it from the course server.", milestone: 3, ready: false),
         Step(id: 2, title: "Confirm downrange", detail: DownrangeLog.prompt, milestone: 6, ready: false),
-        Step(id: 3, title: "Range the pole", detail: "A few photos from the firing point.", milestone: 2, ready: true),
+        Step(id: 3, title: "Range the pole", detail: "Crosshair on the base, dial the plumb line to the pole's top, lock.", milestone: 2, ready: true),
         Step(id: 4, title: "Initial data", detail: "Charge, elevation and aim, cleared by the safety checks.", milestone: 4, ready: false),
-        Step(id: 5, title: "Fire and spot", detail: "One photo: tap the potato and the pole base to see the miss.", milestone: 4, ready: false),
+        Step(id: 5, title: "Fire and spot", detail: "Call short, over or range correct; left/right is measured with the crosshair.", milestone: 4, ready: false),
         Step(id: 6, title: "Adjust or cease fire", detail: "Add or drop, left or right, until a round rests in the ring.", milestone: 4, ready: false),
         Step(id: 7, title: "Verify and score", detail: "Walk out together; score is rounds plus metres outside the ring.", milestone: 6, ready: false)
     ]
@@ -48,8 +48,8 @@ struct PlayView: View {
                     Text("Ranging works now from the Tools tab. Course loading and scoring come in milestones 3 and 6.")
                 }
                 Section {
-                    NavigationLink { RangingView() } label: {
-                        Label("Range a flag now", systemImage: "camera.metering.multispot")
+                    NavigationLink { ReticleRangingView() } label: {
+                        Label("Range a pole now", systemImage: "scope")
                     }
                 }
             }

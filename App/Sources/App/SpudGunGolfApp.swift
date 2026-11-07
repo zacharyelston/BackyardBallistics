@@ -4,12 +4,14 @@ import SwiftUI
 struct SpudGunGolfApp: App {
     @StateObject private var fieldLog = FieldLogStore(fileName: "fieldlog.json")
     @StateObject private var rangingLog = RangingLogStore(fileName: "ranginglog.json")
+    @StateObject private var reticleLog = ReticleLogStore(fileName: "reticlelog.json")
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(fieldLog)
                 .environmentObject(rangingLog)
+                .environmentObject(reticleLog)
         }
     }
 }

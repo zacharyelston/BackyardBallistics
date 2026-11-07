@@ -61,6 +61,22 @@ final class ARKitRangingSource: NSObject, RangingCaptureSource, ARSessionDelegat
         return FrozenFrame(image: cg, intrinsics: k, lens: "Wide (AR)", approximateIntrinsics: false, pose: pose)
     }
 
+    func liveIntrinsics() -> Intrinsics? {
+        guard let camera = arView.session.currentFrame?.camera else { return nil }
+        return Intrinsics(matrix: camera.intrinsics, width: Int(camera.imageResolution.width),
+                          height: Int(camera.imageResolution.height))
+    }
+
+    /// From the camera transform; the session's `.gravityAndHeading` alignment makes −Z true north.
+    func liveAim() -> CaptureAim? {
+        guard let camera = arView.session.currentFrame?.camera, case .normal = camera.trackingState else { return nil }
+        let t = camera.transform
+        let pose = CameraPose(simd_double4x4(columns: (SIMD4<Double>(t.columns.0), SIMD4<Double>(t.columns.1),
+                                                       SIMD4<Double>(t.columns.2), SIMD4<Double>(t.columns.3))))
+        let aim = pose.aim
+        return CaptureAim(bearing: aim.bearing, angleBelowLevel: aim.angleBelowLevel)
+    }
+
     private func emit() {
         onStatus?(CaptureStatus(
             tracking: tracking,

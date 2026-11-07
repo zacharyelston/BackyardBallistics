@@ -4,6 +4,7 @@ import SwiftUI
 struct ToolsView: View {
     @EnvironmentObject private var fieldLog: FieldLogStore
     @EnvironmentObject private var rangingLog: RangingLogStore
+    @EnvironmentObject private var reticleLog: ReticleLogStore
     @AppStorage(Settings.poleHeightKey) private var poleHeight = Settings.defaultPoleHeight
     @AppStorage(Settings.cameraHeightKey) private var cameraHeight = Settings.defaultCameraHeight
     @AppStorage(Settings.simulatedCaptureKey) private var simulatedCapture = false
@@ -25,17 +26,31 @@ struct ToolsView: View {
                 }
 
                 Section {
-                    NavigationLink { RangingView() } label: {
-                        Label("Range the flag", systemImage: "camera.metering.multispot")
+                    NavigationLink { ReticleRangingView() } label: {
+                        Label("Range the pole", systemImage: "scope")
                     }
-                    NavigationLink { RangingLogView() } label: {
-                        Label("Ranging log", systemImage: "list.number")
-                            .badge(rangingLog.items.count)
+                    NavigationLink { ReticleLogView() } label: {
+                        Label("Reticle log", systemImage: "list.number")
+                            .badge(reticleLog.items.count)
                     }
                 } header: {
                     Text("Ranging")
                 } footer: {
-                    Text("Three to five photos of the pole from a short arc give distance, height difference and a cross-check.")
+                    Text("Crosshair on the pole's base, turn the dial until the plumb line meets the pole's top, lock.")
+                }
+
+                Section {
+                    NavigationLink { RangingView() } label: {
+                        Label("Multi-photo cross-check", systemImage: "camera.metering.multispot")
+                    }
+                    NavigationLink { RangingLogView() } label: {
+                        Label("Multi-photo log", systemImage: "list.bullet")
+                            .badge(rangingLog.items.count)
+                    }
+                } header: {
+                    Text("Cross-check (optional)")
+                } footer: {
+                    Text("Three to five marked photos of the pole from a short arc give an independent distance and height difference.")
                 }
 
                 Section {
