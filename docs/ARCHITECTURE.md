@@ -102,9 +102,9 @@ sequenceDiagram
   loop until a round is in the ring or the player ceases fire
     P->>A: Fire, then one photo: tap the potato and the pole base
     A->>F: spot(miss vector)
-    F-->>A: correction (add/drop, left/right); wind and velocity updated
+    F-->>A: correction (add/drop, left/right), wind and velocity updated
   end
-  P->>A: Cease fire; everyone walks out; range the pole from the closest round
+  P->>A: Cease fire, everyone walks out, range the pole from the closest round
   A->>A: score = rounds + metres outside the ring
 ```
 
