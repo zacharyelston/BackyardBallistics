@@ -20,7 +20,7 @@ Every line is one flat, dotted key with one value, like an SNMP OID. The path sa
 | `course.boundary.N` | `42.360010, -71.059010` | Yes | Property-line corners, in order; include neighbouring land only with its owner's agreement |
 | `hole.N.meta.name` | `The Driveway` | Yes | |
 | `hole.N.meta.par` | `3` | Yes | Rounds a good player needs to land one in the ring |
-| `hole.N.meta.downrange_play` | `no` | No | `yes` lets players fire further missions from their closest round; default `no` |
+| `hole.N.meta.downrange_play` | `false` | No | `true` lets players fire further missions from their closest round; default `false` |
 | `hole.N.firing_point.M` | `42.360120, -71.058880` | Yes | One or more; farther points make harder versions of the hole |
 | `hole.N.flag.position` | `42.360950, -71.058810` | Yes | Base of the pole: the hole |
 | `hole.N.flag.pole_height_m` | `2.438` | Yes | Measured with the app at setup |
