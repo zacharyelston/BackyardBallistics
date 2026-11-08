@@ -1,5 +1,7 @@
 import Foundation
 import CoreLocation
+import UIKit
+import UserNotifications
 import CoreGeo
 import RangingKit
 import GroupKit
@@ -29,9 +31,22 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
     /// The round the commander asked members to spot (spotting over the link comes in G5).
     @Published private(set) var spotRequest: SpotRequest?
     @Published private(set) var lastFix: CLLocation?
+    /// Which way the phone points, degrees from true north (magnetic if true isn't available), for
+    /// the order pointer. Nil until the compass reports.
+    @Published private(set) var heading: Double?
+    /// The last spot call this phone sent: which round, and what.
+    @Published private(set) var lastSpot: (round: Int, call: RangeCall)?
+    /// Join squad is on screen (it lists the orders itself, so the banner stays out of the way).
+    @Published var showingJoinScreen = false
     @Published private(set) var lastSent: Date?
     /// Locks this phone sent to the commander, newest last, with what the commander did with each.
     @Published private(set) var sentLocks: [SentLock] = []
+    /// The squad leader's orders for this member that aren't finished (done or can't), newest last.
+    @Published private(set) var orders: [Order] = []
+    /// This member's answers, by order.
+    @Published private(set) var answers: [UUID: OrderAck.Response] = [:]
+    /// Orders answered done or can't, so a resend after a rejoin doesn't bring them back.
+    private var finishedOrders: Set<UUID> = []
 
     struct SentLock: Identifiable, Equatable {
         var id: UUID
@@ -151,6 +166,10 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         status = nil
         spotRequest = nil
         sentLocks = []
+        orders = []
+        answers = [:]
+        lastSpot = nil
+        finishedOrders = []
         state = .idle
     }
 
@@ -183,19 +202,103 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
             squadName = w.squad.name
             state = .joined
             startReporting()
+            Self.askForNotifications()
         case let .squadStatus(s):
             status = s
             squadName = s.squad.name
             if s.roundInFlight == nil { spotRequest = nil }
         case let .spotRequest(r):
+            if spotRequest != r { UINotificationFeedbackGenerator().notificationOccurred(.success) }
             spotRequest = r
         case let .refused(reason):
             state = .refused(reason)   // GroupClient stops on a refusal
         case let .lockReceipt(r):
             if let i = sentLocks.firstIndex(where: { $0.id == r.lock }) { sentLocks[i].receipt = r }
+        case let .order(o):
+            received(o)
         default:
             break   // observer-only messages and the rest aren't for phones
         }
+    }
+
+    // MARK: Orders
+
+    /// Answers an order. Done and can't take it off this phone's list; seen keeps it there.
+    func ack(_ order: Order, _ response: OrderAck.Response) {
+        answers[order.id] = response
+        client?.send(.orderAck(OrderAck(order: order.id, response: response)))
+        if response != .seen {
+            finishedOrders.insert(order.id)
+            orders.removeAll { $0.id == order.id }
+        }
+    }
+
+    private func received(_ o: Order) {
+        guard !finishedOrders.contains(o.id) else { return }
+        if let i = orders.firstIndex(where: { $0.id == o.id }) { orders[i] = o; return }   // a resend after a rejoin
+        orders.append(o)
+        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        if UIApplication.shared.applicationState != .active { Self.notify(o, squad: squadName) }
+    }
+
+    /// Asks once, on the first join, so new orders can reach a locked phone.
+    private static func askForNotifications() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            guard settings.authorizationStatus == .notDetermined else { return }
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        }
+    }
+
+    private static func notify(_ o: Order, squad: String?) {
+        let content = UNMutableNotificationContent()
+        content.title = "\(squad ?? "Squad"): \(o.kind.title)"
+        content.body = o.text.isEmpty ? "New order from the squad leader." : o.text
+        content.sound = .default
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: o.id.uuidString, content: content, trigger: nil))
+    }
+
+    /// Bearing (degrees from north) and distance (metres) from this phone's latest fix to an order's place.
+    func pointer(to order: Order) -> (bearing: Double, distance: Double)? {
+        guard let at = order.at, let fix = lastFix else { return nil }
+        let here = GeoPoint(latitude: fix.coordinate.latitude, longitude: fix.coordinate.longitude)
+        return (Geo.bearing(from: here, to: at), Geo.distance(here, at))
+    }
+
+    /// Distance and compass direction from this phone's latest fix to an order's place, if both are known.
+    func directions(to order: Order) -> String? {
+        guard let at = order.at, let fix = lastFix else { return nil }
+        let here = GeoPoint(latitude: fix.coordinate.latitude, longitude: fix.coordinate.longitude)
+        let d = Geo.distance(here, at)
+        let b = Geo.bearing(from: here, to: at)
+        let points = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        let compass = points[Int((b + 22.5) / 45) % 8]
+        return String(format: "%.0f m %@ (%03.0f°)", d, compass, b)
+    }
+
+    // MARK: Spotting
+
+    /// This member's role in the squad (the gunner calls Fired).
+    var isGunner: Bool { me?.role == .gunner }
+
+    /// The round the gunner would call Fired for next, if the squad is firing and nothing is in the air.
+    var nextRoundToFire: FiredReport? {
+        guard let s = status, let hole = s.hole, s.phase == .firing, !s.walkingOut, s.roundInFlight == nil, s.missions > 0 else { return nil }
+        return FiredReport(hole: hole, mission: s.missions, round: s.rounds.count + 1)
+    }
+
+    /// The gunner's Fired: the round is in the air, and the commander asks everyone to spot it.
+    func sendFired() {
+        guard isGunner, let f = nextRoundToFire, let c = client, c.status == .connected else { return }
+        c.send(.fired(f))
+    }
+
+    /// Calls the round in flight: short, over or range correct, from where this phone is. Left/right
+    /// isn't measured here (a flank spotter's left/right needs the flank geometry, later).
+    func sendSpot(_ call: RangeCall) {
+        guard let r = spotRequest, let c = client, c.status == .connected else { return }
+        let vantage = lastFix.map { GeoPoint(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude) }
+        c.send(.spot(SpotReport(hole: r.hole, mission: r.mission, round: r.round, call: call, lateral: nil, vantage: vantage)))
+        lastSpot = (r.round, call)
     }
 
     // MARK: Locks
@@ -228,6 +331,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         location.allowsBackgroundLocationUpdates = true
         location.showsBackgroundLocationIndicator = true
         location.startUpdatingLocation()
+        if CLLocationManager.headingAvailable() { location.startUpdatingHeading() }
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: Self.positionInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.sendPosition() }
@@ -238,6 +342,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         timer?.invalidate()
         timer = nil
         location.stopUpdatingLocation()
+        location.stopUpdatingHeading()
         location.allowsBackgroundLocationUpdates = false
     }
 
@@ -249,6 +354,11 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
                                heading: fix.course >= 0 ? fix.course : nil, time: fix.timestamp)
         c.send(.position(p))
         lastSent = Date()
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        let h = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+        Task { @MainActor in self.heading = h }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

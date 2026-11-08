@@ -356,4 +356,55 @@ final class GroupKitTests: XCTestCase {
         XCTAssertFalse(f.holds("Red").contains(.checkFire(by: "Theater")))
         XCTAssertFalse(watched.contains { if case .spotRequest = $0 { return true }; return false })
     }
+
+    // MARK: Orders
+
+    func testOrdersReachTheirMembersAndAnswersCount() {
+        let f = Field()
+        f.addSquad("Red")
+        var got: [String: [Order]] = [:]
+        var phones: [String: Phone] = [:]
+        for name in ["Ana", "Ben", "Cy"] {
+            let p = f.addPhone(name, squad: "Red", at: .zero)
+            phones[name] = p
+            f.net.add(p.peer) { m, from in
+                if case let .order(o) = m.body { got[name, default: []].append(o) }
+                return p.receive(m, from: from)
+            }
+        }
+        let ben = phones["Ben"]!.member!, cy = phones["Cy"]!.member!
+
+        // To one member.
+        f.command("Red") { $0.sendOrder(.moveTo, text: "Left flank", at: origin, to: [ben], now: $1) }
+        XCTAssertEqual(got["Ben"]?.map(\.text), ["Left flank"])
+        XCTAssertNil(got["Ana"])
+        XCTAssertNil(got["Cy"])
+
+        // To the team.
+        f.command("Red") { $0.sendOrder(.holdPosition, text: "Hold, people downrange", now: $1) }
+        XCTAssertEqual(got.values.map(\.count).sorted(), [1, 1, 2])
+
+        // Answers: only from someone the order was for.
+        let flank = got["Ben"]![0]
+        f.send(phones["Ben"]!, .orderAck(OrderAck(order: flank.id, response: .done)))
+        f.send(phones["Cy"]!, .orderAck(OrderAck(order: flank.id, response: .done)))
+        XCTAssertEqual(f.hosts["Red"]!.acks[flank.id], [ben: .done])
+        XCTAssertEqual(f.hosts["Red"]!.recipients(of: flank).map(\.name), ["Ben"])
+
+        // A rejoin gets its unfinished orders again; a finished one isn't resent.
+        got["Cy"] = []
+        f.send(phones["Cy"]!, .bye)
+        f.send(phones["Cy"]!, .hello(Hello(name: "Cy", device: phones["Cy"]!.device, joinCode: "RED")))
+        XCTAssertEqual(got["Cy"]?.map(\.kind), [.holdPosition])
+        got["Ben"] = []
+        f.send(phones["Ben"]!, .bye)
+        f.send(phones["Ben"]!, .hello(Hello(name: "Ben", device: phones["Ben"]!.device, joinCode: "RED")))
+        XCTAssertEqual(got["Ben"]?.map(\.kind), [.holdPosition], "the done move-to isn't resent")
+
+        // An order to nobody on the roster is refused; long text is cut.
+        f.command("Red") { $0.sendOrder(.note, text: "x", to: [MemberID()], now: $1) }
+        XCTAssertEqual(f.hosts["Red"]!.lastProblem, "Pick at least one member.")
+        XCTAssertEqual(Order(kind: .note, text: String(repeating: "a", count: 500), time: Date()).text.count, Order.maxText)
+        _ = cy
+    }
 }
