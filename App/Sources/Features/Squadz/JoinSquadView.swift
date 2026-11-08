@@ -10,6 +10,7 @@ struct JoinSquadView: View {
     @AppStorage(Settings.playerNameKey) private var name = Settings.defaultPlayerName
     @State private var picked: GroupBrowser.Found?
     @State private var code = ""
+    @State private var scanning = false
 
     var body: some View {
         Form {
@@ -27,6 +28,14 @@ struct JoinSquadView: View {
             }
         }
         .navigationTitle("Join squad")
+        .sheet(isPresented: $scanning) {
+            JoinCodeScanSheet { scanned in
+                code = scanned
+                // One squad nearby: that's the one the code is for.
+                let compatible = membership.found.filter(\.isCompatible)
+                if picked == nil, compatible.count == 1 { picked = compatible[0] }
+            }
+        }
         .onAppear { membership.startBrowsing() }
         .onDisappear { membership.stopBrowsing() }
     }
@@ -84,6 +93,13 @@ struct JoinSquadView: View {
             Text("The commander's iPad must be open on Command a squad, on the same Wi-Fi (or nearby, with no router). If iOS asks to find devices on your local network, allow it.")
         }
         Section {
+            if JoinCodeScanner.isAvailable {
+                Button {
+                    scanning = true
+                } label: {
+                    Label("Scan code", systemImage: "qrcode.viewfinder")
+                }
+            }
             TextField("Join code", text: $code)
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
@@ -97,7 +113,7 @@ struct JoinSquadView: View {
         } header: {
             Text("Code")
         } footer: {
-            Text("Six letters and numbers, shown big on the commander's iPad.")
+            Text("Scan the QR code on the commander's iPad, or type the six letters and numbers shown under it.")
         }
     }
 

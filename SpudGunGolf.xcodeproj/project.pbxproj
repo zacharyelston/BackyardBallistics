@@ -48,6 +48,7 @@
 		B520BDB5D743A27AC8F6807C /* CourseKit in Frameworks */ = {isa = PBXBuildFile; productRef = 4F593FFDD1BB38CAFE7BFC4C /* CourseKit */; };
 		BC5AFF250A5499A470335176 /* SafetyKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9650B624C198CEA48B5299D6 /* SafetyKit */; };
 		C17CD159F8E81ACE5278508D /* SimulatedRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B45B7403F091985D78297E /* SimulatedRangingSource.swift */; };
+		C50B4878967B32CF63176FDD /* JoinCodeScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C65BD036734D6BD5C19725B /* JoinCodeScanner.swift */; };
 		C670AE24783CEC45026EA822 /* RangingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311424D16BF397C1CD80DDFE /* RangingSession.swift */; };
 		C9D4F65053E9F8705B55B8AA /* GroupLink in Frameworks */ = {isa = PBXBuildFile; productRef = 305D2A30F81FFD8DBD356D47 /* GroupLink */; };
 		DD2A092952F63A5FAFDCE4A7 /* RangingCaptureSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C49810F5CD5D313FB0CD103 /* RangingCaptureSource.swift */; };
@@ -64,6 +65,7 @@
 		058FD02EB37A4DD2D60E9425 /* LauncherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherView.swift; sourceTree = "<group>"; };
 		05E120BD574CED262D43DC22 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		065ED1CBF727D2A9F1C17FFE /* CourseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseStore.swift; sourceTree = "<group>"; };
+		0C65BD036734D6BD5C19725B /* JoinCodeScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinCodeScanner.swift; sourceTree = "<group>"; };
 		0E339C687D3B38CF183F162C /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
 		103D8AEC8FC2644FBAE493AA /* sample-course.yaml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = "sample-course.yaml"; sourceTree = "<group>"; };
 		1956E8D95530FA7EA760FD87 /* RangingLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingLog.swift; sourceTree = "<group>"; };
@@ -189,6 +191,7 @@
 			isa = PBXGroup;
 			children = (
 				7E3297A98DDACEAB482EF66B /* CommandSquadView.swift */,
+				0C65BD036734D6BD5C19725B /* JoinCodeScanner.swift */,
 				FDE461F8C92C1AE4841587B3 /* JoinSquadView.swift */,
 				53AF3C47E42C2CD18B24317F /* QRCodeView.swift */,
 				8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */,
@@ -443,6 +446,7 @@
 				1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */,
 				969A1C83E524FD939C7D8B00 /* HoleMissionView.swift in Sources */,
 				9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */,
+				C50B4878967B32CF63176FDD /* JoinCodeScanner.swift in Sources */,
 				50761EB52A9A37C9E24D8403 /* JoinSquadView.swift in Sources */,
 				AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */,
 				8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */,
