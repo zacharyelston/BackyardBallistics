@@ -20,18 +20,6 @@ public enum GroupService {
     }
 }
 
-/// Six characters, without the ones people misread (0/O, 1/I/L).
-public enum JoinCode {
-    static let alphabet = Array("ABCDEFGHJKMNPQRSTUVWXYZ23456789")
-    public static func make() -> String {
-        var g = SystemRandomNumberGenerator()
-        return String((0..<6).map { _ in alphabet.randomElement(using: &g)! })
-    }
-    public static func normalized(_ code: String) -> String {
-        code.uppercased().filter { !$0.isWhitespace && $0 != "-" }
-    }
-}
-
 public extension NWParameters {
     /// TCP with TLS keyed from the join code (a pre-shared key), so only people who have the code
     /// can connect, and nothing travels in the clear. Peer-to-peer Wi-Fi is allowed.

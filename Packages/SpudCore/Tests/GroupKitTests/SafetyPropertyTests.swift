@@ -40,6 +40,12 @@ final class SafetyPropertyTests: XCTestCase {
             .spot(SpotReport(hole: 1, mission: 1, round: 1, call: .over, lateral: -0.4, vantage: origin)),
             .fired(FiredReport(hole: 1, mission: 1, round: 1)),
             .orderAck(OrderAck(order: UUID(), response: .done)),
+            .fieldNote(FieldNote(author: "Ana", time: t, courseID: "c", at: origin, accuracy: 3, text: "Hedge", photo: Data([1, 2]))),
+            .fieldSubmission(FieldSubmission(author: "Ana", time: t, course: testCourse(), yaml: "id: c")),
+            .fileOffer(FileOffer(kind: .capture, group: UUID(), name: "shot-1.jpg", size: 10, sha256: "ab", courseID: "c")),
+            .fileChunk(FileChunk(file: UUID(), index: 0, data: Data([1, 2, 3]))),
+            .fileDone(UUID()),
+            .receipt(Receipt(id: UUID(), status: .stored, detail: "ok")),
             .order(Order(kind: .moveTo, text: "Left flank, by the shed", at: origin, to: [MemberID()], time: t)),
             .checkFire(CheckFire(by: "Ana")),
             .welcome(Welcome(member: MemberID(), squad: squad)),
@@ -60,7 +66,7 @@ final class SafetyPropertyTests: XCTestCase {
         ]
         for body in all {
             switch body {   // exhaustive on purpose
-            case .hello, .bye, .position, .lock, .spot, .fired, .orderAck, .order, .checkFire, .welcome, .observing, .course, .refused, .squadStatus,
+            case .hello, .bye, .position, .lock, .spot, .fired, .orderAck, .order, .fieldNote, .fieldSubmission, .fileOffer, .fileChunk, .fileDone, .receipt, .checkFire, .welcome, .observing, .course, .refused, .squadStatus,
                  .spotRequest, .lockReceipt, .joinMatch, .squadReport, .positions, .matchState: break
             }
         }

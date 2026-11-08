@@ -1,5 +1,6 @@
 import SwiftUI
 import VisionKit
+import GroupKit
 import GroupLink
 
 /// Reads the join code from the QR code on the commander's iPad, with VisionKit's live scanner.

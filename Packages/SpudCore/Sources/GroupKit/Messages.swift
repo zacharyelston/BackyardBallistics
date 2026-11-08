@@ -15,7 +15,19 @@ import CourseKit
 
 public enum GroupProtocol {
     /// Bumped on any change to the messages. A device on another version is refused (fail closed).
-    public static let version = 4
+    public static let version = 5
+}
+
+/// Six characters, without the ones people misread (0/O, 1/I/L).
+public enum JoinCode {
+    public static let alphabet = Array("ABCDEFGHJKMNPQRSTUVWXYZ23456789")
+    public static func make() -> String {
+        var g = SystemRandomNumberGenerator()
+        return String((0..<6).map { _ in alphabet.randomElement(using: &g)! })
+    }
+    public static func normalized(_ code: String) -> String {
+        code.uppercased().filter { !$0.isWhitespace && $0 != "-" }
+    }
 }
 
 public struct SquadID: Codable, Hashable, Sendable, CustomStringConvertible {
@@ -81,6 +93,8 @@ public struct Hello: Codable, Equatable, Sendable {
         /// A Theater station (v4): watches the squad. It receives status and positions and can
         /// send nothing that the squad acts on.
         case observer
+        /// A phone connecting to a Theater host (not a squad) to send fields, notes and files.
+        case contributor
     }
     public var name: String
     public var device: UUID
@@ -408,6 +422,14 @@ public struct GroupMessage: Codable, Equatable, Sendable {
         case fired(FiredReport)
         /// A member's answer to an order.
         case orderAck(OrderAck)
+        /// A note pinned to the field: member → leader (passed on to observers), or phone → Theater.
+        case fieldNote(FieldNote)
+        /// A surveyed or loaded field: member → leader (to adopt), or phone → Theater (to register).
+        case fieldSubmission(FieldSubmission)
+        /// Phone → Theater: a file in chunks, then done.
+        case fileOffer(FileOffer)
+        case fileChunk(FileChunk)
+        case fileDone(UUID)
         /// Phone → commander, and commander → match host.
         case checkFire(CheckFire)
 
@@ -424,6 +446,8 @@ public struct GroupMessage: Codable, Equatable, Sendable {
         case lockReceipt(LockReceipt)
         /// The squad leader's order, to the members it's for (and to observers, read-only).
         case order(Order)
+        /// What the leader or the Theater did with a note, field or file.
+        case receipt(Receipt)
 
         // Commander → match host
         case joinMatch(JoinMatch)
