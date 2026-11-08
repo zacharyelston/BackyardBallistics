@@ -2,6 +2,7 @@ import SwiftUI
 import RangingKit
 import CoreGeo
 import SafetyKit
+import GroupKit
 
 /// The main ranging method: hold the crosshair on the pole's base, rough the dial in on the live view,
 /// freeze a full-resolution still, fine-match the plumb line's top to the pole's top on it, and lock.
@@ -27,6 +28,9 @@ struct ReticleRangingView: View {
     @StateObject private var session = RangingSession.make()
     @StateObject private var motion = MotionReader()
     @EnvironmentObject private var reticleLog: ReticleLogStore
+    @EnvironmentObject private var squad: SquadMembership
+    /// The lock last sent to the squad's commander from this screen.
+    @State private var sentLockID: UUID?
     @AppStorage(Settings.poleHeightKey) private var poleHeight = Settings.defaultPoleHeight
     @AppStorage(Settings.cameraHeightKey) private var cameraHeight = Settings.defaultCameraHeight
     @AppStorage(Settings.flagLatKey) private var flagLat = 0.0
@@ -177,6 +181,62 @@ struct ReticleRangingView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(gate?.verdict.isAllowed != true)
             }
+            if mission == nil, let lock, squad.isInSquad {
+                squadSend(lock)
+            }
+        }
+    }
+
+    /// v3 Squadz: send the lock to the commander's iPad, which checks it against the course flag.
+    @ViewBuilder private func squadSend(_ lock: ReticleLock) -> some View {
+        let sent = squad.sentLock(sentLockID)
+        HUDPanel {
+            VStack(alignment: .leading, spacing: 6) {
+                Menu {
+                    Button("First range of the hole (from the firing point)") { send(lock, .initial) }
+                    Button("Next mission (from the closest round)") { send(lock, .nextMission) }
+                    Button("Verify (from the closest round, after cease fire)") { send(lock, .verify) }
+                    Button("Field map only") { send(lock, .observation) }
+                } label: {
+                    Label(sent == nil ? "Send to \(squad.squadName ?? "squad")" : "Send again", systemImage: "paperplane.fill")
+                        .font(.headline)
+                }
+                .disabled(squad.state != .joined)
+                if let sent {
+                    Text(receiptText(sent)).font(.footnote).foregroundStyle(receiptColor(sent))
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if squad.state != .joined {
+                    Text("Reconnecting to the squad…").font(.footnote).foregroundStyle(.orange)
+                }
+            }
+        }
+    }
+
+    private func send(_ lock: ReticleLock, _ purpose: LockPurpose) {
+        sentLockID = squad.sendLock(lock, purpose: purpose)
+    }
+
+    private func receiptText(_ s: SquadMembership.SentLock) -> String {
+        let what: String
+        switch s.purpose {
+        case .initial: what = "first range"
+        case .nextMission: what = "next mission"
+        case .verify: what = "verify"
+        case .observation: what = "field map"
+        }
+        switch s.receipt?.status {
+        case nil: return "Sent (\(what))…"
+        case .received?: return "The commander has it (\(what))."
+        case .used?: return "Used by the commander (\(what))."
+        case .refused?: return "Refused: " + (s.receipt?.reasons.joined(separator: " ") ?? "")
+        }
+    }
+
+    private func receiptColor(_ s: SquadMembership.SentLock) -> Color {
+        switch s.receipt?.status {
+        case .used?: return .green
+        case .refused?: return .red
+        default: return .secondary
         }
     }
 
@@ -379,6 +439,7 @@ struct ReticleRangingView: View {
     }
 
     private func unlock() {
+        sentLockID = nil
         unfreeze()
         lock = nil
         gate = nil
