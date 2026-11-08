@@ -21,6 +21,9 @@ struct CommandSquadView: View {
             }
         }
         .navigationTitle("Command a squad")
+        // Keep the commander's iPad awake while this screen is open: if it sleeps, every phone drops.
+        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
     }
 
     // MARK: Setup

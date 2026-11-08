@@ -71,6 +71,17 @@ final class SquadCommand: ObservableObject {
         }
     }
 
+    /// The app came back to the foreground (after the iPad slept): restart the listener on the same
+    /// port now, so phones rejoin without waiting. Members come back as the same members.
+    func sceneBecameActive() {
+        guard host != nil else { return }
+        switch link {
+        case .off: return
+        case .failed: advertise()
+        case .starting, .listening: group?.restart()
+        }
+    }
+
     /// Stops advertising and drops every link. The saved round stays, for Resume.
     func stop() {
         group?.stop()

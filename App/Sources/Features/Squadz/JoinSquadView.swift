@@ -15,12 +15,12 @@ struct JoinSquadView: View {
     var body: some View {
         Form {
             switch membership.state {
-            case .joined, .disconnected:
+            case .joined, .reconnecting:
                 joinedSections
             case let .connecting(squad):
                 Section {
                     HStack { ProgressView(); Text("Joining \(squad)…") }
-                    Button("Cancel", role: .cancel) { membership.leave(sendBye: false) }
+                    Button("Cancel", role: .cancel) { membership.leave() }
                 }
             default:
                 problemSection
@@ -120,10 +120,18 @@ struct JoinSquadView: View {
     // MARK: Joined
 
     @ViewBuilder private var joinedSections: some View {
-        if membership.state == .disconnected {
+        if case let .reconnecting(why) = membership.state {
             Section {
-                Label("Lost the link to the squad's iPad.", systemImage: "wifi.exclamationmark").foregroundStyle(.orange)
-                Button("Rejoin") { membership.retry() }
+                HStack(spacing: 10) {
+                    ProgressView()
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Reconnecting to \(membership.squadName ?? "the squad")…")
+                        Text(why).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                    }
+                }
+                Button("Try now") { membership.retry() }
+            } footer: {
+                Text("If the commander's iPad slept or the Wi-Fi blinked, the phone rejoins on its own as the same member.")
             }
         }
         Section {

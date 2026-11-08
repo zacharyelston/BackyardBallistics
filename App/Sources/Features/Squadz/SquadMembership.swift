@@ -10,12 +10,13 @@ import GroupLink
 final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelegate {
     enum State: Equatable {
         case idle
+        /// Finding the squad and saying hello.
         case connecting(String)
         case joined
+        /// The link dropped (the iPad slept, Wi-Fi blinked); `GroupClient` is rejoining on its own.
+        case reconnecting(String)
         case refused(String)
         case failed(String)
-        /// The link dropped after joining.
-        case disconnected
     }
 
     @Published private(set) var found: [GroupBrowser.Found] = []
@@ -33,8 +34,8 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
     static let positionInterval: TimeInterval = 3
 
     private var browser: GroupBrowser?
-    private var connection: GroupConnection?
-    private var lastTarget: (found: GroupBrowser.Found, code: String, name: String)?
+    private var client: GroupClient?
+    private var lastTarget: (squad: String, code: String, name: String)?
     private let location = CLLocationManager()
     private var timer: Timer?
 
@@ -58,6 +59,14 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         return (status?.squad ?? welcome?.squad)?.members.first { $0.id == id }
     }
 
+    /// In a squad, or trying to get back into one.
+    var isInSquad: Bool {
+        switch state {
+        case .joined, .reconnecting: return true
+        default: return false
+        }
+    }
+
     // MARK: Finding squads
 
     func startBrowsing() {
@@ -79,34 +88,51 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
 
     // MARK: Joining
 
+    /// Joins a squad by its name. `GroupClient` keeps the link up from here on: after any drop it
+    /// finds the squad again and rejoins as the same member.
     func join(_ squad: GroupBrowser.Found, code: String, name: String) {
-        leave(sendBye: false)
+        join(squadName: squad.name, code: code, name: name)
+    }
+
+    private func join(squadName name: String, code: String, name player: String) {
+        leave()
         let code = JoinCode.normalized(code)
-        lastTarget = (squad, code, name)
-        squadName = squad.name
-        state = .connecting(squad.name)
-        let c = GroupConnection(to: squad.endpoint, joinCode: code)
-        c.onState = { [weak self] s in self?.linkChanged(s) }
+        lastTarget = (name, code, player)
+        squadName = name
+        state = .connecting(name)
+        let c = GroupClient(squadName: name, joinCode: code, hello: Hello(name: player, device: Self.deviceID, joinCode: code))
+        c.onStatus = { [weak self] s in self?.clientChanged(s) }
         c.onMessage = { [weak self] m in self?.receive(m) }
-        connection = c
+        client = c
         c.start()
     }
 
-    /// Tries the last squad again with the same code.
+    /// Tries again now: straight away if the client is still trying, or from scratch after it gave up.
     func retry() {
-        guard let t = lastTarget else { return }
-        join(t.found, code: t.code, name: t.name)
+        if let c = client, !Self.isStopped(c.status) {
+            c.retryNow()
+        } else if let t = lastTarget {
+            join(squadName: t.squad, code: t.code, name: t.name)
+        }
     }
 
-    /// Leaves the squad: tells the commander, then closes the link.
-    func leave(sendBye: Bool = true) {
-        if sendBye, let c = connection, c.state == .ready {
-            c.send(.bye)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { c.cancel() }
-        } else {
-            connection?.cancel()
-        }
-        connection = nil
+    private static func isStopped(_ s: GroupClient.Status) -> Bool {
+        if case .stopped = s { return true } else { return false }
+    }
+
+    /// The app came back to the foreground: don't wait out the backoff.
+    func sceneBecameActive() {
+        guard let c = client, c.status != .connected else { return }
+        c.retryNow()
+    }
+
+    /// Leaves the squad: says bye (if linked) and stops rejoining.
+    func leave() {
+        let c = client
+        client = nil
+        c?.onStatus = nil
+        c?.onMessage = nil
+        c?.stop()
         stopReporting()
         welcome = nil
         status = nil
@@ -114,27 +140,27 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         state = .idle
     }
 
-    private func linkChanged(_ s: GroupConnection.State) {
+    private func clientChanged(_ s: GroupClient.Status) {
+        let name = squadName ?? "the squad"
         switch s {
-        case .connecting:
-            break
-        case .ready:
-            guard let t = lastTarget else { return }
-            connection?.send(.hello(Hello(name: t.name, device: Self.deviceID, joinCode: t.code)))
-        case let .failed(reason):
+        case .searching, .connecting:
+            if welcome == nil { state = .connecting(name) }
+        case .connected:
+            // The hello is out; the welcome (or a refusal) follows. A rejoin keeps showing the squad.
+            if welcome != nil { state = .joined }
+        case let .reconnecting(why):
+            state = welcome == nil ? .connecting(name) : .reconnecting(why)
+        case let .stopped(why):
             stopReporting()
             if case .refused = state { return }
-            state = welcome == nil ? .failed(reason) : .disconnected
-        case .closed:
-            stopReporting()
-            if state == .joined { state = .disconnected }
+            state = why == "Left" ? .idle : .failed(why)
         }
     }
 
     private func receive(_ message: GroupMessage) {
         guard message.protocolVersion == GroupProtocol.version else {
             state = .refused("This squad's iPad runs another version of the app (protocol \(message.protocolVersion)). Update both.")
-            connection?.cancel()
+            client?.stop()
             return
         }
         switch message.body {
@@ -150,16 +176,16 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         case let .spotRequest(r):
             spotRequest = r
         case let .refused(reason):
-            state = .refused(reason)
-            connection?.cancel()
+            state = .refused(reason)   // GroupClient stops on a refusal
         default:
-            break   // lock receipts and the rest come with G5
+            break   // lock receipts, observer-only messages and the rest come with G5 or aren't for phones
         }
     }
 
     // MARK: Position reports
 
     private func startReporting() {
+        guard timer == nil else { return }
         if location.authorizationStatus == .notDetermined { location.requestWhenInUseAuthorization() }
         location.startUpdatingLocation()
         timer?.invalidate()
@@ -175,7 +201,8 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
     }
 
     private func sendPosition() {
-        guard state == .joined, let c = connection, c.state == .ready, let fix = lastFix, fix.horizontalAccuracy > 0 else { return }
+        // Only while linked: GroupClient drops sends otherwise, but don't count them as sent.
+        guard state == .joined, let c = client, c.status == .connected, let fix = lastFix, fix.horizontalAccuracy > 0 else { return }
         let p = MemberPosition(at: GeoPoint(latitude: fix.coordinate.latitude, longitude: fix.coordinate.longitude),
                                accuracy: fix.horizontalAccuracy,
                                heading: fix.course >= 0 ? fix.course : nil, time: fix.timestamp)
