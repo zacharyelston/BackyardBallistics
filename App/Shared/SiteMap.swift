@@ -23,7 +23,7 @@ struct SiteMapSquad: Identifiable {
     var orders: [Order] = []
     /// Pointers: from a member to the place an unfinished order sends them, dashed.
     var pointers: [SiteMapRay] = []
-    /// Field notes pinned where they were written.
+    /// Field notes with a place, drawn as pins (with their accuracy, when known).
     var notes: [FieldNote] = []
 }
 
@@ -133,15 +133,6 @@ struct SiteMap: View {
                         }
                     }
                 }
-                ForEach(squad.notes.filter { $0.at != nil }) { note in
-                    Annotation("", coordinate: note.at!.coordinate, anchor: .bottom) {
-                        Image(systemName: "note.text")
-                            .font(.callout.weight(.bold)).foregroundStyle(.black)
-                            .padding(7).background(.yellow, in: RoundedRectangle(cornerRadius: 7))
-                            .overlay(RoundedRectangle(cornerRadius: 7).stroke(.white, lineWidth: 2))
-                            .shadow(radius: 2)
-                    }
-                }
                 ForEach(squad.orders.filter { $0.at != nil }) { order in
                     Annotation(order.kind.title, coordinate: order.at!.coordinate, anchor: .bottom) {
                         Image(systemName: order.kind.systemImage)
@@ -149,6 +140,15 @@ struct SiteMap: View {
                             .padding(6).background(color, in: Circle())
                             .overlay(Circle().stroke(.white, lineWidth: 1.5))
                     }
+                }
+            }
+            ForEach(squads.flatMap(\.notes).filter { $0.at != nil }) { note in
+                if let a = note.accuracy, a > 0 {
+                    MapCircle(center: note.at!.coordinate, radius: a).foregroundStyle(.yellow.opacity(0.15))
+                }
+                Annotation(note.author, coordinate: note.at!.coordinate, anchor: .bottom) {
+                    Image(systemName: "mappin.circle.fill").font(.title3).foregroundStyle(.yellow)
+                        .shadow(radius: 2).help(note.text)
                 }
             }
             if let draftPlace {
