@@ -3,8 +3,12 @@ import RangingKit
 import CoreGeo
 import SafetyKit
 
-/// The main ranging method: hold the crosshair on the pole's base, turn the range dial until the plumb
-/// line's top meets the pole's top, and lock. No tapping.
+/// The main ranging method: hold the crosshair on the pole's base, rough the dial in on the live view,
+/// freeze a full-resolution still, fine-match the plumb line's top to the pole's top on it, and lock.
+/// No tapping.
+///
+/// Live video is 1920 × 1440 on every iPhone; the still is the phone's full sensor resolution (about
+/// 4032 × 3024), which halves the range error and removes hand shake from the match.
 ///
 /// The dial sets the line's length in sensor pixels (`ReticleRange`), which is then drawn in screen
 /// points. Pinch zoom enlarges the feed and the line together, so it never changes the range.
@@ -27,6 +31,14 @@ struct ReticleRangingView: View {
     @State private var trueDistance: Double?
     @State private var note = ""
     @State private var logged = false
+    /// The full-resolution still being matched, with the tilt, plumb direction and aim at the moment of Freeze.
+    @State private var still: FrozenFrame?
+    @State private var stillAngleBelow = 0.0
+    @State private var stillUp = CGVector(dx: 0, dy: -1)
+    @State private var stillAim: CaptureAim?
+    /// Zoom anchor on the frozen still, view fractions: the middle of the line when frozen.
+    @State private var stillAnchor = UnitPoint.center
+    @State private var freezing = false
 
     private static let dialRange: ClosedRange<Double> = 5...100
     private static let polePresets: [(label: String, feet: Double)] = [("8 ft", 8), ("10 ft", 10), ("12 ft", 12)]
@@ -41,12 +53,16 @@ struct ReticleRangingView: View {
         return session.source.liveAim()?.angleBelowLevel
     }
 
-    /// The locked reticle, or the live one from the current frame's intrinsics and tilt.
+    /// Intrinsics of the image being matched: the frozen still if there is one, else the live feed.
+    private var activeIntrinsics: Intrinsics? { still?.intrinsics ?? session.source.liveIntrinsics() }
+
+    /// The locked reticle, or the one for the image being matched.
     private var reticle: ReticleRange? {
         if let lock { return lock.reticle }
-        guard let k = session.source.liveIntrinsics() else { return nil }
+        guard let k = activeIntrinsics else { return nil }
         // In portrait the screen's vertical runs along the buffer's x axis, so the line uses fx.
-        return ReticleRange(focalPixels: k.fx, poleHeight: poleHeight, angleBelowLevel: angleBelowLevel ?? 0)
+        return ReticleRange(focalPixels: k.fx, poleHeight: poleHeight,
+                            angleBelowLevel: still != nil ? stillAngleBelow : (angleBelowLevel ?? 0))
     }
 
     private var shownRange: Double { lock?.range ?? dialRange }
@@ -63,6 +79,7 @@ struct ReticleRangingView: View {
         }
         .navigationTitle("Range the pole")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar) // the floating tab bar would cover the dial
         .onAppear {
             if let sim = session.source as? SimulatedRangingSource {
                 sim.aimAtBase = true
@@ -82,19 +99,26 @@ struct ReticleRangingView: View {
     private var feed: some View {
         GeometryReader { geo in
             let totalZoom = zoom * pinch
+            // Live: zoom about the crosshair. Frozen: about the middle of the line, so the base and the
+            // top stay on screen together while zoomed in to fine-match.
+            let anchor = still != nil ? stillAnchor : .center
+            let a = CGPoint(x: anchor.x * geo.size.width, y: anchor.y * geo.size.height)
+            let c = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
+            let base = CGPoint(x: a.x + (c.x - a.x) * totalZoom, y: a.y + (c.y - a.y) * totalZoom)
             ZStack {
                 cameraLayer
                     .frame(width: geo.size.width, height: geo.size.height)
-                    .scaleEffect(totalZoom)
+                    .scaleEffect(totalZoom, anchor: anchor)
                     .frame(width: geo.size.width, height: geo.size.height)
                     .clipped()
-                ReticleOverlay(lineLength: linePoints(in: geo.size) * totalZoom,
-                               up: MotionReader.plumbUp(gravity: motion.gravity),
+                ReticleOverlay(base: base,
+                               lineLength: linePoints(in: geo.size) * totalZoom,
+                               up: still != nil ? stillUp : MotionReader.plumbUp(gravity: motion.gravity),
                                locked: lock != nil)
                     .allowsHitTesting(false)
                 VStack {
                     HStack {
-                        Text(session.source.isSimulated ? "Simulated · \(session.tracking.label)" : session.tracking.label)
+                        Text(feedLabel)
                             .font(.footnote.weight(.semibold))
                             .padding(.horizontal, 10).padding(.vertical, 4)
                             .background(.ultraThinMaterial, in: Capsule())
@@ -121,20 +145,30 @@ struct ReticleRangingView: View {
         .background(Color.black)
     }
 
+    private var feedLabel: String {
+        if let k = still?.intrinsics { return "Frozen · \(k.width)×\(k.height)" }
+        return session.source.isSimulated ? "Simulated · \(session.tracking.label)" : session.tracking.label
+    }
+
     @ViewBuilder private var cameraLayer: some View {
-        if let ar = session.source as? ARKitRangingSource {
-            ARViewContainer(arView: ar.arView)
-        } else if let simImage {
-            Image(decorative: simImage, scale: 1).resizable().scaledToFill()
-        } else {
-            Color.black
+        ZStack {
+            if let ar = session.source as? ARKitRangingSource {
+                ARViewContainer(arView: ar.arView)
+            } else if let simImage {
+                Image(decorative: simImage, scale: 1).resizable().scaledToFill()
+            } else {
+                Color.black
+            }
+            if let still {
+                Image(decorative: still.image, scale: 1).resizable().scaledToFill()
+            }
         }
     }
 
     /// Screen points for the dial's range at zoom 1. The feed is aspect-filled from the landscape
     /// buffer shown upright, so one sensor pixel is `max(viewW / bufferH, viewH / bufferW)` points.
     private func linePoints(in size: CGSize) -> CGFloat {
-        guard let reticle, let k = session.source.liveIntrinsics() else { return 0 }
+        guard let reticle, let k = activeIntrinsics else { return 0 }
         let perPixel = max(size.width / CGFloat(k.height), size.height / CGFloat(k.width))
         return CGFloat(reticle.linePixels(range: shownRange)) * perPixel
     }
@@ -165,6 +199,11 @@ struct ReticleRangingView: View {
                     Text(String(format: "Line %.0f px on the sensor · %.1f° below level", reticle.linePixels(range: shownRange),
                                 reticle.angleBelowLevel))
                         .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                    if let k = activeIntrinsics, lock == nil {
+                        Text(still != nil ? "Matching on the \(k.width)×\(k.height) still"
+                                          : "Live \(k.width)×\(k.height) video · Freeze for the full-resolution still")
+                            .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                    }
                 }
             }
             LabeledContent("Pole height") {
@@ -178,13 +217,26 @@ struct ReticleRangingView: View {
                 .disabled(lock != nil)
             }
             if lock == nil {
-                Button {
-                    lockRange()
-                } label: {
-                    Label("Lock", systemImage: "lock.fill").font(.headline).frame(maxWidth: .infinity)
+                if still == nil {
+                    Button {
+                        freeze()
+                    } label: {
+                        Label(freezing ? "Freezing…" : "Freeze", systemImage: "camera.aperture")
+                            .font(.headline).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!session.trackingReady || freezing)
+                    Button("Lock on the live view") { lockRange() }
+                        .disabled(!session.trackingReady)
+                } else {
+                    Button {
+                        lockRange()
+                    } label: {
+                        Label("Lock", systemImage: "lock.fill").font(.headline).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    Button("Back to live") { unfreeze() }
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(!session.trackingReady)
                 if let lockProblem {
                     Text(lockProblem).font(.footnote).foregroundStyle(.orange)
                 }
@@ -194,8 +246,39 @@ struct ReticleRangingView: View {
         } header: {
             Text("Range dial")
         } footer: {
-            Text("Hold the crosshair on the pole's base. Turn the dial until the top of the white line meets the top of the orange band, then lock. Pinch to zoom; zoom never changes the range.")
+            Text("Hold the crosshair on the pole's base and turn the dial roughly to the top of the orange band. Freeze, pinch to zoom on the still, fine-match the line's top to the band's top, then lock. Zoom never changes the range.")
         }
+    }
+
+    /// Takes the full-resolution still, keeping the tilt, plumb direction and aim of this moment.
+    private func freeze() {
+        guard let aim = session.source.liveAim() else { lockProblem = "No compass bearing yet. Wait for tracking, then freeze again."; return }
+        let below = angleBelowLevel ?? aim.angleBelowLevel
+        let up = MotionReader.plumbUp(gravity: motion.gravity)
+        freezing = true
+        lockProblem = nil
+        session.source.captureStill { frame in
+            freezing = false
+            guard let frame else { lockProblem = "The camera gave no still. Lock on the live view instead."; return }
+            still = frame
+            stillAngleBelow = below
+            stillUp = up
+            stillAim = aim
+            // Zoom about the middle of the line at the dial's current range.
+            let k = frame.intrinsics
+            let r = ReticleRange(focalPixels: k.fx, poleHeight: poleHeight, angleBelowLevel: below)
+            let viewH = 380.0, viewW = UIScreen.main.bounds.width
+            let perPixel = max(viewW / Double(k.height), viewH / Double(k.width))
+            let half = r.linePixels(range: dialRange) * perPixel / 2
+            stillAnchor = UnitPoint(x: 0.5 + up.dx * half / viewW, y: 0.5 + up.dy * half / viewH)
+            zoom = 1
+        }
+    }
+
+    private func unfreeze() {
+        still = nil
+        stillAim = nil
+        zoom = 1
     }
 
     private func nudge(_ by: Double) {
@@ -203,13 +286,14 @@ struct ReticleRangingView: View {
     }
 
     private func lockRange() {
-        guard let k = session.source.liveIntrinsics() else { lockProblem = "No camera frame yet. Wait a moment and lock again."; return }
-        guard let aim = session.source.liveAim() else { lockProblem = "No compass bearing yet. Wait for tracking, then lock again."; return }
+        guard let k = activeIntrinsics else { lockProblem = "No camera frame yet. Wait a moment and lock again."; return }
+        guard let aim = stillAim ?? session.source.liveAim() else { lockProblem = "No compass bearing yet. Wait for tracking, then lock again."; return }
         guard let location = session.currentLocation else { lockProblem = "Waiting for GPS. Lock again once it has a fix."; return }
-        let below = angleBelowLevel ?? aim.angleBelowLevel
+        let below = still != nil ? stillAngleBelow : (angleBelowLevel ?? aim.angleBelowLevel)
         let l = ReticleLock(reticle: ReticleRange(focalPixels: k.fx, poleHeight: poleHeight, angleBelowLevel: below),
                             range: dialRange, bearing: aim.bearing, cameraHeight: cameraHeight,
-                            location: location, horizontalAccuracy: session.horizontalAccuracy)
+                            location: location, horizontalAccuracy: session.horizontalAccuracy,
+                            imageWidth: k.width, imageHeight: k.height)
         let en = l.eastNorth
         lock = l
         gate = Safety.checkFlag(lie: l.location, east: en.east, north: en.north, flag: flagPoint)
@@ -218,6 +302,7 @@ struct ReticleRangingView: View {
     }
 
     private func unlock() {
+        unfreeze()
         lock = nil
         gate = nil
         logged = false
@@ -235,6 +320,9 @@ struct ReticleRangingView: View {
                                                                l.heightDifference >= 0 ? "(uphill)" : "(downhill)"))
             LabeledContent("Bearing", value: String(format: "%.1f°", l.bearing))
             LabeledContent("Angle below level", value: String(format: "%.2f°", l.angleBelowLevel))
+            if let w = l.imageWidth, let h = l.imageHeight {
+                LabeledContent("Matched on", value: "\(w)×\(h)")
+            }
             LabeledContent("GPS", value: String(format: "%.6f, %.6f%@", l.location.latitude, l.location.longitude,
                                                  l.horizontalAccuracy.map { String(format: " ±%.0f m", $0) } ?? ""))
         }
@@ -308,6 +396,8 @@ struct ReticleRangingView: View {
 
 /// Crosshair at the centre of the view, with a plumb line rising from it to the dial's length.
 struct ReticleOverlay: View {
+    /// Where the crosshair sits on screen (the pole's base); the view's centre unless zoomed off-centre.
+    var base: CGPoint? = nil
     /// Line length, screen points.
     var lineLength: CGFloat
     /// Unit "up" direction on screen (y down), from gravity.
@@ -316,7 +406,7 @@ struct ReticleOverlay: View {
 
     var body: some View {
         Canvas { ctx, size in
-            let c = CGPoint(x: size.width / 2, y: size.height / 2)
+            let c = base ?? CGPoint(x: size.width / 2, y: size.height / 2)
             let side = CGVector(dx: -up.dy, dy: up.dx) // perpendicular to the line
             let top = CGPoint(x: c.x + up.dx * lineLength, y: c.y + up.dy * lineLength)
             func seg(_ a: CGPoint, _ b: CGPoint) -> Path { var p = Path(); p.move(to: a); p.addLine(to: b); return p }

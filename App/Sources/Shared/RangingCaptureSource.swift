@@ -53,6 +53,10 @@ protocol RangingCaptureSource: AnyObject {
     func stop()
     /// Freezes the current frame, with its pose and intrinsics, for marking. Nil if tracking isn't ready.
     func capture() -> FrozenFrame?
+    /// The sharpest still the camera can give right now, with its own intrinsics and pose: a
+    /// full-resolution frame where the device offers one (every iPhone on iOS 16+ through ARKit),
+    /// else the live frame. Calls back on the main queue; nil if there is no frame at all.
+    func captureStill(_ done: @escaping (FrozenFrame?) -> Void)
     /// Intrinsics of the live feed's native (landscape) buffer, for the reticle. Nil until the first frame.
     func liveIntrinsics() -> Intrinsics?
     /// Where the optical axis points now. Nil until tracking has a heading.

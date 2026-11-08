@@ -48,10 +48,17 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 
 ### Ranging with the reticle
 
-Ranging is a stadia reading, not a tap. The crosshair sits on the pole's base, a plumb line rises from it (kept plumb by CoreMotion gravity), and the range dial is turned until the line's top meets the top of the pole's orange band. Then **Lock**.
+Ranging is a stadia reading, not a tap. The crosshair sits on the pole's base, a plumb line rises from it (kept plumb by CoreMotion gravity), and the range dial is turned roughly to the top of the pole's orange band on the live view. **Freeze** then takes a full-resolution still (`captureStill`: ARKit's `captureHighResolutionFrame`, with that frame's own intrinsics and pose) and keeps the tilt, plumb direction and bearing of that moment. The player pinch-zooms on the still (anchored on the middle of the line, so the base and top stay in view), fine-matches the line's top, and taps **Lock**. If no still comes back, **Lock on the live view** still works, at the live frame's precision.
 
 - **Range.** `d = f·H/h`, with `f` the focal length in sensor pixels, `H` the known pole height (8, 10 or 12 ft) and `h` the line length in sensor pixels. When the phone looks down at the base, `ReticleRange` corrects for the tilt exactly (`d = H / (tanθ + tan(atan(h/f) − θ))`); at level that is the plain formula. Uncorrected, the tilt reads about 14 cm short at 10 m and nothing that matters past 30 m.
-- **Error.** ±1 px at the base and at the top, in quadrature: `σ = √2·d²/(f·H)`. On the 4K wide camera (`f` ≈ 3320 px) an 8 ft pole is about 811/270/135/90 px at 10/30/60/90 m, so σ is about 2 cm, 16 cm, 63 cm and 1.4 m.
+- **Error.** ±1 px at the base and at the top, in quadrature: `σ = √2·d²/(f·H)`. It is set by the image the line is matched on, and the target is every iPhone, not just Pro models:
+
+  | Image | `f` | 8 ft pole at 10/30/60/90 m | σ at 10/30/60/90 m |
+  | --- | --- | --- | --- |
+  | Live video, 1920 × 1440 (every iPhone) | ≈ 1500 px | 366/122/61/41 px | 4 cm, 35 cm, 1.4 m, 3.1 m |
+  | Full-resolution still at Freeze, ≈ 4032 × 3024 (every iPhone, iOS 16+) | ≈ 3000 px | 731/244/122/81 px | 2 cm, 17 cm, 70 cm, 1.6 m |
+
+  Zooming in on a still frame usually lets people match better than a pixel, so the still's figures are cautious. The lock records the image size it was matched on.
 - **Height difference.** Camera height − `d·tan(angle below level to the base)`, + uphill.
 - **Pole position.** GPS + compass bearing + range (`Geo.destination`); the lock then runs SafetyKit's 10 m flag check.
 

@@ -25,6 +25,8 @@ final class SimulatedRangingSource: RangingCaptureSource {
     let scene: Scene
     /// A 1920 × 1440 landscape sensor, like ARKit's default wide format.
     let intrinsics = Intrinsics(fx: 1450, fy: 1450, cx: 960, cy: 720, width: 1920, height: 1440)
+    /// The full-resolution still at Freeze: twice the live resolution, like a 12 MP photo against 1440p video.
+    let stillIntrinsics = Intrinsics(fx: 2900, fy: 2900, cx: 1920, cy: 1440, width: 3840, height: 2880)
     private(set) var eye: SIMD3<Double>
     /// Hold the crosshair on the pole's base (the reticle screen) instead of looking level (multi-photo).
     var aimAtBase = false
@@ -65,6 +67,14 @@ final class SimulatedRangingSource: RangingCaptureSource {
         return frame
     }
 
+    func captureStill(_ done: @escaping (FrozenFrame?) -> Void) {
+        let frame = render(scale: 1, intrinsics: stillIntrinsics).map {
+            FrozenFrame(image: $0, intrinsics: stillIntrinsics, lens: "Simulated (full resolution)",
+                        approximateIntrinsics: false, pose: pose)
+        }
+        DispatchQueue.main.async { done(frame) }
+    }
+
     /// The live "camera" view, at a reduced size.
     func preview(scale: CGFloat = 0.3) -> CGImage? { render(scale: scale) }
 
@@ -83,8 +93,8 @@ final class SimulatedRangingSource: RangingCaptureSource {
 
     /// Draws the upright (portrait) photo. Buffer pixels map to the display as the real camera's
     /// do: a frame rotated 90° clockwise, so buffer x runs down the screen.
-    private func render(scale: CGFloat) -> CGImage? {
-        let k = intrinsics, pose = self.pose
+    private func render(scale: CGFloat, intrinsics k: Intrinsics? = nil) -> CGImage? {
+        let k = k ?? intrinsics, pose = self.pose
         let size = CGSize(width: CGFloat(k.height) * scale, height: CGFloat(k.width) * scale)
         func display(_ world: SIMD3<Double>) -> CGPoint? {
             guard let p = pose.project(world, intrinsics: k) else { return nil }
