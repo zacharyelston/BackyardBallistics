@@ -83,6 +83,8 @@ public struct DownrangeLog: Codable, Equatable, Sendable {
     private static func key(_ player: String, _ hole: Int) -> String { "\(hole)|\(player)" }
     public mutating func confirm(player: String, hole: Int) { confirmed.insert(Self.key(player, hole)) }
     public func isConfirmed(player: String, hole: Int) -> Bool { confirmed.contains(Self.key(player, hole)) }
+    /// Withdraws a confirmation (check fire, or a new firing position): the player must look again.
+    public mutating func revoke(player: String, hole: Int) { confirmed.remove(Self.key(player, hole)) }
 }
 
 public enum Safety {
