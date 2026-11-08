@@ -10,6 +10,7 @@
 		02A1B855EAFC04BFFF0A95E5 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8331D4584229CE4D7A8756 /* AppSettings.swift */; };
 		0AF36FDEC5020706C479DECC /* RangingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5E31597492CC0E5465EB5069 /* RangingKit */; };
 		0DB342C6E1811E08407493BD /* ReticleLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AB2145B8AC206B21693A78 /* ReticleLog.swift */; };
+		101471AC6F8D8479978D0772 /* GroupKit in Frameworks */ = {isa = PBXBuildFile; productRef = ED48412377178EFF51799932 /* GroupKit */; };
 		1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E339C687D3B38CF183F162C /* CameraController.swift */; };
 		1769E9EFAF55537C3DAF1649 /* RangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29F67AAE33283A8171918D7 /* RangingView.swift */; };
 		185EAC0298AD8B5B54972D1F /* RoundKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8B584124A0591F676D89F825 /* RoundKit */; };
@@ -17,20 +18,25 @@
 		1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B045324F460255AFAFCFE722 /* FieldLog.swift */; };
 		213FAEF9984EE5CF8F8711E5 /* CourseSurveyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */; };
 		2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */; };
+		3EFC1974454B6AB94800DE8B /* SafetyKit in Frameworks */ = {isa = PBXBuildFile; productRef = 624B5971BCEFE3276F13D796 /* SafetyKit */; };
 		42FCF884DB4D1292750E9C3A /* ARKitRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */; };
+		47FEF687AF2EBDB3FFE0AC73 /* GroupLink in Frameworks */ = {isa = PBXBuildFile; productRef = 205C0B8F75E83E48DA0B80BF /* GroupLink */; };
 		4C17D03F0FA06FE37704E92C /* PoleHeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC575A2D9586FD6E557618AD /* PoleHeightView.swift */; };
 		4F2B51B4E6257E189C5A7746 /* RoundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FFE521AEBEB67F465CAA9E6 /* RoundView.swift */; };
+		661D2D673DB0316E8869D598 /* CourseKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0C5EE927A1EE9007CDD1FE51 /* CourseKit */; };
 		723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */; };
 		724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AFC18B1FD4637E46C11CA7 /* CrosshairSpotView.swift */; };
 		77084244531EA1125D1C00E1 /* BallisticsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 957114E8D0EB2D87927F3B83 /* BallisticsKit */; };
 		833F06491C4DDFF9FDC23AC6 /* CoreGeo in Frameworks */ = {isa = PBXBuildFile; productRef = A767DE0DBD45719511064F3D /* CoreGeo */; };
 		85E9117B8A9E9C1E6A3E5DF9 /* CameraNeedsPortrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77E46D1FF69E6EBCE1E9BBE /* CameraNeedsPortrait.swift */; };
+		87F94927E6C765892683FE20 /* CoreGeo in Frameworks */ = {isa = PBXBuildFile; productRef = 6D7643BBB300C31D6097E331 /* CoreGeo */; };
 		8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C414C5B4AC53422F7AABC2C /* LeanCheckView.swift */; };
 		915EF4E6CCD9C105BCCAB207 /* local in Resources */ = {isa = PBXBuildFile; fileRef = A44E34B89E1526A64BADF1B3 /* local */; };
 		9214CC0F333393CF432A7B65 /* CourseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 065ED1CBF727D2A9F1C17FFE /* CourseStore.swift */; };
 		969A1C83E524FD939C7D8B00 /* HoleMissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88FD57DAB3E4CCC46159899 /* HoleMissionView.swift */; };
 		981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7230BC9CD26B3C17565509AE /* CourseView.swift */; };
 		9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA6EB5E25631668DAC5462C /* JSONStore.swift */; };
+		A5E0A234EC6642A523EE480F /* GroupKit in Frameworks */ = {isa = PBXBuildFile; productRef = 42F3226CD1FFA1EDFE808E86 /* GroupKit */; };
 		AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058FD02EB37A4DD2D60E9425 /* LauncherView.swift */; };
 		ABC854639A4529209FB9DA2B /* RangingLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1956E8D95530FA7EA760FD87 /* RangingLog.swift */; };
 		ADCBF1C6E705A2F12C6A84FC /* ReticleRangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E87C56614F017F0224D65F /* ReticleRangingView.swift */; };
@@ -40,11 +46,13 @@
 		BC5AFF250A5499A470335176 /* SafetyKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9650B624C198CEA48B5299D6 /* SafetyKit */; };
 		C17CD159F8E81ACE5278508D /* SimulatedRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B45B7403F091985D78297E /* SimulatedRangingSource.swift */; };
 		C670AE24783CEC45026EA822 /* RangingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311424D16BF397C1CD80DDFE /* RangingSession.swift */; };
+		C9D4F65053E9F8705B55B8AA /* GroupLink in Frameworks */ = {isa = PBXBuildFile; productRef = 305D2A30F81FFD8DBD356D47 /* GroupLink */; };
 		DD2A092952F63A5FAFDCE4A7 /* RangingCaptureSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C49810F5CD5D313FB0CD103 /* RangingCaptureSource.swift */; };
 		DE1452806D6020CB0741687C /* ToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42B175AD5A532DDE2201A1D /* ToolsView.swift */; };
 		EA0FB4BBE754C7D64CD92FB1 /* SpudGunGolfApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0502B6763FEB460945C51624 /* SpudGunGolfApp.swift */; };
 		ED15A3B0669DB05DBE20DD3D /* SightingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C51A940D33C796DF2A866B /* SightingView.swift */; };
 		F5C088DF7343E3AE34A239F6 /* CameraHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */; };
+		F663DF385477783B5FE4CBDD /* SpudTheaterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F14AA5B7F89FEA9E804DA95 /* SpudTheaterApp.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,9 +73,11 @@
 		54BDFBE220065C8E3F5A4FEF /* SpudCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SpudCore; path = Packages/SpudCore; sourceTree = SOURCE_ROOT; };
 		57E87C56614F017F0224D65F /* ReticleRangingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReticleRangingView.swift; sourceTree = "<group>"; };
 		5C49810F5CD5D313FB0CD103 /* RangingCaptureSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingCaptureSource.swift; sourceTree = "<group>"; };
+		5E021E898D313DF96AEA9B39 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6FFE521AEBEB67F465CAA9E6 /* RoundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundView.swift; sourceTree = "<group>"; };
 		7230BC9CD26B3C17565509AE /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
 		86B45B7403F091985D78297E /* SimulatedRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatedRangingSource.swift; sourceTree = "<group>"; };
+		8F14AA5B7F89FEA9E804DA95 /* SpudTheaterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpudTheaterApp.swift; sourceTree = "<group>"; };
 		9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraHUD.swift; sourceTree = "<group>"; };
 		A44E34B89E1526A64BADF1B3 /* local */ = {isa = PBXFileReference; lastKnownFileType = folder; name = local; path = courses/local; sourceTree = SOURCE_ROOT; };
 		AC575A2D9586FD6E557618AD /* PoleHeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleHeightView.swift; sourceTree = "<group>"; };
@@ -76,6 +86,7 @@
 		BD53A79A0D7E172F849F2839 /* RoundStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundStore.swift; sourceTree = "<group>"; };
 		C42B175AD5A532DDE2201A1D /* ToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolsView.swift; sourceTree = "<group>"; };
 		C77E46D1FF69E6EBCE1E9BBE /* CameraNeedsPortrait.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraNeedsPortrait.swift; sourceTree = "<group>"; };
+		CB8A578A329DCC609C701191 /* SpudTheater.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpudTheater.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D1E9E1B2EC8B568A9E479CDA /* PoleMarker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleMarker.swift; sourceTree = "<group>"; };
 		D29F67AAE33283A8171918D7 /* RangingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingView.swift; sourceTree = "<group>"; };
 		D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SpudGunGolf.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -96,6 +107,20 @@
 				B520BDB5D743A27AC8F6807C /* CourseKit in Frameworks */,
 				77084244531EA1125D1C00E1 /* BallisticsKit in Frameworks */,
 				185EAC0298AD8B5B54972D1F /* RoundKit in Frameworks */,
+				101471AC6F8D8479978D0772 /* GroupKit in Frameworks */,
+				C9D4F65053E9F8705B55B8AA /* GroupLink in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D2E2B72DC1D9819348D2EF7A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				87F94927E6C765892683FE20 /* CoreGeo in Frameworks */,
+				3EFC1974454B6AB94800DE8B /* SafetyKit in Frameworks */,
+				661D2D673DB0316E8869D598 /* CourseKit in Frameworks */,
+				A5E0A234EC6642A523EE480F /* GroupKit in Frameworks */,
+				47FEF687AF2EBDB3FFE0AC73 /* GroupLink in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -136,6 +161,7 @@
 			isa = PBXGroup;
 			children = (
 				EE34B935C2BCB7EEE43C21E4 /* Sources */,
+				9DB93DF1251CA30247971933 /* Theater */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -174,6 +200,15 @@
 				54BDFBE220065C8E3F5A4FEF /* SpudCore */,
 			);
 			path = Packages;
+			sourceTree = "<group>";
+		};
+		9DB93DF1251CA30247971933 /* Theater */ = {
+			isa = PBXGroup;
+			children = (
+				5E021E898D313DF96AEA9B39 /* Info.plist */,
+				8F14AA5B7F89FEA9E804DA95 /* SpudTheaterApp.swift */,
+			);
+			path = Theater;
 			sourceTree = "<group>";
 		};
 		BB5F2F1E778CCEE3CE996E0B /* Ranging */ = {
@@ -228,6 +263,7 @@
 			isa = PBXGroup;
 			children = (
 				D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */,
+				CB8A578A329DCC609C701191 /* SpudTheater.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -258,6 +294,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		17BCA245A79F9695BA10806B /* SpudTheater */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2BEBDF807023DBC6423AECC9 /* Build configuration list for PBXNativeTarget "SpudTheater" */;
+			buildPhases = (
+				617DC8D89A2768CDACFC4B3F /* Sources */,
+				D2E2B72DC1D9819348D2EF7A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SpudTheater;
+			packageProductDependencies = (
+				6D7643BBB300C31D6097E331 /* CoreGeo */,
+				624B5971BCEFE3276F13D796 /* SafetyKit */,
+				0C5EE927A1EE9007CDD1FE51 /* CourseKit */,
+				42F3226CD1FFA1EDFE808E86 /* GroupKit */,
+				205C0B8F75E83E48DA0B80BF /* GroupLink */,
+			);
+			productName = SpudTheater;
+			productReference = CB8A578A329DCC609C701191 /* SpudTheater.app */;
+			productType = "com.apple.product-type.application";
+		};
 		BE7DD4331BD91D496AFB5FF6 /* SpudGunGolf */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = D345BB381149A45422359E11 /* Build configuration list for PBXNativeTarget "SpudGunGolf" */;
@@ -278,6 +337,8 @@
 				4F593FFDD1BB38CAFE7BFC4C /* CourseKit */,
 				957114E8D0EB2D87927F3B83 /* BallisticsKit */,
 				8B584124A0591F676D89F825 /* RoundKit */,
+				ED48412377178EFF51799932 /* GroupKit */,
+				305D2A30F81FFD8DBD356D47 /* GroupLink */,
 			);
 			productName = SpudGunGolf;
 			productReference = D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */;
@@ -292,6 +353,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					17BCA245A79F9695BA10806B = {
+						ProvisioningStyle = Manual;
+					};
 					BE7DD4331BD91D496AFB5FF6 = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
@@ -316,6 +380,7 @@
 			projectRoot = "";
 			targets = (
 				BE7DD4331BD91D496AFB5FF6 /* SpudGunGolf */,
+				17BCA245A79F9695BA10806B /* SpudTheater */,
 			);
 		};
 /* End PBXProject section */
@@ -333,6 +398,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		617DC8D89A2768CDACFC4B3F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F663DF385477783B5FE4CBDD /* SpudTheaterApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9207B5E4235D41F5E1FD65B2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -373,6 +446,25 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		1D6EBF8E5A11F94B7CC1DE48 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Theater/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.backyardballistics.spudtheater;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
 		3DC1F9BCCA950ECFB83FBE0D /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 05E120BD574CED262D43DC22 /* Signing.xcconfig */;
@@ -389,6 +481,25 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
+		};
+		6FEF3292291CB40F9217CC39 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Theater/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.backyardballistics.spudtheater;
+				SDKROOT = macosx;
+			};
+			name = Debug;
 		};
 		835284E259FDA916076E9E57 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -437,11 +548,11 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 0.1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -518,12 +629,12 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 0.1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -533,6 +644,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2BEBDF807023DBC6423AECC9 /* Build configuration list for PBXNativeTarget "SpudTheater" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6FEF3292291CB40F9217CC39 /* Debug */,
+				1D6EBF8E5A11F94B7CC1DE48 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		B53025587128EA806A87EFB0 /* Build configuration list for PBXProject "SpudGunGolf" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -561,6 +681,22 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0C5EE927A1EE9007CDD1FE51 /* CourseKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CourseKit;
+		};
+		205C0B8F75E83E48DA0B80BF /* GroupLink */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GroupLink;
+		};
+		305D2A30F81FFD8DBD356D47 /* GroupLink */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GroupLink;
+		};
+		42F3226CD1FFA1EDFE808E86 /* GroupKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GroupKit;
+		};
 		4F593FFDD1BB38CAFE7BFC4C /* CourseKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CourseKit;
@@ -568,6 +704,14 @@
 		5E31597492CC0E5465EB5069 /* RangingKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = RangingKit;
+		};
+		624B5971BCEFE3276F13D796 /* SafetyKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SafetyKit;
+		};
+		6D7643BBB300C31D6097E331 /* CoreGeo */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CoreGeo;
 		};
 		8B584124A0591F676D89F825 /* RoundKit */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -584,6 +728,10 @@
 		A767DE0DBD45719511064F3D /* CoreGeo */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CoreGeo;
+		};
+		ED48412377178EFF51799932 /* GroupKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GroupKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -90,6 +90,8 @@ public struct SquadHost {
     public var designatedSpotter: MemberID?
 
     public private(set) var peers: [PeerID: MemberID] = [:]
+    /// Theater stations watching the squad. They get status and positions; what they send is ignored.
+    public private(set) var observers: Set<PeerID> = []
     public private(set) var positions: [MemberID: MemberPosition] = [:]
     public private(set) var locks: [ReceivedLock] = []
     public private(set) var spotReports: [ReceivedSpot] = []
@@ -157,6 +159,10 @@ public struct SquadHost {
             return []
         }
         if case let .hello(hello) = message.body { return join(hello, peer: peer, now: now) }
+        if observers.contains(peer) {
+            if case .bye = message.body { observers.remove(peer) }
+            return []   // an observer can't act on the squad
+        }
         guard let member = peers[peer] else { return [] }   // not joined: ignored
 
         switch message.body {
@@ -166,7 +172,8 @@ public struct SquadHost {
         case var .position(p):
             p.member = member
             positions[member] = p
-            return matchHost.map { [Outgoing(to: $0, .positions(squad: squadID, [p]))] } ?? []
+            let toObservers = observers.sorted { $0.raw < $1.raw }.map { Outgoing(to: $0, .positions(squad: squadID, [p])) }
+            return (matchHost.map { [Outgoing(to: $0, .positions(squad: squadID, [p]))] } ?? []) + toObservers
         case let .lock(report):
             locks.append(ReceivedLock(report: report, member: member, status: .received))
             if locks.count > Self.maxLocksKept { locks.removeFirst(locks.count - Self.maxLocksKept) }
@@ -184,6 +191,16 @@ public struct SquadHost {
 
     private mutating func join(_ hello: Hello, peer: PeerID, now: Date) -> [Outgoing] {
         guard hello.joinCode == joinCode else { return [Outgoing(to: peer, .refused("Wrong join code."))] }
+        if hello.role == .observer {
+            peers[peer] = nil
+            observers.insert(peer)
+            let known = positions.values.sorted { $0.time < $1.time }
+            return [Outgoing(to: peer, .observing(round.squad)),
+                    Outgoing(to: peer, .course(round.course)),
+                    Outgoing(to: peer, .squadStatus(status(now: now)))]
+                + (known.isEmpty ? [] : [Outgoing(to: peer, .positions(squad: squadID, known))])
+        }
+        observers.remove(peer)
         let id: MemberID
         if let existing = round.squad.members.first(where: { $0.device == hello.device }) {
             id = existing.id
@@ -476,9 +493,10 @@ public struct SquadHost {
         return statusToMembers(now: now) + toMatch
     }
 
+    /// Status to every member and observer.
     private func statusToMembers(now: Date) -> [Outgoing] {
         let s = status(now: now)
-        return peers.keys.sorted { $0.raw < $1.raw }.map { Outgoing(to: $0, .squadStatus(s)) }
+        return (Array(peers.keys) + Array(observers)).sorted { $0.raw < $1.raw }.map { Outgoing(to: $0, .squadStatus(s)) }
     }
 
     /// What members see: no firing data.

@@ -11,6 +11,7 @@ import PackageDescription
 //   CourseKit  – course files: parsing, the Course/Hole model, validation through SafetyKit
 //   RoundKit   – fire missions per hole, cease fire and verify, downrange play, scoring, practice
 //   GroupKit   – v3 Squadz: the squad and match protocol, the commander's and match host's state, holds
+//   GroupLink  – GroupKit over the local network: Bonjour, TLS keyed from the join code (Network.framework)
 let package = Package(
     name: "SpudCore",
     platforms: [.iOS(.v17), .macOS(.v14)],
@@ -21,7 +22,8 @@ let package = Package(
         .library(name: "BallisticsKit", targets: ["BallisticsKit"]),
         .library(name: "CourseKit", targets: ["CourseKit"]),
         .library(name: "RoundKit", targets: ["RoundKit"]),
-        .library(name: "GroupKit", targets: ["GroupKit"])
+        .library(name: "GroupKit", targets: ["GroupKit"]),
+        .library(name: "GroupLink", targets: ["GroupLink"])
     ],
     targets: [
         .target(name: "CoreGeo"),
@@ -31,6 +33,7 @@ let package = Package(
         .target(name: "CourseKit", dependencies: ["CoreGeo", "SafetyKit"]),
         .target(name: "RoundKit", dependencies: ["CoreGeo", "RangingKit", "BallisticsKit", "CourseKit"]),
         .target(name: "GroupKit", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit"]),
+        .target(name: "GroupLink", dependencies: ["GroupKit"]),
         .testTarget(name: "CoreGeoTests", dependencies: ["CoreGeo"]),
         .testTarget(name: "SafetyKitTests", dependencies: ["SafetyKit", "CoreGeo"]),
         .testTarget(name: "RangingKitTests", dependencies: ["RangingKit", "CoreGeo"]),
@@ -38,6 +41,7 @@ let package = Package(
         // RangingKit is here only to pin CourseRules.maxLeanDeg to LeanMath.limitDegrees.
         .testTarget(name: "CourseKitTests", dependencies: ["CourseKit", "CoreGeo", "SafetyKit", "RangingKit"]),
         .testTarget(name: "RoundKitTests", dependencies: ["RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "CoreGeo"]),
-        .testTarget(name: "GroupKitTests", dependencies: ["GroupKit", "RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "SafetyKit", "CoreGeo"])
+        .testTarget(name: "GroupKitTests", dependencies: ["GroupKit", "RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "SafetyKit", "CoreGeo"]),
+        .testTarget(name: "GroupLinkTests", dependencies: ["GroupLink", "GroupKit", "CourseKit", "CoreGeo"])
     ]
 )

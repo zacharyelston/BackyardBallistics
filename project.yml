@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.backyardballistics
   deploymentTarget:
     iOS: "17.0"
+    macOS: "14.0"
   createIntermediateGroups: true
 settings:
   base:
@@ -37,6 +38,10 @@ targets:
         product: BallisticsKit
       - package: SpudCore
         product: RoundKit
+      - package: SpudCore
+        product: GroupKit
+      - package: SpudCore
+        product: GroupLink
     info:
       path: App/Resources/Info.plist
       properties:
@@ -50,7 +55,8 @@ targets:
         UIRequiresFullScreen: true
         NSCameraUsageDescription: SpudGunGolf uses the camera to measure flag poles and range the hole.
         NSLocationWhenInUseUsageDescription: SpudGunGolf uses your location to find the hole and check that a range lands on a course flag.
-        NSLocalNetworkUsageDescription: SpudGunGolf downloads the course file from the course server on the local Wi-Fi.
+        NSLocalNetworkUsageDescription: SpudGunGolf finds and joins your squad's iPad on the local Wi-Fi, and downloads the course file from the course server.
+        NSBonjourServices: [_spudgolf._tcp]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     configFiles:
@@ -60,3 +66,35 @@ targets:
       base:
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: NO
+  # v4 Theater Mode: the course owner's station (docs/THEATER_MODE.md). Watches squads as an
+  # observer; it never sees or clears firing data. Signed to run locally, so it builds over SSH.
+  SpudTheater:
+    type: application
+    platform: macOS
+    sources:
+      - App/Theater
+    dependencies:
+      - package: SpudCore
+        product: CoreGeo
+      - package: SpudCore
+        product: SafetyKit
+      - package: SpudCore
+        product: CourseKit
+      - package: SpudCore
+        product: GroupKit
+      - package: SpudCore
+        product: GroupLink
+    info:
+      path: App/Theater/Info.plist
+      properties:
+        CFBundleDisplayName: SpudGunGolf Theater
+        LSApplicationCategoryType: public.app-category.sports-games
+        NSLocalNetworkUsageDescription: SpudGunGolf Theater finds the squads' iPads on the local network to watch the course.
+        NSBonjourServices: [_spudgolf._tcp]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.backyardballistics.spudtheater
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        ENABLE_HARDENED_RUNTIME: NO
