@@ -13,6 +13,7 @@ graph BT
   BallisticsKit["BallisticsKit<br/>flight, roll-out, solver, dispersion"]
   FireControlKit["FireControlKit (m5)<br/>calibration fitting"]
   RoundKit["RoundKit<br/>missions, scoring, scorecard, practice"]
+  GroupKit["GroupKit (v3)<br/>squad and match protocol, holds"]
   App["SpudGunGolf app<br/>SwiftUI, ARKit, AVFoundation"]
   SafetyKit --> CoreGeo
   RangingKit --> CoreGeo
@@ -23,6 +24,8 @@ graph BT
   RoundKit --> RangingKit
   RoundKit --> BallisticsKit
   RoundKit --> CourseKit
+  GroupKit --> RoundKit
+  GroupKit --> SafetyKit
   App --> RangingKit
   App --> SafetyKit
   App --> CourseKit
@@ -41,6 +44,7 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 | CourseKit | The course file parser (`CourseFile`), `Course`/`Hole`/`Flag`/`Hazard`, `CourseValidator` (calls `Safety.checkFan` and the 100 yd limit; flag kit rules in `CourseRules`) | CoreGeo, SafetyKit | `swift test` on the sample course, malformed files and fan or boundary violations |
 | BallisticsKit | Point-mass flight with drag and wind shear, roll-out per surface, the low/lob `Solver` with roll allowance, `Charge` (uncalibrated until m5, capped by SafetyKit), `Dispersion` and `SeededGenerator` | SafetyKit | `swift test`, including parity with the browser prototype's own numbers |
 | RoundKit | `HolePlay` (one hole as fire missions: begin, record spots or lost rounds, cease fire, resume, advance downrange, finish), `Mission` (a lock and its `FireControl`, aim point), `HoleRules` scoring, `Scorecard`, and `PracticeRange` (simulated locks, rounds and spots on a course's geometry) | CoreGeo, RangingKit, BallisticsKit, CourseKit | `swift test`, including 40 simulated practice holes that must converge |
+| GroupKit (v3 Squadz, [GROUP_PLAY.md](GROUP_PLAY.md)) | The squad and match protocol (`GroupMessage`, length-prefixed JSON via `GroupWire`), `SquadHost` (the commander's iPad: joins, locks gated by `Safety.clearRange` on its own course, Fired, spots, cease fire and verify, amending by replay), `MatchHost` (turns between squads, scoreboard, field-wide holds: walking out, check fire, members in the fan, silent phones), `GroupGate` (holds only add to SafetyKit's verdict), and `LoopbackNetwork` | CoreGeo, SafetyKit, RangingKit, CourseKit, RoundKit | `swift test`: a two-squad practice match over the loopback, and safety properties (nothing that clears or fires crosses the wire, a message fuzz can't unlock) |
 | FireControlKit (m5) | Calibration fitting: per-setting velocities from calibration shots | BallisticsKit | planned |
 
 ### Dependency rules
