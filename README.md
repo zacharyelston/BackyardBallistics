@@ -35,13 +35,17 @@ Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 | `docs/GROUP_PLAY.md` | Design for v3 Squadz (not built): squads play squads on v2 fire missions; a commander iPad maps the field from members' phones |
 | `docs/THEATER_MODE.md` | Design for v4 Theater Mode (not built): the course owner's observer station and GPU-built field map |
 | `docs/COURSE_FORMAT.md` | The flat-key YAML course file a course's web server serves |
+| `docs/DEV_MACHINES.md` | The development Macs and test devices, bringing a new Mac in, and SSH between them |
 | `courses/sample-course.yaml` | Example course file |
 | `prototype/` | Browser prototypes: v1 Classic and v2 Fire Missions |
 | `site/`, `scripts/build-pages.sh` | GitHub Pages landing page and build; `.github/workflows/pages.yml` checks every PR and deploys `main` |
 | `scripts/typecheck-ios.sh` | Typechecks everything against the iPhone SDK without signing or a simulator |
+| `scripts/bootstrap-mac.sh`, `Brewfile` | One-command setup for a new Apple silicon Mac; see `docs/DEV_MACHINES.md` |
 | `project.yml` | XcodeGen spec for `SpudGunGolf.xcodeproj` |
 
 ## Build
+
+On a new Mac, run `scripts/bootstrap-mac.sh` first; see [DEV_MACHINES.md](docs/DEV_MACHINES.md).
 
 ```bash
 xcodegen generate
