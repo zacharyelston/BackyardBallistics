@@ -124,6 +124,9 @@ fi
 step "Accounts"
 if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
   ok "GitHub CLI is signed in"
+elif [[ -n "${SSH_CONNECTION:-}" ]] && command -v gh >/dev/null && gh auth status 2>&1 | grep -q "Active account: true"; then
+  # Over SSH the login keychain is locked, so gh can't read its token and calls it invalid.
+  ok "GitHub CLI has an account (its token can't be read over SSH; check on this Mac if in doubt)"
 else
   todo "Sign in to GitHub: gh auth login"
 fi
