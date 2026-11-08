@@ -287,6 +287,8 @@ A Mac on the same network can take the heavy work off the iPads. It is optional:
 
 - Take part in firing: it receives no locks for firing, no solutions and no confirmations. Its output is display only (see [Safety](#safety), rule 3).
 
+**In v4.** [v4 Theater Mode](THEATER_MODE.md) keeps this host as the built-in implementation of a `FieldMappingService` interface. On a course with an owner's Theater station, the course's GPU mapping back end takes this role for every match.
+
 **How it fits.** A small macOS target in `project.yml`, built from the same SpudCore packages (they're platform free and already build on macOS for `swift test`). It joins over the same `GroupTransport` as a `renderHost` peer with the match code. Without it, each iPad draws the course, surface, members and mission layers itself, which covers everything the game needs.
 
 ## Prior work: Squadz
