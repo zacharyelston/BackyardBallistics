@@ -2,6 +2,7 @@ import Foundation
 import CoreGeo
 import RangingKit
 import RoundKit
+import CourseKit
 
 // v3 Squadz: who's who, and every message that crosses between devices.
 //
@@ -14,7 +15,7 @@ import RoundKit
 
 public enum GroupProtocol {
     /// Bumped on any change to the messages. A device on another version is refused (fail closed).
-    public static let version = 2
+    public static let version = 3
 }
 
 public struct SquadID: Codable, Hashable, Sendable, CustomStringConvertible {
@@ -346,6 +347,9 @@ public struct GroupMessage: Codable, Equatable, Sendable {
         case welcome(Welcome)
         /// To a Theater station that joined as an observer.
         case observing(Squad)
+        /// The squad's course, to an observer: the published boundary, holes, flags, firing points
+        /// and hazards, for the site map. No firing data.
+        case course(Course)
         case refused(String)
         case squadStatus(SquadStatus)
         case spotRequest(SpotRequest)
