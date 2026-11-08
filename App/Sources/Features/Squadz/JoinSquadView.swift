@@ -143,6 +143,17 @@ struct JoinSquadView: View {
         } header: {
             Text(membership.state == .joined ? "Welcome" : "Squad")
         }
+        if !membership.orders.isEmpty {
+            Section {
+                ForEach(membership.orders.reversed()) { order in
+                    OrderCard(order: order).padding(.vertical, 4)
+                }
+            } header: {
+                Text("Orders")
+            } footer: {
+                Text("From the squad leader. Done or Can't takes an order off your list.")
+            }
+        }
         if let s = membership.status {
             Section {
                 LabeledContent("Hole", value: s.hole.map { "\($0)" } ?? "Not started")

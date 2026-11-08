@@ -30,6 +30,8 @@
 		723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */; };
 		724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AFC18B1FD4637E46C11CA7 /* CrosshairSpotView.swift */; };
 		77084244531EA1125D1C00E1 /* BallisticsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 957114E8D0EB2D87927F3B83 /* BallisticsKit */; };
+		7C2DD2E5091CC8ED15143BC6 /* OrderCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75BC877E68D4709936CE0EB1 /* OrderCard.swift */; };
+		801A31073180797249782AAE /* SquadOrdersPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202B6EDB55A5E428B38307AF /* SquadOrdersPanel.swift */; };
 		833F06491C4DDFF9FDC23AC6 /* CoreGeo in Frameworks */ = {isa = PBXBuildFile; productRef = A767DE0DBD45719511064F3D /* CoreGeo */; };
 		850826D3141B26E48925FB53 /* SquadMembership.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD109C93883530F2F1D8C14B /* SquadMembership.swift */; };
 		85E9117B8A9E9C1E6A3E5DF9 /* CameraNeedsPortrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77E46D1FF69E6EBCE1E9BBE /* CameraNeedsPortrait.swift */; };
@@ -75,6 +77,7 @@
 		1956E8D95530FA7EA760FD87 /* RangingLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingLog.swift; sourceTree = "<group>"; };
 		1DA6EB5E25631668DAC5462C /* JSONStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONStore.swift; sourceTree = "<group>"; };
 		1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseSurveyView.swift; sourceTree = "<group>"; };
+		202B6EDB55A5E428B38307AF /* SquadOrdersPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadOrdersPanel.swift; sourceTree = "<group>"; };
 		21DE58B1664E8C5DF8BD7EEB /* SiteMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteMap.swift; sourceTree = "<group>"; };
 		24CC3BEAA9B245580729F49F /* SquadHolePanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadHolePanels.swift; sourceTree = "<group>"; };
 		2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayView.swift; sourceTree = "<group>"; };
@@ -89,6 +92,7 @@
 		5E021E898D313DF96AEA9B39 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6FFE521AEBEB67F465CAA9E6 /* RoundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundView.swift; sourceTree = "<group>"; };
 		7230BC9CD26B3C17565509AE /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
+		75BC877E68D4709936CE0EB1 /* OrderCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderCard.swift; sourceTree = "<group>"; };
 		7E3297A98DDACEAB482EF66B /* CommandSquadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandSquadView.swift; sourceTree = "<group>"; };
 		86B45B7403F091985D78297E /* SimulatedRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatedRangingSource.swift; sourceTree = "<group>"; };
 		8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadCommand.swift; sourceTree = "<group>"; };
@@ -201,10 +205,12 @@
 				7E3297A98DDACEAB482EF66B /* CommandSquadView.swift */,
 				0C65BD036734D6BD5C19725B /* JoinCodeScanner.swift */,
 				FDE461F8C92C1AE4841587B3 /* JoinSquadView.swift */,
+				75BC877E68D4709936CE0EB1 /* OrderCard.swift */,
 				53AF3C47E42C2CD18B24317F /* QRCodeView.swift */,
 				8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */,
 				24CC3BEAA9B245580729F49F /* SquadHolePanels.swift */,
 				FD109C93883530F2F1D8C14B /* SquadMembership.swift */,
+				202B6EDB55A5E428B38307AF /* SquadOrdersPanel.swift */,
 			);
 			path = Squadz;
 			sourceTree = "<group>";
@@ -470,6 +476,7 @@
 				AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */,
 				8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */,
 				2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */,
+				7C2DD2E5091CC8ED15143BC6 /* OrderCard.swift in Sources */,
 				723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */,
 				4C17D03F0FA06FE37704E92C /* PoleHeightView.swift in Sources */,
 				B4139AA51DCD859C3D15F05A /* PoleMarker.swift in Sources */,
@@ -489,6 +496,7 @@
 				A3A842FBA87CAC888247D14E /* SquadCommand.swift in Sources */,
 				126A7AA4D2C4C1E6DD4B9C6F /* SquadHolePanels.swift in Sources */,
 				850826D3141B26E48925FB53 /* SquadMembership.swift in Sources */,
+				801A31073180797249782AAE /* SquadOrdersPanel.swift in Sources */,
 				DE1452806D6020CB0741687C /* ToolsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -89,7 +89,7 @@ struct SquadLobbyView: View {
                 HStack(spacing: 0) {
                     map
                     ScrollView {
-                        VStack(spacing: 16) { codePanel(compact: true); SquadHolePanel(); SquadLocksPanel(); rosterPanel; statusPanel }.padding(16)
+                        VStack(spacing: 16) { codePanel(compact: true); SquadOrdersPanel(); rosterPanel; SquadHolePanel(); SquadLocksPanel(); statusPanel }.padding(16)
                     }
                     .frame(width: min(400, geo.size.width * 0.36))
                     .background(Color(.systemGroupedBackground))
@@ -99,7 +99,7 @@ struct SquadLobbyView: View {
                     VStack(spacing: 20) {
                         map.frame(height: max(320, geo.size.height * 0.45))
                             .clipShape(RoundedRectangle(cornerRadius: 16))
-                        codePanel(compact: false); SquadHolePanel(); SquadLocksPanel(); rosterPanel; statusPanel
+                        codePanel(compact: false); SquadOrdersPanel(); rosterPanel; SquadHolePanel(); SquadLocksPanel(); statusPanel
                     }
                     .padding()
                 }
@@ -133,7 +133,12 @@ struct SquadLobbyView: View {
                                           activeHole: host.round.hole?.holeNumber, walkingOut: host.round.walkingOut,
                                           rays: host.locks.filter { $0.status == .used }.map {
                                               SiteMapRay(from: $0.report.lock.location, to: $0.report.lock.polePosition)
-                                          })])
+                                          },
+                                          orders: Array(host.orders.suffix(20)))],
+                    selected: command.orderTargets,
+                    draftPlace: command.orderPlace,
+                    onTapPlace: command.placingOrder ? { p in command.orderPlace = p; command.placingOrder = false } : nil,
+                    onTapMember: { command.toggleTarget($0) })
         }
     }
 
@@ -207,6 +212,10 @@ struct SquadLobbyView: View {
 
     private func row(_ line: SquadCommand.RosterLine, now: Date) -> some View {
         HStack(spacing: 12) {
+            Image(systemName: command.orderTargets.contains(line.id) ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(command.orderTargets.contains(line.id) ? Color.accentColor : .secondary)
+                .onTapGesture { command.toggleTarget(line.id) }
+                .accessibilityLabel(command.orderTargets.contains(line.id) ? "Picked for the next order" : "Pick for the next order")
             Circle().fill(line.online ? Color.green : Color.gray.opacity(0.5)).frame(width: 10, height: 10)
                 .accessibilityLabel(line.online ? "Linked" : "Offline")
             VStack(alignment: .leading, spacing: 2) {

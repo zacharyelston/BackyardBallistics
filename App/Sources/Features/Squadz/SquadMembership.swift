@@ -1,5 +1,7 @@
 import Foundation
 import CoreLocation
+import UIKit
+import UserNotifications
 import CoreGeo
 import RangingKit
 import GroupKit
@@ -32,6 +34,12 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
     @Published private(set) var lastSent: Date?
     /// Locks this phone sent to the commander, newest last, with what the commander did with each.
     @Published private(set) var sentLocks: [SentLock] = []
+    /// The squad leader's orders for this member that aren't finished (done or can't), newest last.
+    @Published private(set) var orders: [Order] = []
+    /// This member's answers, by order.
+    @Published private(set) var answers: [UUID: OrderAck.Response] = [:]
+    /// Orders answered done or can't, so a resend after a rejoin doesn't bring them back.
+    private var finishedOrders: Set<UUID> = []
 
     struct SentLock: Identifiable, Equatable {
         var id: UUID
@@ -151,6 +159,9 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         status = nil
         spotRequest = nil
         sentLocks = []
+        orders = []
+        answers = [:]
+        finishedOrders = []
         state = .idle
     }
 
@@ -183,6 +194,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
             squadName = w.squad.name
             state = .joined
             startReporting()
+            Self.askForNotifications()
         case let .squadStatus(s):
             status = s
             squadName = s.squad.name
@@ -193,9 +205,58 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
             state = .refused(reason)   // GroupClient stops on a refusal
         case let .lockReceipt(r):
             if let i = sentLocks.firstIndex(where: { $0.id == r.lock }) { sentLocks[i].receipt = r }
+        case let .order(o):
+            received(o)
         default:
             break   // observer-only messages and the rest aren't for phones
         }
+    }
+
+    // MARK: Orders
+
+    /// Answers an order. Done and can't take it off this phone's list; seen keeps it there.
+    func ack(_ order: Order, _ response: OrderAck.Response) {
+        answers[order.id] = response
+        client?.send(.orderAck(OrderAck(order: order.id, response: response)))
+        if response != .seen {
+            finishedOrders.insert(order.id)
+            orders.removeAll { $0.id == order.id }
+        }
+    }
+
+    private func received(_ o: Order) {
+        guard !finishedOrders.contains(o.id) else { return }
+        if let i = orders.firstIndex(where: { $0.id == o.id }) { orders[i] = o; return }   // a resend after a rejoin
+        orders.append(o)
+        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        if UIApplication.shared.applicationState != .active { Self.notify(o, squad: squadName) }
+    }
+
+    /// Asks once, on the first join, so new orders can reach a locked phone.
+    private static func askForNotifications() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            guard settings.authorizationStatus == .notDetermined else { return }
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        }
+    }
+
+    private static func notify(_ o: Order, squad: String?) {
+        let content = UNMutableNotificationContent()
+        content.title = "\(squad ?? "Squad"): \(o.kind.title)"
+        content.body = o.text.isEmpty ? "New order from the squad leader." : o.text
+        content.sound = .default
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: o.id.uuidString, content: content, trigger: nil))
+    }
+
+    /// Distance and compass direction from this phone's latest fix to an order's place, if both are known.
+    func directions(to order: Order) -> String? {
+        guard let at = order.at, let fix = lastFix else { return nil }
+        let here = GeoPoint(latitude: fix.coordinate.latitude, longitude: fix.coordinate.longitude)
+        let d = Geo.distance(here, at)
+        let b = Geo.bearing(from: here, to: at)
+        let points = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        let compass = points[Int((b + 22.5) / 45) % 8]
+        return String(format: "%.0f m %@ (%03.0f°)", d, compass, b)
     }
 
     // MARK: Locks

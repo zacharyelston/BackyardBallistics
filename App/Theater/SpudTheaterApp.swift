@@ -32,6 +32,8 @@ struct Watch: Identifiable {
     var course: Course?
     var status: SquadStatus?
     var positions: [MemberID: MemberPosition] = [:]
+    /// The squad leader's orders, as an observer sees them, oldest first (the last 20).
+    var orders: [Order] = []
     let client: GroupClient
 }
 
@@ -83,6 +85,11 @@ final class TheaterModel: ObservableObject {
         case let .squadStatus(s): watches[name]?.status = s; watches[name]?.squad = s.squad
         case let .positions(_, list):
             for p in list { if let id = p.member { watches[name]?.positions[id] = p } }
+        case let .order(o):
+            guard var w = watches[name], !w.orders.contains(where: { $0.id == o.id }) else { break }
+            w.orders.append(o)
+            if w.orders.count > 20 { w.orders.removeFirst(w.orders.count - 20) }
+            watches[name] = w
         default: break   // an observer is sent nothing else
         }
     }
@@ -158,7 +165,7 @@ extension Watch {
     /// What the shared site map (App/Shared/SiteMap.swift) draws for this squad.
     var siteMapSquad: SiteMapSquad {
         SiteMapSquad(id: name, course: course, members: squad?.members ?? [], positions: positions,
-                     activeHole: status?.hole, walkingOut: status?.walkingOut ?? true)
+                     activeHole: status?.hole, walkingOut: status?.walkingOut ?? true, orders: orders)
     }
 }
 
@@ -177,6 +184,24 @@ struct SquadCard: View {
                 }
                 if let c = watch.course {
                     Text("\(c.name) v\(c.version) · \(c.holes.count) holes, par \(c.totalPar)").font(.caption).foregroundStyle(.secondary)
+                }
+                if !watch.orders.isEmpty {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Latest orders").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                        ForEach(watch.orders.suffix(4).reversed()) { o in
+                            HStack(spacing: 6) {
+                                Image(systemName: o.kind.systemImage).frame(width: 16)
+                                Text(o.kind.title).fontWeight(.semibold)
+                                Text("to " + recipients(o))
+                                if !o.text.isEmpty { Text("· " + o.text).lineLimit(1) }
+                                Spacer()
+                                TimelineView(.periodic(from: .now, by: 10)) { t in
+                                    Text(age(o.time, now: t.date)).foregroundStyle(.secondary)
+                                }
+                            }
+                            .font(.caption)
+                        }
+                    }
                 }
                 Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 4) {
                     GridRow {
@@ -206,6 +231,12 @@ struct SquadCard: View {
                 Text(linkText).font(.caption).foregroundStyle(linkColor)
             }
         }
+    }
+
+    private func recipients(_ o: Order) -> String {
+        guard let to = o.to else { return "the team" }
+        let names = (watch.squad?.members ?? []).filter { to.contains($0.id) }.map(\.name)
+        return names.isEmpty ? "\(to.count) member(s)" : names.joined(separator: ", ")
     }
 
     private var linkText: String {

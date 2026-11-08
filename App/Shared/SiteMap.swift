@@ -19,6 +19,26 @@ struct SiteMapSquad: Identifiable {
     var walkingOut: Bool
     /// Lines of sight of locks the commander used: from where the member stood to the ranged pole.
     var rays: [SiteMapRay] = []
+    /// Orders with a place on the field, drawn as pins with the kind's icon.
+    var orders: [Order] = []
+}
+
+extension Order.Kind {
+    /// SF Symbol for the kind, on the map, the commander's buttons and the phone's banner.
+    var systemImage: String {
+        switch self {
+        case .rangeFrom: return "scope"
+        case .spot: return "eye.fill"
+        case .moveTo: return "figure.walk"
+        case .capture: return "camera.fill"
+        case .holdPosition: return "hand.raised.fill"
+        case .returnToFiringPoint: return "arrow.uturn.backward"
+        case .note: return "text.bubble.fill"
+        }
+    }
+
+    /// Kinds that are about a place, so the commander can set one on the map.
+    var takesPlace: Bool { self == .moveTo || self == .rangeFrom || self == .capture }
 }
 
 struct SiteMapRay: Hashable {
@@ -32,6 +52,14 @@ struct SiteMapRay: Hashable {
 /// GPS dots with accuracy circles, grey once their position is stale.
 struct SiteMap: View {
     let squads: [SiteMapSquad]
+    /// Members drawn with a selection ring (the commander picking who an order is for).
+    var selected: Set<MemberID> = []
+    /// A place being set for an order, drawn as a hollow pin.
+    var draftPlace: GeoPoint?
+    /// Called with the tapped spot when set (placing an order); otherwise taps pan as usual.
+    var onTapPlace: ((GeoPoint) -> Void)?
+    /// Called when a member's dot is tapped.
+    var onTapMember: ((MemberID) -> Void)?
     @State private var camera: MapCameraPosition = .automatic
     @State private var fittedTo: String?
 
@@ -40,6 +68,16 @@ struct SiteMap: View {
     private static let squadColors: [Color] = [.orange, .cyan, .pink, .yellow, .mint, .purple]
 
     var body: some View {
+        MapReader { proxy in
+            map
+                .onTapGesture(coordinateSpace: .local) { point in
+                    guard let onTapPlace, let c = proxy.convert(point, from: .local) else { return }
+                    onTapPlace(GeoPoint(latitude: c.latitude, longitude: c.longitude))
+                }
+        }
+    }
+
+    private var map: some View {
         Map(position: $camera) {
             ForEach(courses, id: \.id) { course in
                 MapPolygon(coordinates: course.boundary.vertices.map(\.coordinate))
@@ -80,8 +118,25 @@ struct SiteMap: View {
                             Circle().fill(stale ? .gray : color)
                                 .frame(width: 12, height: 12)
                                 .overlay(Circle().stroke(.white, lineWidth: 2))
+                                .padding(4)
+                                .overlay(Circle().stroke(.yellow, lineWidth: selected.contains(m.id) ? 3 : 0))
+                                .contentShape(Circle())
+                                .onTapGesture { onTapMember?(m.id) }
                         }
                     }
+                }
+                ForEach(squad.orders.filter { $0.at != nil }) { order in
+                    Annotation(order.kind.title, coordinate: order.at!.coordinate, anchor: .bottom) {
+                        Image(systemName: order.kind.systemImage)
+                            .font(.caption.weight(.bold)).foregroundStyle(.white)
+                            .padding(6).background(color, in: Circle())
+                            .overlay(Circle().stroke(.white, lineWidth: 1.5))
+                    }
+                }
+            }
+            if let draftPlace {
+                Annotation("New order", coordinate: draftPlace.coordinate, anchor: .bottom) {
+                    Image(systemName: "mappin.circle").font(.title).foregroundStyle(.yellow).shadow(radius: 2)
                 }
             }
         }

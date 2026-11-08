@@ -1,4 +1,5 @@
 import Foundation
+import CoreGeo
 import CourseKit
 import GroupKit
 import GroupLink
@@ -28,6 +29,12 @@ final class SquadCommand: ObservableObject {
     /// Links the transport has closed. `SquadHost` has no message for a dropped phone, so the
     /// roster works out "offline" from this.
     @Published private(set) var closedPeers: Set<PeerID> = []
+
+    // Drafting an order: who it's for (empty = the whole team) and an optional place on the field.
+    @Published var orderTargets: Set<MemberID> = []
+    @Published var orderPlace: GeoPoint?
+    /// The next map tap sets `orderPlace` instead of panning.
+    @Published var placingOrder = false
 
     private var group: GroupHost?
     private let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -155,6 +162,25 @@ final class SquadCommand: ObservableObject {
 
     func finishHole() {
         act { $0.finish(now: Date()) }
+    }
+
+    // MARK: Orders
+
+    /// Sends an order to the picked members, or to the whole team when none are picked. Clears the
+    /// place afterwards; the picked members stay picked for the next order.
+    @discardableResult
+    func sendOrder(_ kind: Order.Kind, text: String) -> Bool {
+        let before = host?.orders.count ?? 0
+        let to = orderTargets.isEmpty ? nil : Array(orderTargets)
+        let at = kind.takesPlace ? orderPlace : nil
+        act { $0.sendOrder(kind, text: text, at: at, to: to, now: Date()) }
+        let sent = (host?.orders.count ?? 0) > before
+        if sent { orderPlace = nil; placingOrder = false }
+        return sent
+    }
+
+    func toggleTarget(_ member: MemberID) {
+        if orderTargets.contains(member) { orderTargets.remove(member) } else { orderTargets.insert(member) }
     }
 
     /// Runs a commander action and sends what it returns.
