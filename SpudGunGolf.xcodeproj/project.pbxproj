@@ -12,6 +12,7 @@
 		0AF36FDEC5020706C479DECC /* RangingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5E31597492CC0E5465EB5069 /* RangingKit */; };
 		0DB342C6E1811E08407493BD /* ReticleLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AB2145B8AC206B21693A78 /* ReticleLog.swift */; };
 		101471AC6F8D8479978D0772 /* GroupKit in Frameworks */ = {isa = PBXBuildFile; productRef = ED48412377178EFF51799932 /* GroupKit */; };
+		126A7AA4D2C4C1E6DD4B9C6F /* SquadHolePanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24CC3BEAA9B245580729F49F /* SquadHolePanels.swift */; };
 		1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E339C687D3B38CF183F162C /* CameraController.swift */; };
 		1769E9EFAF55537C3DAF1649 /* RangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29F67AAE33283A8171918D7 /* RangingView.swift */; };
 		185EAC0298AD8B5B54972D1F /* RoundKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8B584124A0591F676D89F825 /* RoundKit */; };
@@ -29,6 +30,8 @@
 		723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */; };
 		724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AFC18B1FD4637E46C11CA7 /* CrosshairSpotView.swift */; };
 		77084244531EA1125D1C00E1 /* BallisticsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 957114E8D0EB2D87927F3B83 /* BallisticsKit */; };
+		7C2DD2E5091CC8ED15143BC6 /* OrderCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75BC877E68D4709936CE0EB1 /* OrderCard.swift */; };
+		801A31073180797249782AAE /* SquadOrdersPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202B6EDB55A5E428B38307AF /* SquadOrdersPanel.swift */; };
 		833F06491C4DDFF9FDC23AC6 /* CoreGeo in Frameworks */ = {isa = PBXBuildFile; productRef = A767DE0DBD45719511064F3D /* CoreGeo */; };
 		850826D3141B26E48925FB53 /* SquadMembership.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD109C93883530F2F1D8C14B /* SquadMembership.swift */; };
 		85E9117B8A9E9C1E6A3E5DF9 /* CameraNeedsPortrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77E46D1FF69E6EBCE1E9BBE /* CameraNeedsPortrait.swift */; };
@@ -61,6 +64,7 @@
 		F3A3289C04D85630458C4104 /* QRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53AF3C47E42C2CD18B24317F /* QRCodeView.swift */; };
 		F5C088DF7343E3AE34A239F6 /* CameraHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */; };
 		F663DF385477783B5FE4CBDD /* SpudTheaterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F14AA5B7F89FEA9E804DA95 /* SpudTheaterApp.swift */; };
+		F78611232CDD4DE0E4BE10E5 /* SpotterCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8253128CDBFDB91FAFF0 /* SpotterCard.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,11 +78,14 @@
 		1956E8D95530FA7EA760FD87 /* RangingLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingLog.swift; sourceTree = "<group>"; };
 		1DA6EB5E25631668DAC5462C /* JSONStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONStore.swift; sourceTree = "<group>"; };
 		1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseSurveyView.swift; sourceTree = "<group>"; };
+		202B6EDB55A5E428B38307AF /* SquadOrdersPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadOrdersPanel.swift; sourceTree = "<group>"; };
 		21DE58B1664E8C5DF8BD7EEB /* SiteMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteMap.swift; sourceTree = "<group>"; };
+		24CC3BEAA9B245580729F49F /* SquadHolePanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadHolePanels.swift; sourceTree = "<group>"; };
 		2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayView.swift; sourceTree = "<group>"; };
 		2C414C5B4AC53422F7AABC2C /* LeanCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeanCheckView.swift; sourceTree = "<group>"; };
 		2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARKitRangingSource.swift; sourceTree = "<group>"; };
 		311424D16BF397C1CD80DDFE /* RangingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingSession.swift; sourceTree = "<group>"; };
+		39FC8253128CDBFDB91FAFF0 /* SpotterCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotterCard.swift; sourceTree = "<group>"; };
 		52C51A940D33C796DF2A866B /* SightingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SightingView.swift; sourceTree = "<group>"; };
 		53AF3C47E42C2CD18B24317F /* QRCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeView.swift; sourceTree = "<group>"; };
 		54BDFBE220065C8E3F5A4FEF /* SpudCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SpudCore; path = Packages/SpudCore; sourceTree = SOURCE_ROOT; };
@@ -87,6 +94,7 @@
 		5E021E898D313DF96AEA9B39 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6FFE521AEBEB67F465CAA9E6 /* RoundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundView.swift; sourceTree = "<group>"; };
 		7230BC9CD26B3C17565509AE /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
+		75BC877E68D4709936CE0EB1 /* OrderCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderCard.swift; sourceTree = "<group>"; };
 		7E3297A98DDACEAB482EF66B /* CommandSquadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandSquadView.swift; sourceTree = "<group>"; };
 		86B45B7403F091985D78297E /* SimulatedRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatedRangingSource.swift; sourceTree = "<group>"; };
 		8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadCommand.swift; sourceTree = "<group>"; };
@@ -199,9 +207,13 @@
 				7E3297A98DDACEAB482EF66B /* CommandSquadView.swift */,
 				0C65BD036734D6BD5C19725B /* JoinCodeScanner.swift */,
 				FDE461F8C92C1AE4841587B3 /* JoinSquadView.swift */,
+				75BC877E68D4709936CE0EB1 /* OrderCard.swift */,
 				53AF3C47E42C2CD18B24317F /* QRCodeView.swift */,
+				39FC8253128CDBFDB91FAFF0 /* SpotterCard.swift */,
 				8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */,
+				24CC3BEAA9B245580729F49F /* SquadHolePanels.swift */,
 				FD109C93883530F2F1D8C14B /* SquadMembership.swift */,
+				202B6EDB55A5E428B38307AF /* SquadOrdersPanel.swift */,
 			);
 			path = Squadz;
 			sourceTree = "<group>";
@@ -467,6 +479,7 @@
 				AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */,
 				8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */,
 				2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */,
+				7C2DD2E5091CC8ED15143BC6 /* OrderCard.swift in Sources */,
 				723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */,
 				4C17D03F0FA06FE37704E92C /* PoleHeightView.swift in Sources */,
 				B4139AA51DCD859C3D15F05A /* PoleMarker.swift in Sources */,
@@ -482,9 +495,12 @@
 				ED15A3B0669DB05DBE20DD3D /* SightingView.swift in Sources */,
 				C17CD159F8E81ACE5278508D /* SimulatedRangingSource.swift in Sources */,
 				D0A4DFE5B2FF3CA0E1D4EDD8 /* SiteMap.swift in Sources */,
+				F78611232CDD4DE0E4BE10E5 /* SpotterCard.swift in Sources */,
 				EA0FB4BBE754C7D64CD92FB1 /* SpudGunGolfApp.swift in Sources */,
 				A3A842FBA87CAC888247D14E /* SquadCommand.swift in Sources */,
+				126A7AA4D2C4C1E6DD4B9C6F /* SquadHolePanels.swift in Sources */,
 				850826D3141B26E48925FB53 /* SquadMembership.swift in Sources */,
+				801A31073180797249782AAE /* SquadOrdersPanel.swift in Sources */,
 				DE1452806D6020CB0741687C /* ToolsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -40,6 +40,11 @@ struct RootView: View {
                 .tabItem { Label("Tools", systemImage: "wrench.and.screwdriver") }
         }
         .tint(.orange)
+        // The squad leader's newest order, along the bottom of whatever screen is open (clear of
+        // the navigation bar and the tab bar).
+        .overlay(alignment: .bottom) {
+            OrderBanner().padding(.bottom, 58).animation(.default, value: squadMembership.orders.count)
+        }
         // Back from sleep or the background: the squad's iPad reopens its listener at once, and a
         // member's phone retries without waiting out its backoff.
         .onChange(of: scenePhase) { _, phase in

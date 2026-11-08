@@ -89,7 +89,7 @@ struct SquadLobbyView: View {
                 HStack(spacing: 0) {
                     map
                     ScrollView {
-                        VStack(spacing: 16) { codePanel(compact: true); rosterPanel; statusPanel }.padding(16)
+                        VStack(spacing: 16) { codePanel(compact: true); SquadOrdersPanel(); rosterPanel; SquadHolePanel(); SquadLocksPanel(); statusPanel }.padding(16)
                     }
                     .frame(width: min(400, geo.size.width * 0.36))
                     .background(Color(.systemGroupedBackground))
@@ -99,7 +99,7 @@ struct SquadLobbyView: View {
                     VStack(spacing: 20) {
                         map.frame(height: max(320, geo.size.height * 0.45))
                             .clipShape(RoundedRectangle(cornerRadius: 16))
-                        codePanel(compact: false); rosterPanel; statusPanel
+                        codePanel(compact: false); SquadOrdersPanel(); rosterPanel; SquadHolePanel(); SquadLocksPanel(); statusPanel
                     }
                     .padding()
                 }
@@ -130,7 +130,24 @@ struct SquadLobbyView: View {
         if let host = command.host {
             SiteMap(squads: [SiteMapSquad(id: host.player, course: host.round.course,
                                           members: host.round.squad.members, positions: host.positions,
-                                          activeHole: host.round.hole?.holeNumber, walkingOut: host.round.walkingOut)])
+                                          activeHole: host.round.hole?.holeNumber, walkingOut: host.round.walkingOut,
+                                          rays: host.locks.filter { $0.status == .used }.map {
+                                              SiteMapRay(from: $0.report.lock.location, to: $0.report.lock.polePosition)
+                                          },
+                                          orders: Array(host.orders.suffix(20)),
+                                          pointers: command.orderPointers)],
+                    selected: command.orderTargets,
+                    draftPlace: command.orderPlace,
+                    onTapPlace: command.placingOrder ? { command.setPlace($0) } : nil,
+                    onTapMember: command.placingOrder ? nil : { command.toggleTarget($0) })
+                .overlay(alignment: .top) {
+                    if command.placingOrder, let kind = command.orderKind {
+                        Label("Tap where: \(kind.title)", systemImage: "hand.tap.fill")
+                            .font(.headline).padding(.horizontal, 14).padding(.vertical, 8)
+                            .background(.orange, in: Capsule()).foregroundStyle(.white)
+                            .padding(.top, 12)
+                    }
+                }
         }
     }
 
@@ -204,6 +221,13 @@ struct SquadLobbyView: View {
 
     private func row(_ line: SquadCommand.RosterLine, now: Date) -> some View {
         HStack(spacing: 12) {
+            Image(systemName: command.orderTargets.contains(line.id) ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(command.orderTargets.contains(line.id) ? Color.accentColor : .secondary)
+                .frame(width: 36, height: 36)
+                .contentShape(Rectangle())
+                .onTapGesture { command.toggleTarget(line.id) }
+                .accessibilityLabel(command.orderTargets.contains(line.id) ? "Picked for the next order" : "Pick for the next order")
             Circle().fill(line.online ? Color.green : Color.gray.opacity(0.5)).frame(width: 10, height: 10)
                 .accessibilityLabel(line.online ? "Linked" : "Offline")
             VStack(alignment: .leading, spacing: 2) {
@@ -254,9 +278,11 @@ struct SquadLobbyView: View {
                     ForEach(s.holds, id: \.self) { h in
                         Label(h.description, systemImage: "hand.raised.fill").font(.footnote).foregroundStyle(.orange)
                     }
+                    if s.holds.contains(.noMatch) {
+                        Text("A squad on its own has no match host, so firing data stays held. That's expected in practice; holds never stop orders, locks or the map.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                 }
-                Text("Playing holes over the link (ranging, Fired, spotting) comes in the next step, G5.")
-                    .font(.footnote).foregroundStyle(.secondary).padding(.top, 4)
             }
         }
         .padding(20)

@@ -1,4 +1,5 @@
 import Foundation
+import CoreGeo
 import CourseKit
 import GroupKit
 import GroupLink
@@ -28,6 +29,17 @@ final class SquadCommand: ObservableObject {
     /// Links the transport has closed. `SquadHost` has no message for a dropped phone, so the
     /// roster works out "offline" from this.
     @Published private(set) var closedPeers: Set<PeerID> = []
+
+    // Drafting an order, one step at a time: who it's for (empty = the whole team), what kind,
+    // where (a fresh map tap, for kinds that take a place), then Send. Nothing carries over from
+    // the last order: choosing a kind clears the place, and sending clears the whole draft.
+    @Published var orderTargets: Set<MemberID> = []
+    @Published private(set) var orderKind: Order.Kind?
+    @Published var orderPlace: GeoPoint?
+    /// The next map tap sets `orderPlace` instead of panning.
+    @Published var placingOrder = false
+    /// The last order problem (for example no one picked), shown in the Orders panel.
+    @Published private(set) var orderProblem: String?
 
     private var group: GroupHost?
     private let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -130,6 +142,116 @@ final class SquadCommand: ObservableObject {
 
     func remove(_ member: MemberID) {
         act { $0.removeMember(member, now: Date()) }
+    }
+
+    // MARK: The hole
+
+    /// Opens the next unfinished hole from the chosen firing point.
+    func startNextHole(firingPoint: Int) {
+        act { $0.startNextHole(firingPoint: firingPoint, now: Date()) }
+    }
+
+    /// The commander's own look downrange. No message from a phone can do this.
+    func confirmDownrange() {
+        act { $0.confirmDownrange(now: Date()) }
+    }
+
+    /// Uses a member's lock for its purpose, after the flag check on this iPad's course.
+    func useLock(_ id: UUID) {
+        act { $0.useLock(id, now: Date()) }
+    }
+
+    /// Fired, on the gunner's behalf: the round is in the air and every member is asked to spot it.
+    func fired() {
+        act { $0.fired(now: Date()) }
+    }
+
+    /// Records the round in flight with a member's call (left/right from their report, or none).
+    func commitSpot(from member: MemberID) {
+        act { $0.commit(callFrom: member, lateralFrom: nil, now: Date()) }
+    }
+
+    func commitLost() {
+        act { $0.commitLost(now: Date()) }
+    }
+
+    func ceaseFire() {
+        act { $0.ceaseFire(now: Date()) }
+    }
+
+    func finishHole() {
+        act { $0.finish(now: Date()) }
+    }
+
+    // MARK: Orders
+
+    /// Step 2: the kind. Clears any place from before; kinds that take a place go straight to
+    /// "tap the map".
+    func chooseKind(_ kind: Order.Kind?) {
+        orderKind = kind
+        orderPlace = nil
+        placingOrder = kind?.takesPlace ?? false
+        orderProblem = nil
+    }
+
+    /// Step 3: where, from a map tap.
+    func setPlace(_ p: GeoPoint) {
+        orderPlace = p
+        placingOrder = false
+    }
+
+    /// Ready to send: a kind, a place if the kind needs one, and a note for a Note.
+    func canSend(text: String) -> Bool {
+        guard let k = orderKind else { return false }
+        if k.takesPlace && orderPlace == nil { return false }
+        if k == .note && text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return false }
+        return true
+    }
+
+    /// Step 4: sends the draft to the picked members, or the whole team when none are picked,
+    /// then clears the draft so the next order starts fresh.
+    @discardableResult
+    func sendOrder(text: String) -> Bool {
+        guard let kind = orderKind, canSend(text: text) else { return false }
+        let before = host?.orders.count ?? 0
+        let to = orderTargets.isEmpty ? nil : Array(orderTargets)
+        act { $0.sendOrder(kind, text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+                           at: kind.takesPlace ? orderPlace : nil, to: to, now: Date()) }
+        let sent = (host?.orders.count ?? 0) > before
+        if sent {
+            clearOrderDraft()
+        } else {
+            orderProblem = host?.lastProblem ?? "The order wasn't sent."
+        }
+        return sent
+    }
+
+    func clearOrderDraft() {
+        orderTargets = []
+        orderKind = nil
+        orderPlace = nil
+        placingOrder = false
+        orderProblem = nil
+    }
+
+    /// Members each unfinished order with a place is for, with where they are now: the pointer
+    /// lines on the commander's map.
+    var orderPointers: [SiteMapRay] {
+        guard let host else { return [] }
+        var rays: [SiteMapRay] = []
+        for order in host.orders.suffix(20) {
+            guard let at = order.at else { continue }
+            for m in host.recipients(of: order) {
+                let answer = host.acks[order.id]?[m.id]
+                guard answer != .done, answer != .cannot, let p = host.positions[m.id] else { continue }
+                rays.append(SiteMapRay(from: p.at, to: at))
+            }
+        }
+        return rays
+    }
+
+    func toggleTarget(_ member: MemberID) {
+        if orderTargets.contains(member) { orderTargets.remove(member) } else { orderTargets.insert(member) }
     }
 
     /// Runs a commander action and sends what it returns.

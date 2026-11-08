@@ -39,6 +39,8 @@ final class SafetyPropertyTests: XCTestCase {
             .lock(LockReport(purpose: .initial, lock: lock)),
             .spot(SpotReport(hole: 1, mission: 1, round: 1, call: .over, lateral: -0.4, vantage: origin)),
             .fired(FiredReport(hole: 1, mission: 1, round: 1)),
+            .orderAck(OrderAck(order: UUID(), response: .done)),
+            .order(Order(kind: .moveTo, text: "Left flank, by the shed", at: origin, to: [MemberID()], time: t)),
             .checkFire(CheckFire(by: "Ana")),
             .welcome(Welcome(member: MemberID(), squad: squad)),
             .observing(squad),
@@ -58,7 +60,7 @@ final class SafetyPropertyTests: XCTestCase {
         ]
         for body in all {
             switch body {   // exhaustive on purpose
-            case .hello, .bye, .position, .lock, .spot, .fired, .checkFire, .welcome, .observing, .course, .refused, .squadStatus,
+            case .hello, .bye, .position, .lock, .spot, .fired, .orderAck, .order, .checkFire, .welcome, .observing, .course, .refused, .squadStatus,
                  .spotRequest, .lockReceipt, .joinMatch, .squadReport, .positions, .matchState: break
             }
         }
