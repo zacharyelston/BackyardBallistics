@@ -39,6 +39,7 @@ graph LR
 ```
 
 - **Observer feed.** On a Theater course, each commander's iPad and match host also streams to the Theater station what it already handles: member positions, raw locks, spot reports, observations and capture bundles, `HolePlay` summaries, holds and scores. It uses the same `GroupTransport` and Bonjour service, in a `theater` role, joined with the course's own code. **No firing data is in the feed**, because in v3 firing data never leaves the commander's iPad.
+- **The door for phones (built).** The Theater advertises itself on the same Bonjour service with TXT `role=theater` under the Mac's name, with its own six-character code (kept across launches; **New code** replaces it). Any phone can pick **Send to Theater**, enter the code and send fields, notes and capture files with no squad running (TheaterKit's `TheaterHost`). Notes are saved under `<field>/notes/`, files under `<field>/captures/<group>/`, and the selected field lists both; notes with a place and capture targets show as pins on the site map. Notes members send their squad leader reach the Theater through the observer feed and are saved the same way.
 - **Mapping back end.** An external GPU mapping service (a photogrammetry and site-map back end) on the course's local network. The Theater station is its only client.
 - **Shared map.** The Theater station sends the finished tiles to every commander's iPad, where they become the map's mesh layer. They are display only, as in v3.
 
