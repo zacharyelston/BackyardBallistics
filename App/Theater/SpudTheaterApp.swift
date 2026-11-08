@@ -8,7 +8,8 @@ import GroupLink
 
 /// v4 Theater Mode: find the squads' iPads on the network and watch them as an observer. Each
 /// squad sends its course, and its members' GPS positions as they come in. The site map shows the
-/// course on satellite imagery with every member on it. Watching only: no firing data reaches it.
+/// course on satellite imagery with every member on it; the 3D view (Field3DView.swift) shows it on
+/// the ground's real shape. Watching only: no firing data reaches it.
 @main
 struct SpudTheaterApp: App {
     @StateObject private var model = TheaterModel()
@@ -100,6 +101,11 @@ final class TheaterModel: ObservableObject {
 struct TheaterView: View {
     @EnvironmentObject private var model: TheaterModel
     @State private var codes: [String: String] = [:]
+    @AppStorage("mapMode") private var mapMode: MapMode = .map
+
+    enum MapMode: String { case map, threeD }
+
+    private var siteMapSquads: [SiteMapSquad] { model.watches.values.sorted { $0.name < $1.name }.map(\.siteMapSquad) }
 
     var body: some View {
         NavigationSplitView {
@@ -138,8 +144,13 @@ struct TheaterView: View {
             .navigationSplitViewColumnWidth(min: 250, ideal: 280)
         } detail: {
             VSplitView {
-                SiteMap(squads: model.watches.values.sorted { $0.name < $1.name }.map(\.siteMapSquad))
-                    .frame(minHeight: 320)
+                Group {
+                    switch mapMode {
+                    case .map: SiteMap(squads: siteMapSquads)
+                    case .threeD: Field3DView(squads: siteMapSquads)
+                    }
+                }
+                .frame(minHeight: 320)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         if model.watches.isEmpty {
@@ -151,6 +162,16 @@ struct TheaterView: View {
                     .padding()
                 }
                 .frame(minHeight: 160)
+            }
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Picker("View", selection: $mapMode) {
+                        Label("Map", systemImage: "map").tag(MapMode.map)
+                        Label("3D", systemImage: "mountain.2").tag(MapMode.threeD)
+                    }
+                    .pickerStyle(.segmented)
+                    .help("The site map, or the course in 3D on the ground's real shape")
+                }
             }
         }
     }

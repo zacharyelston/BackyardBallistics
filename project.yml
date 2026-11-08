@@ -89,6 +89,9 @@ targets:
         product: GroupKit
       - package: SpudCore
         product: GroupLink
+      # The 3D view: ENU frames, elevation grids, field meshes, and the scene geometry.
+      - package: SpudCore
+        product: FieldKit
     info:
       path: App/Theater/Info.plist
       properties:
