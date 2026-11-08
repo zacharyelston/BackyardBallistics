@@ -2,6 +2,7 @@ import SwiftUI
 import CoreLocation
 import CoreGeo
 import CourseKit
+import GroupKit
 
 /// A survey in progress: one hole's pole, its firing point and the boundary corners, kept between
 /// launches so the walk around the property can be paused.
@@ -119,6 +120,9 @@ final class SurveySampler: NSObject, ObservableObject, CLLocationManagerDelegate
 /// loaded as this device's course, and can be shared as a course file for `courses/local/course.yaml`.
 struct CourseSurveyView: View {
     @EnvironmentObject private var store: CourseStore
+    @EnvironmentObject private var membership: SquadMembership
+    @AppStorage(Settings.playerNameKey) private var player = Settings.defaultPlayerName
+    @State private var sentToLeader: UUID?
     @StateObject private var sampler = SurveySampler()
     @AppStorage(CourseSurvey.key) private var draftData = Data()
     @State private var survey = CourseSurvey()
@@ -214,6 +218,27 @@ struct CourseSurveyView: View {
                 if let text = survey.text {
                     ShareLink(item: text, preview: SharePreview("\(survey.name) course file")) {
                         Label("Share course file", systemImage: "square.and.arrow.up")
+                    }
+                    if let course = survey.course {
+                        NavigationLink {
+                            TheaterSendView(title: "Send to Theater",
+                                            summary: ["\(course.name) · \(course.holes.count) hole\(course.holes.count == 1 ? "" : "s")"],
+                                            payloads: { [.field(FieldSubmission(author: player, time: Date(), course: course, yaml: text))] })
+                        } label: {
+                            Label("Send to Theater", systemImage: "theatermasks")
+                        }
+                        if membership.isInSquad {
+                            Button {
+                                sentToLeader = membership.sendField(FieldSubmission(author: player, time: Date(), course: course, yaml: text))
+                                if sentToLeader == nil { message = "Not linked to the squad's iPad right now. Try again in a moment." }
+                            } label: {
+                                Label("Send to my squad leader", systemImage: "person.badge.shield.checkmark")
+                            }
+                            .disabled(!membership.canSendToLeader || (!isValid && !isPracticeOnly))
+                            if let id = sentToLeader, let s = membership.sentToLeader.first(where: { $0.id == id }) {
+                                SentItemRow(title: s.title, receipt: s.receipt)
+                            }
+                        }
                     }
                 }
                 if let message { Text(message).font(.footnote).foregroundStyle(.secondary) }

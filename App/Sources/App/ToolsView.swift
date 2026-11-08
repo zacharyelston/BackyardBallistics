@@ -43,6 +43,16 @@ struct ToolsView: View {
                 }
 
                 Section {
+                    NavigationLink { FieldNoteView() } label: {
+                        Label("Field note", systemImage: "note.text.badge.plus")
+                    }
+                } header: {
+                    Text("Field notes")
+                } footer: {
+                    Text("Pin a note (and a photo) where you're standing, and send it to the Theater host or your squad leader.")
+                }
+
+                Section {
                     NavigationLink { TargetCaptureView() } label: {
                         Label("Target capture", systemImage: "viewfinder.rectangular")
                     }

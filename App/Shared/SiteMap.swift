@@ -23,6 +23,8 @@ struct SiteMapSquad: Identifiable {
     var orders: [Order] = []
     /// Pointers: from a member to the place an unfinished order sends them, dashed.
     var pointers: [SiteMapRay] = []
+    /// Field notes pinned where they were written.
+    var notes: [FieldNote] = []
 }
 
 extension Order.Kind {
@@ -129,6 +131,15 @@ struct SiteMap: View {
                                 .contentShape(Circle())
                                 .onTapGesture { onTapMember?(m.id) }
                         }
+                    }
+                }
+                ForEach(squad.notes.filter { $0.at != nil }) { note in
+                    Annotation("", coordinate: note.at!.coordinate, anchor: .bottom) {
+                        Image(systemName: "note.text")
+                            .font(.callout.weight(.bold)).foregroundStyle(.black)
+                            .padding(7).background(.yellow, in: RoundedRectangle(cornerRadius: 7))
+                            .overlay(RoundedRectangle(cornerRadius: 7).stroke(.white, lineWidth: 2))
+                            .shadow(radius: 2)
                     }
                 }
                 ForEach(squad.orders.filter { $0.at != nil }) { order in

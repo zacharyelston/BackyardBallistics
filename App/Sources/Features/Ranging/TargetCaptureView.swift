@@ -18,6 +18,11 @@ struct TargetCaptureView: View {
     @State private var freezing = false
     @State private var problem: String?
     @State private var savedFolder: URL?
+    @State private var sendingToTheater = false
+    /// One ID per saved capture: its files land in one folder on the Theater.
+    @State private var captureGroup = UUID()
+    @EnvironmentObject private var theater: TheaterLink
+    @EnvironmentObject private var courses: CourseStore
     @State private var simImage: CGImage?
 
     private static let sticks: [ScaleStick] = [.meterQuarters, .twoMeterHalves]
@@ -72,6 +77,25 @@ struct TargetCaptureView: View {
             session.start()
         }
         .onDisappear { session.pause() }
+        .sheet(isPresented: $sendingToTheater) {
+            if let folder = savedFolder {
+                NavigationStack {
+                    TheaterSendView(title: "Send capture", summary: Self.files(in: folder).map(\.lastPathComponent),
+                                    payloads: { [group = captureGroup, course = courses.loaded?.result.course?.id ?? courses.practiceCourse?.id] in
+                                        Self.files(in: folder).map { .file($0, kind: .capture, group: group, courseID: course) }
+                                    })
+                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Close") { sendingToTheater = false } } }
+                }
+                .environmentObject(theater)
+            }
+        }
+    }
+
+    /// A saved capture's files to send: the shots, then capture.json.
+    static func files(in folder: URL) -> [URL] {
+        let all = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+        return all.filter { !$0.lastPathComponent.hasPrefix(".") }
+            .sorted { ($0.lastPathComponent == "capture.json" ? 1 : 0, $0.lastPathComponent) < ($1.lastPathComponent == "capture.json" ? 1 : 0, $1.lastPathComponent) }
     }
 
     /// The live camera, filled into the screen and clipped to it (an aspect-filled image would
@@ -143,8 +167,11 @@ struct TargetCaptureView: View {
                 }
                 if let problem { Text(problem).font(.footnote).foregroundStyle(.orange) }
                 if let savedFolder {
-                    ShareLink(item: savedFolder) { Label("Saved. Share to the Theater host", systemImage: "square.and.arrow.up") }
-                        .font(.footnote)
+                    HStack(spacing: 16) {
+                        Button { sendingToTheater = true } label: { Label("Send to Theater", systemImage: "theatermasks") }
+                        ShareLink(item: savedFolder) { Label("Share", systemImage: "square.and.arrow.up") }
+                    }
+                    .font(.footnote)
                 }
             }
         }
@@ -227,6 +254,7 @@ struct TargetCaptureView: View {
             encoder.dateEncodingStrategy = .iso8601
             try encoder.encode(bundle).write(to: dir.appendingPathComponent("capture.json"), options: .atomic)
             savedFolder = dir
+            captureGroup = UUID()
             problem = nil
         } catch {
             problem = "Couldn't save: \(error.localizedDescription)"

@@ -45,8 +45,17 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
     @Published private(set) var orders: [Order] = []
     /// This member's answers, by order.
     @Published private(set) var answers: [UUID: OrderAck.Response] = [:]
+    /// Field notes and fields this phone sent the squad leader, newest first, with the leader's receipts.
+    @Published private(set) var sentToLeader: [SentToLeader] = []
     /// Orders answered done or can't, so a resend after a rejoin doesn't bring them back.
     private var finishedOrders: Set<UUID> = []
+
+    struct SentToLeader: Identifiable, Equatable {
+        var id: UUID
+        var title: String
+        var date: Date
+        var receipt: Receipt?
+    }
 
     struct SentLock: Identifiable, Equatable {
         var id: UUID
@@ -166,6 +175,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         status = nil
         spotRequest = nil
         sentLocks = []
+        sentToLeader = []
         orders = []
         answers = [:]
         lastSpot = nil
@@ -216,9 +226,39 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
             if let i = sentLocks.firstIndex(where: { $0.id == r.lock }) { sentLocks[i].receipt = r }
         case let .order(o):
             received(o)
+        case let .receipt(r):
+            if let i = sentToLeader.firstIndex(where: { $0.id == r.id }) { sentToLeader[i].receipt = r }
         default:
             break   // observer-only messages and the rest aren't for phones
         }
+    }
+
+    // MARK: Field notes and fields
+
+    /// Sends a field note to the squad leader (who passes it on to the Theater). Nil when not linked.
+    @discardableResult
+    func sendNote(_ note: FieldNote) -> UUID? {
+        guard let c = client, c.status == .connected else { return nil }
+        c.send(.fieldNote(note))
+        record(note.id, "Note: " + (note.text.isEmpty ? "photo" : String(note.text.prefix(40))))
+        return note.id
+    }
+
+    /// Offers a field to the squad leader, to adopt for the squad. Nil when not linked.
+    @discardableResult
+    func sendField(_ field: FieldSubmission) -> UUID? {
+        guard let c = client, c.status == .connected else { return nil }
+        c.send(.fieldSubmission(field))
+        record(field.id, "Field: \(field.course.name)")
+        return field.id
+    }
+
+    /// Linked to the squad's iPad right now (sending works).
+    var canSendToLeader: Bool { client?.status == .connected && welcome != nil }
+
+    private func record(_ id: UUID, _ title: String) {
+        sentToLeader.insert(SentToLeader(id: id, title: title, date: Date()), at: 0)
+        if sentToLeader.count > 30 { sentToLeader.removeLast(sentToLeader.count - 30) }
     }
 
     // MARK: Orders
