@@ -10,6 +10,9 @@ enum Settings {
     static let flagLonKey = "flagLon"
     /// Use the simulated camera for ranging (always on in the Simulator).
     static let simulatedCaptureKey = "simulatedCapture"
+    /// Name on the scorecard and in the downrange confirmations.
+    static let playerNameKey = "playerName"
+    static let defaultPlayerName = "Player 1"
     static let defaultPoleHeight = 2.438
     static let defaultCameraHeight = 1.5
 }

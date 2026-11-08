@@ -6,6 +6,7 @@ struct SpudGunGolfApp: App {
     @StateObject private var rangingLog = RangingLogStore(fileName: "ranginglog.json")
     @StateObject private var reticleLog = ReticleLogStore(fileName: "reticlelog.json")
     @StateObject private var courseStore = CourseStore()
+    @StateObject private var roundStore = RoundStore()
 
     var body: some Scene {
         WindowGroup {
@@ -14,6 +15,7 @@ struct SpudGunGolfApp: App {
                 .environmentObject(rangingLog)
                 .environmentObject(reticleLog)
                 .environmentObject(courseStore)
+                .environmentObject(roundStore)
         }
     }
 }
