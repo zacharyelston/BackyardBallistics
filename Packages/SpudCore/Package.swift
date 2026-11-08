@@ -11,6 +11,7 @@ import PackageDescription
 //   CourseKit  – course files: parsing, the Course/Hole model, validation through SafetyKit
 //   RoundKit   – fire missions per hole, cease fire and verify, downrange play, scoring, practice
 //   GroupKit   – v3 Squadz: the squad and match protocol, the commander's and match host's state, holds
+//   FieldKit   – the field in 3D: ENU frames, georeferencing reconstructions to GPS, elevation grids, mesh records
 //   GroupLink  – GroupKit over the local network: Bonjour, TLS keyed from the join code (Network.framework)
 let package = Package(
     name: "SpudCore",
@@ -25,7 +26,8 @@ let package = Package(
         .library(name: "GroupKit", targets: ["GroupKit"]),
         // Prints the facts docs/howto quotes, from the real modules (scripts/build-howto.sh).
         .executable(name: "spud-docs", targets: ["SpudDocs"]),
-        .library(name: "GroupLink", targets: ["GroupLink"])
+        .library(name: "GroupLink", targets: ["GroupLink"]),
+        .library(name: "FieldKit", targets: ["FieldKit"])
     ],
     targets: [
         .target(name: "CoreGeo"),
@@ -37,6 +39,7 @@ let package = Package(
         .target(name: "GroupKit", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit"]),
         .executableTarget(name: "SpudDocs", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit", "GroupKit"]),
         .target(name: "GroupLink", dependencies: ["GroupKit"]),
+        .target(name: "FieldKit", dependencies: ["CoreGeo"]),
         .testTarget(name: "CoreGeoTests", dependencies: ["CoreGeo"]),
         .testTarget(name: "SafetyKitTests", dependencies: ["SafetyKit", "CoreGeo"]),
         .testTarget(name: "RangingKitTests", dependencies: ["RangingKit", "CoreGeo"]),
@@ -45,6 +48,7 @@ let package = Package(
         .testTarget(name: "CourseKitTests", dependencies: ["CourseKit", "CoreGeo", "SafetyKit", "RangingKit"]),
         .testTarget(name: "RoundKitTests", dependencies: ["RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "CoreGeo"]),
         .testTarget(name: "GroupKitTests", dependencies: ["GroupKit", "RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "SafetyKit", "CoreGeo"]),
+        .testTarget(name: "FieldKitTests", dependencies: ["FieldKit", "CoreGeo"]),
         .testTarget(name: "GroupLinkTests", dependencies: ["GroupLink", "GroupKit", "CourseKit", "CoreGeo"])
     ]
 )
