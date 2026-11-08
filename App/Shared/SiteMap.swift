@@ -17,6 +17,13 @@ struct SiteMapSquad: Identifiable {
     var activeHole: Int?
     /// Cease fire: people are walking out, so no fan is live.
     var walkingOut: Bool
+    /// Lines of sight of locks the commander used: from where the member stood to the ranged pole.
+    var rays: [SiteMapRay] = []
+}
+
+struct SiteMapRay: Hashable {
+    var from: GeoPoint
+    var to: GeoPoint
 }
 
 /// The site: satellite imagery with each squad's course and members on it. The course boundary,
@@ -60,6 +67,10 @@ struct SiteMap: View {
             }
             ForEach(Array(squads.enumerated()), id: \.element.id) { i, squad in
                 let color = Self.squadColors[i % Self.squadColors.count]
+                ForEach(Array(squad.rays.enumerated()), id: \.offset) { _, ray in
+                    MapPolyline(coordinates: [ray.from.coordinate, ray.to.coordinate])
+                        .stroke(color.opacity(0.9), lineWidth: 1)
+                }
                 ForEach(squad.members) { m in
                     if let p = squad.positions[m.id] {
                         let stale = Date().timeIntervalSince(p.time) > Self.staleAfter

@@ -132,6 +132,31 @@ final class SquadCommand: ObservableObject {
         act { $0.removeMember(member, now: Date()) }
     }
 
+    // MARK: The hole
+
+    /// Opens the next unfinished hole from the chosen firing point.
+    func startNextHole(firingPoint: Int) {
+        act { $0.startNextHole(firingPoint: firingPoint, now: Date()) }
+    }
+
+    /// The commander's own look downrange. No message from a phone can do this.
+    func confirmDownrange() {
+        act { $0.confirmDownrange(now: Date()) }
+    }
+
+    /// Uses a member's lock for its purpose, after the flag check on this iPad's course.
+    func useLock(_ id: UUID) {
+        act { $0.useLock(id, now: Date()) }
+    }
+
+    func ceaseFire() {
+        act { $0.ceaseFire(now: Date()) }
+    }
+
+    func finishHole() {
+        act { $0.finish(now: Date()) }
+    }
+
     /// Runs a commander action and sends what it returns.
     func act(_ action: (inout SquadHost) -> [Outgoing]) {
         guard var h = host else { return }

@@ -89,7 +89,7 @@ struct SquadLobbyView: View {
                 HStack(spacing: 0) {
                     map
                     ScrollView {
-                        VStack(spacing: 16) { codePanel(compact: true); rosterPanel; statusPanel }.padding(16)
+                        VStack(spacing: 16) { codePanel(compact: true); SquadHolePanel(); SquadLocksPanel(); rosterPanel; statusPanel }.padding(16)
                     }
                     .frame(width: min(400, geo.size.width * 0.36))
                     .background(Color(.systemGroupedBackground))
@@ -99,7 +99,7 @@ struct SquadLobbyView: View {
                     VStack(spacing: 20) {
                         map.frame(height: max(320, geo.size.height * 0.45))
                             .clipShape(RoundedRectangle(cornerRadius: 16))
-                        codePanel(compact: false); rosterPanel; statusPanel
+                        codePanel(compact: false); SquadHolePanel(); SquadLocksPanel(); rosterPanel; statusPanel
                     }
                     .padding()
                 }
@@ -130,7 +130,10 @@ struct SquadLobbyView: View {
         if let host = command.host {
             SiteMap(squads: [SiteMapSquad(id: host.player, course: host.round.course,
                                           members: host.round.squad.members, positions: host.positions,
-                                          activeHole: host.round.hole?.holeNumber, walkingOut: host.round.walkingOut)])
+                                          activeHole: host.round.hole?.holeNumber, walkingOut: host.round.walkingOut,
+                                          rays: host.locks.filter { $0.status == .used }.map {
+                                              SiteMapRay(from: $0.report.lock.location, to: $0.report.lock.polePosition)
+                                          })])
         }
     }
 
@@ -255,8 +258,6 @@ struct SquadLobbyView: View {
                         Label(h.description, systemImage: "hand.raised.fill").font(.footnote).foregroundStyle(.orange)
                     }
                 }
-                Text("Playing holes over the link (ranging, Fired, spotting) comes in the next step, G5.")
-                    .font(.footnote).foregroundStyle(.secondary).padding(.top, 4)
             }
         }
         .padding(20)

@@ -12,6 +12,7 @@
 		0AF36FDEC5020706C479DECC /* RangingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5E31597492CC0E5465EB5069 /* RangingKit */; };
 		0DB342C6E1811E08407493BD /* ReticleLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AB2145B8AC206B21693A78 /* ReticleLog.swift */; };
 		101471AC6F8D8479978D0772 /* GroupKit in Frameworks */ = {isa = PBXBuildFile; productRef = ED48412377178EFF51799932 /* GroupKit */; };
+		126A7AA4D2C4C1E6DD4B9C6F /* SquadHolePanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24CC3BEAA9B245580729F49F /* SquadHolePanels.swift */; };
 		1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E339C687D3B38CF183F162C /* CameraController.swift */; };
 		1769E9EFAF55537C3DAF1649 /* RangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29F67AAE33283A8171918D7 /* RangingView.swift */; };
 		185EAC0298AD8B5B54972D1F /* RoundKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8B584124A0591F676D89F825 /* RoundKit */; };
@@ -75,6 +76,7 @@
 		1DA6EB5E25631668DAC5462C /* JSONStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONStore.swift; sourceTree = "<group>"; };
 		1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseSurveyView.swift; sourceTree = "<group>"; };
 		21DE58B1664E8C5DF8BD7EEB /* SiteMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteMap.swift; sourceTree = "<group>"; };
+		24CC3BEAA9B245580729F49F /* SquadHolePanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadHolePanels.swift; sourceTree = "<group>"; };
 		2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayView.swift; sourceTree = "<group>"; };
 		2C414C5B4AC53422F7AABC2C /* LeanCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeanCheckView.swift; sourceTree = "<group>"; };
 		2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARKitRangingSource.swift; sourceTree = "<group>"; };
@@ -201,6 +203,7 @@
 				FDE461F8C92C1AE4841587B3 /* JoinSquadView.swift */,
 				53AF3C47E42C2CD18B24317F /* QRCodeView.swift */,
 				8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */,
+				24CC3BEAA9B245580729F49F /* SquadHolePanels.swift */,
 				FD109C93883530F2F1D8C14B /* SquadMembership.swift */,
 			);
 			path = Squadz;
@@ -484,6 +487,7 @@
 				D0A4DFE5B2FF3CA0E1D4EDD8 /* SiteMap.swift in Sources */,
 				EA0FB4BBE754C7D64CD92FB1 /* SpudGunGolfApp.swift in Sources */,
 				A3A842FBA87CAC888247D14E /* SquadCommand.swift in Sources */,
+				126A7AA4D2C4C1E6DD4B9C6F /* SquadHolePanels.swift in Sources */,
 				850826D3141B26E48925FB53 /* SquadMembership.swift in Sources */,
 				DE1452806D6020CB0741687C /* ToolsView.swift in Sources */,
 			);
