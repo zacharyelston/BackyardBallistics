@@ -1,0 +1,7 @@
+// Copy to Config/Local.xcconfig (ignored by git), or run scripts/set-team.sh.
+// Your team ID: Xcode > Settings > Accounts > your Apple ID > the team, or the OU of your "Apple Development" certificate.
+DEVELOPMENT_TEAM = ABCDE12345
+
+// A free (Personal Team) account needs a bundle ID nobody else has registered.
+// If Xcode says the ID is unavailable, add something unique, e.g. your initials.
+// PRODUCT_BUNDLE_IDENTIFIER = com.backyardballistics.spudgungolf.yourname

@@ -1,0 +1,8 @@
+// Code signing for SpudGunGolf.
+// Automatic signing with whichever team is set in Config/Local.xcconfig (not committed).
+// Make it with: scripts/set-team.sh   (after signing in to Xcode with your Apple ID)
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM =
+PRODUCT_BUNDLE_IDENTIFIER = com.backyardballistics.spudgungolf
+
+#include? "Local.xcconfig"

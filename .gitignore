@@ -8,3 +8,4 @@ xcuserdata/
 Packages/RangingKit/.build/
 _site/
 node_modules/
+Config/Local.xcconfig

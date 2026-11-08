@@ -36,6 +36,7 @@
 /* Begin PBXFileReference section */
 		0502B6763FEB460945C51624 /* SpudGunGolfApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpudGunGolfApp.swift; sourceTree = "<group>"; };
 		058FD02EB37A4DD2D60E9425 /* LauncherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherView.swift; sourceTree = "<group>"; };
+		05E120BD574CED262D43DC22 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		0E339C687D3B38CF183F162C /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
 		1956E8D95530FA7EA760FD87 /* RangingLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingLog.swift; sourceTree = "<group>"; };
 		1DA6EB5E25631668DAC5462C /* JSONStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONStore.swift; sourceTree = "<group>"; };
@@ -94,9 +95,18 @@
 			isa = PBXGroup;
 			children = (
 				31471B55732A74AE3FC8058E /* App */,
+				67AB202C3040F1E2B9EE066C /* Config */,
 				7C7CE68EF33EEB883DB37F1A /* Packages */,
 				E38998785BBB083889B06138 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		67AB202C3040F1E2B9EE066C /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				05E120BD574CED262D43DC22 /* Signing.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		7C7CE68EF33EEB883DB37F1A /* Packages */ = {
@@ -215,6 +225,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					BE7DD4331BD91D496AFB5FF6 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = B53025587128EA806A87EFB0 /* Build configuration list for PBXProject "SpudGunGolf" */;
@@ -273,6 +287,7 @@
 /* Begin XCBuildConfiguration section */
 		3DC1F9BCCA950ECFB83FBE0D /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 05E120BD574CED262D43DC22 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -282,7 +297,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.backyardballistics.spudgungolf;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -348,6 +362,7 @@
 		};
 		8CACFAA4E73E74E24D5A003F /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 05E120BD574CED262D43DC22 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -357,7 +372,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.backyardballistics.spudgungolf;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};

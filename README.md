@@ -47,7 +47,30 @@ xcodegen generate
 open SpudGunGolf.xcodeproj
 ```
 
-Set your signing team on the SpudGunGolf target, then run on an iPhone. The camera and ARKit tools need a real device.
+### Run on an iPhone
+
+Signing reads your team from `Config/Local.xcconfig`, which git ignores, so team IDs stay out of the repo.
+
+1. In Xcode, sign in under **Settings → Apple Accounts** and create an **Apple Development** certificate (**Manage Certificates… → +**). A free Personal Team works; its installs last 7 days.
+2. Write your team into `Config/Local.xcconfig`:
+
+```bash
+scripts/set-team.sh
+```
+
+3. On the iPhone, turn on **Settings → Privacy & Security → Developer Mode**, then run from Xcode, or from the command line:
+
+```bash
+xcodebuild -project SpudGunGolf.xcodeproj -scheme SpudGunGolf -destination 'platform=iOS,name=<your iPhone>' -allowProvisioningUpdates build
+```
+
+If signing fails with `errSecInternalComponent`, let Apple's tools use your key once (asks for your login keychain password):
+
+```bash
+security set-key-partition-list -S apple-tool:,apple:,codesign: -s ~/Library/Keychains/login.keychain-db
+```
+
+The camera and ARKit tools need a real device; in the Simulator the ranging screens use the simulated camera.
 
 Run the core tests on the Mac:
 
