@@ -19,10 +19,13 @@ struct ToolsView: View {
                     NavigationLink { PoleHeightView() } label: {
                         Label("Measure pole height", systemImage: "ruler")
                     }
+                    NavigationLink { CourseSurveyView() } label: {
+                        Label("Survey a course", systemImage: "mappin.and.ellipse")
+                    }
                 } header: {
                     Text("Flag setup")
                 } footer: {
-                    Text("Guy the pole until the lean check reads under 0.5°, then measure its height.")
+                    Text("Guy the pole until the lean check reads under 0.5°, then measure its height. Survey the course to record the pole, the firing point and the boundary.")
                 }
 
                 Section {

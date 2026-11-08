@@ -9,23 +9,32 @@ public struct CourseProblem: Codable, Equatable, Hashable, Sendable, CustomStrin
         case warning
     }
 
+    /// Problems that only matter when something is really fired.
+    public enum Kind: String, Codable, Sendable {
+        /// A firing point's safety fan leaves the boundary. Practice, which fires nothing, may still use the course.
+        case fan
+    }
+
     public var severity: Severity
+    /// Set for problems that practice can live with; nil for everything else.
+    public var kind: Kind?
     /// 1-based line in the file, when the problem is on one line.
     public var line: Int?
     /// The dotted key involved, when there is one.
     public var key: String?
     public var message: String
 
-    public init(_ severity: Severity, line: Int? = nil, key: String? = nil, _ message: String) {
+    public init(_ severity: Severity, line: Int? = nil, key: String? = nil, kind: Kind? = nil, _ message: String) {
         self.severity = severity
+        self.kind = kind
         self.line = line
         self.key = key
         self.message = message
     }
 
     /// An error: the course is refused.
-    public init(line: Int? = nil, key: String? = nil, _ message: String) {
-        self.init(.error, line: line, key: key, message)
+    public init(line: Int? = nil, key: String? = nil, kind: Kind? = nil, _ message: String) {
+        self.init(.error, line: line, key: key, kind: kind, message)
     }
 
     public var description: String {
@@ -53,4 +62,11 @@ public struct CourseLoadResult: Codable, Equatable, Sendable {
 
     /// The course, only if it passed every check. A course with any error is refused.
     public var playableCourse: Course? { errors.isEmpty ? course : nil }
+
+    /// The course for practice: playable, or refused only because a safety fan leaves the boundary.
+    /// Practice fires nothing, so the fan doesn't apply; real rounds still need `playableCourse`.
+    public var practiceCourse: Course? { errors.allSatisfy { $0.kind == .fan } ? course : nil }
+
+    /// Usable for practice and demos, but not for real rounds.
+    public var isPracticeOnly: Bool { playableCourse == nil && practiceCourse != nil }
 }

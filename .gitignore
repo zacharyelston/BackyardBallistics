@@ -9,3 +9,7 @@ Packages/RangingKit/.build/
 _site/
 node_modules/
 Config/Local.xcconfig
+
+# Your own course: bundled as the default, never committed (see courses/local/README.md)
+courses/local/*
+!courses/local/README.md

@@ -47,6 +47,9 @@ final class RoundStore: ObservableObject {
     }
 
     func start(course: Course, player: String, practice: Bool) {
+        // A real round needs a course that passes every check; a practice-only course
+        // (its safety fan leaves the boundary) can only be practised on.
+        guard practice || !CourseValidator.problems(for: course).contains(where: { $0.severity == .error }) else { return }
         active = Active(card: Scorecard(course: course, player: player, practice: practice), course: course,
                         seed: UInt64.random(in: 1...UInt64(UInt32.max)))
     }

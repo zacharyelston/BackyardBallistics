@@ -20,6 +20,10 @@ targets:
       - App/Sources
       - path: courses/sample-course.yaml
         buildPhase: resources
+      # Your own course, if courses/local/course.yaml exists (git ignores it): the default course.
+      - path: courses/local
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: SpudCore
         product: CoreGeo

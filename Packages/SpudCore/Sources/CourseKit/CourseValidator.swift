@@ -92,7 +92,7 @@ public enum CourseValidator {
             // Without a boundary the course-level problem above already says so, once.
             guard let boundary else { continue }
             for reason in Safety.checkFan(start: start, hole: flag.position, boundary: boundary).reasons {
-                out.append(CourseProblem(key: key, "\(where_): \(reason.description)"))
+                out.append(CourseProblem(key: key, kind: .fan, "\(where_): \(reason.description)"))
             }
         }
         return out
