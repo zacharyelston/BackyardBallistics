@@ -20,6 +20,8 @@ struct FieldNoteView: View {
     @State private var courseID = ""
     @State private var includeLocation = true
     @State private var photo: Data?
+    /// The photo at full size, sent to the Theater as its own file (the inline one is small).
+    @State private var fullPhoto: Data?
     @State private var pickedItem: PhotosPickerItem?
     @State private var takingPhoto = false
     @State private var destination: Destination = .theater
@@ -114,13 +116,13 @@ struct FieldNoteView: View {
             guard let item else { return }
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) {
-                    photo = PhotoShrinker.jpeg(image, under: FieldNote.maxInlinePhotoBytes)
+                    setPhoto(image)
                 }
             }
         }
         .fullScreenCover(isPresented: $takingPhoto) {
             CameraPicker { image in
-                if let image { photo = PhotoShrinker.jpeg(image, under: FieldNote.maxInlinePhotoBytes) }
+                if let image { setPhoto(image) }
                 takingPhoto = false
             }
             .ignoresSafeArea()
@@ -136,7 +138,7 @@ struct FieldNoteView: View {
                     Text(ByteCountFormatter.string(fromByteCount: Int64(photo.count), countStyle: .file))
                         .font(.caption).foregroundStyle(.secondary)
                     Spacer()
-                    Button("Remove", role: .destructive) { self.photo = nil; pickedItem = nil }.font(.footnote)
+                    Button("Remove", role: .destructive) { self.photo = nil; fullPhoto = nil; pickedItem = nil }.font(.footnote)
                 }
             }
             HStack {
@@ -152,7 +154,7 @@ struct FieldNoteView: View {
         } header: {
             Text("Photo (optional)")
         } footer: {
-            Text("Shrunk to under 300 KB so it travels with the note.")
+            Text("A copy under 300 KB travels with the note. The Theater also gets the full-size photo.")
         }
     }
 
@@ -174,16 +176,30 @@ struct FieldNoteView: View {
         let n = note()
         switch destination {
         case .theater:
-            sentToTheater = theater.send([.note(n)]) + sentToTheater
+            var payloads: [TheaterLink.Payload] = [.note(n)]
+            // The full-size photo, as a file the Theater files under notes/<note id>/.
+            if let full = fullPhoto {
+                let url = FileManager.default.temporaryDirectory.appendingPathComponent("note-\(n.id.uuidString).jpg")
+                if (try? full.write(to: url, options: .atomic)) != nil {
+                    payloads.append(.file(url, kind: .notePhoto, group: n.id, courseID: n.courseID))
+                }
+            }
+            sentToTheater = theater.send(payloads) + sentToTheater
             reset()
         case .leader:
             if membership.sendNote(n) != nil { reset() } else { leaderProblem = "Not linked to the squad's iPad right now. Try again in a moment." }
         }
     }
 
+    private func setPhoto(_ image: UIImage) {
+        photo = PhotoShrinker.jpeg(image, under: FieldNote.maxInlinePhotoBytes)
+        fullPhoto = PhotoShrinker.resize(image, longSide: 4032).jpegData(compressionQuality: 0.85)
+    }
+
     private func reset() {
         text = ""
         photo = nil
+        fullPhoto = nil
         pickedItem = nil
     }
 }
