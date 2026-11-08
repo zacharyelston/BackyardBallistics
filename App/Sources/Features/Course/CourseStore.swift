@@ -1,18 +1,25 @@
 import Foundation
 import CourseKit
 
-/// The course the app is playing: the bundled sample, the course server's file, or a typed URL.
+/// The course the app is playing: your own bundled course (courses/local/course.yaml, never in git),
+/// the bundled sample, a course surveyed on this device, the course server's file, or a typed URL.
 /// The last course that passed every check is cached as JSON and restored on launch, so a round
 /// can start without the course Wi-Fi. Restored courses are re-validated against today's limits.
 @MainActor
 final class CourseStore: ObservableObject {
     enum Source: Codable, Equatable {
         case bundledSample
+        /// courses/local/course.yaml, bundled at build time when present.
+        case bundledLocal
+        /// Made with Tools → Survey a course on this device.
+        case surveyed
         case url(URL)
 
         var label: String {
             switch self {
             case .bundledSample: return "Bundled sample"
+            case .bundledLocal: return "Your bundled course"
+            case .surveyed: return "Surveyed on this device"
             case let .url(url): return url.absoluteString
             }
         }
@@ -43,7 +50,7 @@ final class CourseStore: ObservableObject {
     init(cacheFileName: String = "course-cache.json") {
         cacheURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent(cacheFileName)
-        if !restoreCache() { loadBundledSample() }
+        if !restoreCache() && !loadBundledLocal() { loadBundledSample() }
     }
 
     // MARK: Loading
@@ -56,6 +63,26 @@ final class CourseStore: ObservableObject {
             return
         }
         accept(CourseFile.load(data: data), from: .bundledSample)
+    }
+
+    /// Your own course from courses/local/course.yaml, if the build bundled one.
+    nonisolated static var bundledLocalURL: URL? {
+        Bundle.main.url(forResource: "course", withExtension: "yaml", subdirectory: "local")
+    }
+
+    /// Loads your bundled course. False when the build has none.
+    @discardableResult
+    func loadBundledLocal() -> Bool {
+        guard let url = Self.bundledLocalURL, let data = try? Data(contentsOf: url) else { return false }
+        fetchError = nil
+        accept(CourseFile.load(data: data), from: .bundledLocal)
+        return true
+    }
+
+    /// Checks and loads a course file written on this device (the course survey).
+    func loadSurveyed(_ text: String) {
+        fetchError = nil
+        accept(CourseFile.load(text), from: .surveyed)
     }
 
     /// Downloads and checks a course file. Keeps the current course if the download fails.
@@ -108,7 +135,7 @@ final class CourseStore: ObservableObject {
         guard let data = try? Data(contentsOf: cacheURL),
               var cached = try? JSONDecoder().decode(Loaded.self, from: data),
               let course = cached.result.course,
-              cached.source != .bundledSample else { return false } // the bundle's copy is always current
+              cached.source != .bundledSample, cached.source != .bundledLocal else { return false } // the bundle's copy is always current
         // Re-check: the safety limits may have changed since this course was cached.
         cached.result = CourseLoadResult(course: course, problems: CourseValidator.problems(for: course))
         cached.fromCache = true

@@ -262,3 +262,27 @@ final class CourseSafetyTests: XCTestCase {
         for feet in [8.0, 10, 12] { XCTAssertTrue(CourseRules.poleHeightRangeM.contains(feet * 0.3048)) }
     }
 }
+
+final class CourseWriterTests: XCTestCase {
+    func testSampleCourseRoundTrips() throws {
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../../courses/sample-course.yaml")
+        let original = try XCTUnwrap(CourseFile.load(data: Data(contentsOf: url)).course)
+        let text = CourseWriter.text(for: original, comment: "Written by a test")
+        let again = CourseFile.load(text)
+        XCTAssertEqual(again.problems.filter { $0.severity == .error }, [])
+        let course = try XCTUnwrap(again.course)
+        XCTAssertEqual(course.name, original.name)
+        XCTAssertEqual(course.holes.count, original.holes.count)
+        for (a, b) in zip(course.holes, original.holes) {
+            XCTAssertEqual(a.firingPoints.count, b.firingPoints.count)
+            XCTAssertEqual(Geo.distance(a.flag.position, b.flag.position), 0, accuracy: 0.02)
+            XCTAssertEqual(a.flag.poleHeightM, b.flag.poleHeightM, accuracy: 0.001)
+            XCTAssertEqual(a.hazards.map(\.kind), b.hazards.map(\.kind))
+        }
+        XCTAssertEqual(CourseValidator.problems(for: course).filter { $0.severity == .error }, [])
+    }
+
+    func testIDsAreCleaned() {
+        XCTAssertEqual(CourseWriter.clean("The Barn!"), "the-barn")
+    }
+}

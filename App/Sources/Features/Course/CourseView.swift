@@ -115,10 +115,20 @@ struct CourseView: View {
                 Button("Load", action: loadTyped)
                     .disabled(CourseStore.url(fromTyped: typedURL) == nil)
             }
+            if CourseStore.bundledLocalURL != nil {
+                Button {
+                    store.loadBundledLocal()
+                } label: {
+                    Label("Use your bundled course", systemImage: "house")
+                }
+            }
             Button {
                 store.loadBundledSample()
             } label: {
                 Label("Use the bundled sample course", systemImage: "doc.text")
+            }
+            NavigationLink { CourseSurveyView() } label: {
+                Label("Survey a course here", systemImage: "mappin.and.ellipse")
             }
             if store.isFetching {
                 HStack { ProgressView(); Text("Downloading…").foregroundStyle(.secondary) }

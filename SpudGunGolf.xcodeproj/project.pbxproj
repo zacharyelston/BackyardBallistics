@@ -15,6 +15,7 @@
 		185EAC0298AD8B5B54972D1F /* RoundKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8B584124A0591F676D89F825 /* RoundKit */; };
 		1B92E8CB9FDA3BE04558438E /* sample-course.yaml in Resources */ = {isa = PBXBuildFile; fileRef = 103D8AEC8FC2644FBAE493AA /* sample-course.yaml */; };
 		1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B045324F460255AFAFCFE722 /* FieldLog.swift */; };
+		213FAEF9984EE5CF8F8711E5 /* CourseSurveyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */; };
 		2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */; };
 		42FCF884DB4D1292750E9C3A /* ARKitRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */; };
 		4C17D03F0FA06FE37704E92C /* PoleHeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC575A2D9586FD6E557618AD /* PoleHeightView.swift */; };
@@ -24,6 +25,7 @@
 		77084244531EA1125D1C00E1 /* BallisticsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 957114E8D0EB2D87927F3B83 /* BallisticsKit */; };
 		833F06491C4DDFF9FDC23AC6 /* CoreGeo in Frameworks */ = {isa = PBXBuildFile; productRef = A767DE0DBD45719511064F3D /* CoreGeo */; };
 		8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C414C5B4AC53422F7AABC2C /* LeanCheckView.swift */; };
+		915EF4E6CCD9C105BCCAB207 /* local in Resources */ = {isa = PBXBuildFile; fileRef = A44E34B89E1526A64BADF1B3 /* local */; };
 		9214CC0F333393CF432A7B65 /* CourseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 065ED1CBF727D2A9F1C17FFE /* CourseStore.swift */; };
 		969A1C83E524FD939C7D8B00 /* HoleMissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88FD57DAB3E4CCC46159899 /* HoleMissionView.swift */; };
 		981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7230BC9CD26B3C17565509AE /* CourseView.swift */; };
@@ -53,6 +55,7 @@
 		103D8AEC8FC2644FBAE493AA /* sample-course.yaml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = "sample-course.yaml"; sourceTree = "<group>"; };
 		1956E8D95530FA7EA760FD87 /* RangingLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingLog.swift; sourceTree = "<group>"; };
 		1DA6EB5E25631668DAC5462C /* JSONStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONStore.swift; sourceTree = "<group>"; };
+		1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseSurveyView.swift; sourceTree = "<group>"; };
 		2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayView.swift; sourceTree = "<group>"; };
 		2C414C5B4AC53422F7AABC2C /* LeanCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeanCheckView.swift; sourceTree = "<group>"; };
 		2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARKitRangingSource.swift; sourceTree = "<group>"; };
@@ -65,6 +68,7 @@
 		7230BC9CD26B3C17565509AE /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
 		86B45B7403F091985D78297E /* SimulatedRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatedRangingSource.swift; sourceTree = "<group>"; };
 		9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraHUD.swift; sourceTree = "<group>"; };
+		A44E34B89E1526A64BADF1B3 /* local */ = {isa = PBXFileReference; lastKnownFileType = folder; name = local; path = courses/local; sourceTree = SOURCE_ROOT; };
 		AC575A2D9586FD6E557618AD /* PoleHeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleHeightView.swift; sourceTree = "<group>"; };
 		AE8331D4584229CE4D7A8756 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		B045324F460255AFAFCFE722 /* FieldLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldLog.swift; sourceTree = "<group>"; };
@@ -100,6 +104,7 @@
 			isa = PBXGroup;
 			children = (
 				065ED1CBF727D2A9F1C17FFE /* CourseStore.swift */,
+				1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */,
 				7230BC9CD26B3C17565509AE /* CourseView.swift */,
 			);
 			path = Course;
@@ -147,6 +152,7 @@
 		674ED2BB1B365CBB6E56CD90 /* courses */ = {
 			isa = PBXGroup;
 			children = (
+				A44E34B89E1526A64BADF1B3 /* local */,
 				103D8AEC8FC2644FBAE493AA /* sample-course.yaml */,
 			);
 			path = courses;
@@ -316,6 +322,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				915EF4E6CCD9C105BCCAB207 /* local in Resources */,
 				1B92E8CB9FDA3BE04558438E /* sample-course.yaml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -332,6 +339,7 @@
 				1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */,
 				F5C088DF7343E3AE34A239F6 /* CameraHUD.swift in Sources */,
 				9214CC0F333393CF432A7B65 /* CourseStore.swift in Sources */,
+				213FAEF9984EE5CF8F8711E5 /* CourseSurveyView.swift in Sources */,
 				981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */,
 				724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */,
 				1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */,
