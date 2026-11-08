@@ -50,6 +50,9 @@ struct ReticleRangingView: View {
     /// Zoom anchor on the frozen still, view fractions: the middle of the line when frozen.
     @State private var stillAnchor = UnitPoint.center
     @State private var freezing = false
+    @State private var showDetails = false
+    /// The feed's size on screen, for the still's zoom anchor.
+    @State private var feedSize = CGSize(width: 400, height: 700)
 
     private static let dialRange: ClosedRange<Double> = 5...100
     private static let polePresets: [(label: String, feet: Double)] = [("8 ft", 8), ("10 ft", 10), ("12 ft", 12)]
@@ -83,19 +86,15 @@ struct ReticleRangingView: View {
     private var shownRange: Double { lock?.range ?? dialRange }
 
     var body: some View {
-        VStack(spacing: 0) {
-            feed.frame(height: 380).clipped()
-            List {
-                dialSection
-                if let lock { resultSection(lock) }
-                flagSection
-                if let mission, let lock { useSection(mission, lock) }
-                if lock != nil && mission == nil { logSection }
-            }
+        ZStack {
+            feed.ignoresSafeArea(edges: .bottom)
+            controls.environment(\.colorScheme, .dark)
         }
+        .background(Color.black)
         .navigationTitle(mission?.title ?? "Range the pole")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar) // the floating tab bar would cover the dial
+        .toolbar(.hidden, for: .tabBar)
+        .sheet(isPresented: $showDetails) { details }
         .onAppear {
             if let sim = session.source as? SimulatedRangingSource {
                 sim.aimAtBase = true
@@ -110,6 +109,113 @@ struct ReticleRangingView: View {
         }
     }
 
+    // MARK: Controls on the feed
+
+    /// Left: what to do next. Right: the range wheel. Bottom: the reading and the flag check.
+    /// The middle stays clear for the crosshair and the pole.
+    private var controls: some View {
+        VStack(spacing: 10) {
+            Spacer(minLength: 44)
+            HStack(alignment: .center) {
+                actionColumn
+                Spacer()
+                RangeThumbwheel(value: $dialRange, bounds: Self.dialRange)
+                    .disabled(lock != nil)
+            }
+            Spacer(minLength: 8)
+            readout
+        }
+        .padding(.horizontal, 10)
+        .padding(.bottom, 8)
+    }
+
+    @ViewBuilder private var actionColumn: some View {
+        VStack(spacing: 10) {
+            if lock != nil {
+                HUDButton(title: "Re-range", systemImage: "arrow.counterclockwise") { unlock() }
+            } else if still == nil {
+                HUDButton(title: freezing ? "Freezing" : "Freeze", systemImage: "camera.aperture", prominent: true) { freeze() }
+                    .disabled(!session.trackingReady || freezing)
+                HUDButton(title: "Lock live", systemImage: "lock") { lockRange() }
+                    .disabled(!session.trackingReady)
+            } else {
+                HUDButton(title: "Lock", systemImage: "lock.fill", prominent: true) { lockRange() }
+                HUDButton(title: "Live", systemImage: "video") { unfreeze() }
+            }
+            HUDButton(title: "Details", systemImage: "list.bullet.rectangle") { showDetails = true }
+        }
+    }
+
+    private var readout: some View {
+        VStack(spacing: 8) {
+            HUDPanel {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        if lock != nil { Image(systemName: "lock.fill").foregroundStyle(.green) }
+                        Text(Units.metres(shownRange)).font(.system(size: 30, weight: .bold, design: .rounded))
+                        Text(Units.yards(shownRange)).foregroundStyle(.secondary)
+                        Spacer()
+                        if let reticle {
+                            Text(String(format: "± %@", Units.metres(lock?.sigma ?? reticle.sigma(range: shownRange))))
+                                .font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
+                    .monospacedDigit()
+                    Text(statusLine).font(.footnote).foregroundStyle(statusColor)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            if let mission, let lock {
+                Button {
+                    mission.onUse(lock)
+                } label: {
+                    Label("Use this range", systemImage: "checkmark.circle.fill")
+                        .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 6)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(gate?.verdict.isAllowed != true)
+            }
+        }
+    }
+
+    /// One line under the reading: the next step, a problem, or the flag check.
+    private var statusLine: String {
+        if let lockProblem { return lockProblem }
+        if let g = gate {
+            if let r = g.verdict.reasons.first { return r.description }
+            if let miss = g.miss { return String(format: "Flag check passed: %.1f m from the flag point", miss) }
+            return "Locked"
+        }
+        if lock != nil { return flagPoint == nil ? "Locked. No flag point saved, so no flag check." : "Locked" }
+        if still != nil { return "Pinch to zoom on the still. Wheel the line's top onto the band's top, then Lock." }
+        if !session.trackingReady { return "Waiting for the camera to track…" }
+        return "Crosshair on the pole's base. Wheel the line roughly to the band's top, then Freeze."
+    }
+
+    private var statusColor: Color {
+        if lockProblem != nil { return .orange }
+        if let g = gate { return g.verdict.isAllowed ? .green : .red }
+        return .secondary
+    }
+
+    /// Everything that doesn't need the camera: pole height, the lock's numbers, the flag point, the log.
+    private var details: some View {
+        NavigationStack {
+            List {
+                dialSection
+                if let lock { resultSection(lock) }
+                flagSection
+                if lock != nil && mission == nil { logSection }
+            }
+            .navigationTitle("Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button("Done") { showDetails = false } }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
     // MARK: Camera feed and reticle
 
     private var feed: some View {
@@ -122,6 +228,9 @@ struct ReticleRangingView: View {
             let c = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
             let base = CGPoint(x: a.x + (c.x - a.x) * totalZoom, y: a.y + (c.y - a.y) * totalZoom)
             ZStack {
+                Color.clear
+                    .onAppear { feedSize = geo.size }
+                    .onChange(of: geo.size) { _, s in feedSize = s }
                 cameraLayer
                     .frame(width: geo.size.width, height: geo.size.height)
                     .scaleEffect(totalZoom, anchor: anchor)
@@ -193,33 +302,14 @@ struct ReticleRangingView: View {
 
     private var dialSection: some View {
         Section {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(Units.metres(shownRange)).font(.system(size: 30, weight: .bold, design: .rounded)).monospacedDigit()
-                    Text(Units.yards(shownRange)).foregroundStyle(.secondary).monospacedDigit()
-                    Spacer()
-                    if let reticle {
-                        Text(String(format: "± %@", Units.metres(reticle.sigma(range: shownRange))))
-                            .font(.footnote).foregroundStyle(.secondary).monospacedDigit()
-                    }
-                }
-                HStack {
-                    Button { nudge(-0.1) } label: { Image(systemName: "minus.circle") }
-                        .buttonStyle(.borderless).accessibilityLabel("Range down 0.1 m")
-                    Slider(value: $dialRange, in: Self.dialRange, step: 0.1) { Text("Range") }
-                    Button { nudge(0.1) } label: { Image(systemName: "plus.circle") }
-                        .buttonStyle(.borderless).accessibilityLabel("Range up 0.1 m")
-                }
-                .disabled(lock != nil)
-                if let reticle {
-                    Text(String(format: "Line %.0f px on the sensor · %.1f° below level", reticle.linePixels(range: shownRange),
-                                reticle.angleBelowLevel))
-                        .font(.caption).foregroundStyle(.secondary).monospacedDigit()
-                    if let k = activeIntrinsics, lock == nil {
-                        Text(still != nil ? "Matching on the \(k.width)×\(k.height) still"
-                                          : "Live \(k.width)×\(k.height) video · Freeze for the full-resolution still")
-                            .font(.caption).foregroundStyle(.secondary).monospacedDigit()
-                    }
+            if let reticle {
+                Text(String(format: "Line %.0f px on the sensor · %.1f° below level", reticle.linePixels(range: shownRange),
+                            reticle.angleBelowLevel))
+                    .font(.footnote).foregroundStyle(.secondary).monospacedDigit()
+                if let k = activeIntrinsics, lock == nil {
+                    Text(still != nil ? "Matching on the \(k.width)×\(k.height) still"
+                                      : "Live \(k.width)×\(k.height) video · Freeze for the full-resolution still")
+                        .font(.footnote).foregroundStyle(.secondary).monospacedDigit()
                 }
             }
             LabeledContent("Pole height") {
@@ -232,37 +322,10 @@ struct ReticleRangingView: View {
                 }
                 .disabled(lock != nil || mission != nil)
             }
-            if lock == nil {
-                if still == nil {
-                    Button {
-                        freeze()
-                    } label: {
-                        Label(freezing ? "Freezing…" : "Freeze", systemImage: "camera.aperture")
-                            .font(.headline).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!session.trackingReady || freezing)
-                    Button("Lock on the live view") { lockRange() }
-                        .disabled(!session.trackingReady)
-                } else {
-                    Button {
-                        lockRange()
-                    } label: {
-                        Label("Lock", systemImage: "lock.fill").font(.headline).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    Button("Back to live") { unfreeze() }
-                }
-                if let lockProblem {
-                    Text(lockProblem).font(.footnote).foregroundStyle(.orange)
-                }
-            } else {
-                Button("Re-range", role: .destructive) { unlock() }
-            }
         } header: {
             Text("Range dial")
         } footer: {
-            Text("Hold the crosshair on the pole's base and turn the dial roughly to the top of the orange band. Freeze, pinch to zoom on the still, fine-match the line's top to the band's top, then lock. Zoom never changes the range.")
+            Text("Hold the crosshair on the pole's base and wheel the line roughly to the top of the orange band. Freeze, pinch to zoom on the still, fine-match the line's top to the band's top with the wheel or the ± buttons, then lock. Zoom never changes the range.")
         }
     }
 
@@ -283,7 +346,7 @@ struct ReticleRangingView: View {
             // Zoom about the middle of the line at the dial's current range.
             let k = frame.intrinsics
             let r = ReticleRange(focalPixels: k.fx, poleHeight: activePoleHeight, angleBelowLevel: below)
-            let viewH = 380.0, viewW = UIScreen.main.bounds.width
+            let viewW = Double(feedSize.width), viewH = Double(feedSize.height)
             let perPixel = max(viewW / Double(k.height), viewH / Double(k.width))
             let half = r.linePixels(range: dialRange) * perPixel / 2
             stillAnchor = UnitPoint(x: 0.5 + up.dx * half / viewW, y: 0.5 + up.dy * half / viewH)
@@ -295,10 +358,6 @@ struct ReticleRangingView: View {
         still = nil
         stillAim = nil
         zoom = 1
-    }
-
-    private func nudge(_ by: Double) {
-        dialRange = min(Self.dialRange.upperBound, max(Self.dialRange.lowerBound, (dialRange + by) * 10).rounded() / 10)
     }
 
     private func lockRange() {
@@ -384,20 +443,6 @@ struct ReticleRangingView: View {
             Text("Flag check")
         } footer: {
             Text(String(format: "GPS position + bearing + range places the pole. A lock more than %.0f m from a published flag is refused.", Safety.limits.flagGateTolerance))
-        }
-    }
-
-    private func useSection(_ mission: MissionRangingContext, _ lock: ReticleLock) -> some View {
-        Section {
-            Button {
-                mission.onUse(lock)
-            } label: {
-                Label("Use this range", systemImage: "checkmark.circle.fill").font(.headline).frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(gate?.verdict.isAllowed != true)
-        } footer: {
-            Text("Only a range that lands on this hole's flag goes to the firing computer.")
         }
     }
 
