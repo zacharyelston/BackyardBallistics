@@ -74,7 +74,7 @@ struct HoleMissionView: View {
                     })
             }
         }
-        .sheet(isPresented: $measuring) {
+        .fullScreenCover(isPresented: $measuring) {
             if let m = play?.mission {
                 CrosshairSpotView(range: m.lockedRange) { lateral = ($0 * 10).rounded() / 10 }
             }

@@ -40,6 +40,9 @@ targets:
         UILaunchScreen: {}
         UIRequiredDeviceCapabilities: [arkit]
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        # The reticle maths assumes portrait; iPad holds one orientation only in full screen.
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait]
+        UIRequiresFullScreen: true
         NSCameraUsageDescription: SpudGunGolf uses the camera to measure flag poles and range the hole.
         NSLocationWhenInUseUsageDescription: SpudGunGolf uses your location to find the hole and check that a range lands on a course flag.
         NSLocalNetworkUsageDescription: SpudGunGolf downloads the course file from the course server on the local Wi-Fi.
@@ -50,5 +53,5 @@ targets:
       Release: Config/Signing.xcconfig
     settings:
       base:
-        TARGETED_DEVICE_FAMILY: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: NO
