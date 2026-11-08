@@ -16,6 +16,7 @@
 		1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E339C687D3B38CF183F162C /* CameraController.swift */; };
 		1769E9EFAF55537C3DAF1649 /* RangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29F67AAE33283A8171918D7 /* RangingView.swift */; };
 		185EAC0298AD8B5B54972D1F /* RoundKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8B584124A0591F676D89F825 /* RoundKit */; };
+		197376560B606B8013EEF8DC /* DesignScenes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72BC136F6F5A8D10DDA16A19 /* DesignScenes.swift */; };
 		1B92E8CB9FDA3BE04558438E /* sample-course.yaml in Resources */ = {isa = PBXBuildFile; fileRef = 103D8AEC8FC2644FBAE493AA /* sample-course.yaml */; };
 		1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B045324F460255AFAFCFE722 /* FieldLog.swift */; };
 		213FAEF9984EE5CF8F8711E5 /* CourseSurveyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */; };
@@ -99,6 +100,7 @@
 		6FFE521AEBEB67F465CAA9E6 /* RoundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundView.swift; sourceTree = "<group>"; };
 		702D725F3416ABA57B751DAD /* CourseScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseScene.swift; sourceTree = "<group>"; };
 		7230BC9CD26B3C17565509AE /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
+		72BC136F6F5A8D10DDA16A19 /* DesignScenes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignScenes.swift; sourceTree = "<group>"; };
 		75BC877E68D4709936CE0EB1 /* OrderCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderCard.swift; sourceTree = "<group>"; };
 		7E3297A98DDACEAB482EF66B /* CommandSquadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandSquadView.swift; sourceTree = "<group>"; };
 		86B45B7403F091985D78297E /* SimulatedRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatedRangingSource.swift; sourceTree = "<group>"; };
@@ -290,6 +292,7 @@
 			isa = PBXGroup;
 			children = (
 				AE8331D4584229CE4D7A8756 /* AppSettings.swift */,
+				72BC136F6F5A8D10DDA16A19 /* DesignScenes.swift */,
 				058FD02EB37A4DD2D60E9425 /* LauncherView.swift */,
 				2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */,
 				0502B6763FEB460945C51624 /* SpudGunGolfApp.swift */,
@@ -486,6 +489,7 @@
 				213FAEF9984EE5CF8F8711E5 /* CourseSurveyView.swift in Sources */,
 				981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */,
 				724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */,
+				197376560B606B8013EEF8DC /* DesignScenes.swift in Sources */,
 				1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */,
 				969A1C83E524FD939C7D8B00 /* HoleMissionView.swift in Sources */,
 				9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */,
