@@ -76,9 +76,14 @@ public struct ReticleLock: Codable, Equatable, Identifiable, Sendable {
     public var location: GeoPoint
     /// GPS horizontal accuracy, metres.
     public var horizontalAccuracy: Double?
+    /// Size of the image the line was matched on, sensor pixels (landscape). Nil in older records.
+    public var imageWidth: Int?
+    public var imageHeight: Int?
 
     public init(reticle: ReticleRange, range: Double, bearing: Double, cameraHeight: Double,
-                location: GeoPoint, horizontalAccuracy: Double?) {
+                location: GeoPoint, horizontalAccuracy: Double?, imageWidth: Int? = nil, imageHeight: Int? = nil) {
+        self.imageWidth = imageWidth
+        self.imageHeight = imageHeight
         self.reticle = reticle
         self.range = range
         self.bearing = bearing

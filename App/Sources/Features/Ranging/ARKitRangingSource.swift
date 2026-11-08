@@ -31,7 +31,11 @@ final class ARKitRangingSource: NSObject, RangingCaptureSource, ARSessionDelegat
     func start() {
         let config = ARWorldTrackingConfiguration()
         config.worldAlignment = .gravityAndHeading
-        if let fourK = ARWorldTrackingConfiguration.recommendedVideoFormatFor4KResolution {
+        // Live video is 1920 × 1440 on every iPhone; what matters for ranging is the full-resolution
+        // still taken at Freeze, so prefer the format that supports capturing one.
+        if let hiRes = ARWorldTrackingConfiguration.recommendedVideoFormatForHighResolutionFrameCapturing {
+            config.videoFormat = hiRes
+        } else if let fourK = ARWorldTrackingConfiguration.recommendedVideoFormatFor4KResolution {
             config.videoFormat = fourK
         }
         arView.session.delegate = self
@@ -48,9 +52,26 @@ final class ARKitRangingSource: NSObject, RangingCaptureSource, ARSessionDelegat
     }
 
     func capture() -> FrozenFrame? {
-        guard let frame = arView.session.currentFrame else { return nil }
+        guard let frame = arView.session.currentFrame, case .normal = frame.camera.trackingState else { return nil }
+        return frozen(frame, lens: "Wide (AR)")
+    }
+
+    func captureStill(_ done: @escaping (FrozenFrame?) -> Void) {
+        arView.session.captureHighResolutionFrame { [weak self] frame, _ in
+            DispatchQueue.main.async {
+                guard let self else { return done(nil) }
+                if let frame, let still = self.frozen(frame, lens: "Wide (AR, full resolution)") {
+                    done(still)
+                } else {
+                    done(self.capture()) // no high-resolution frame on this device or right now: use the live one
+                }
+            }
+        }
+    }
+
+    /// An upright image of the frame, with the intrinsics and pose of that exact frame.
+    private func frozen(_ frame: ARFrame, lens: String) -> FrozenFrame? {
         let camera = frame.camera
-        guard case .normal = camera.trackingState else { return nil }
         let upright = CIImage(cvPixelBuffer: frame.capturedImage).oriented(.right)
         guard let cg = ciContext.createCGImage(upright, from: upright.extent) else { return nil }
         let k = Intrinsics(matrix: camera.intrinsics, width: Int(camera.imageResolution.width),
@@ -58,7 +79,7 @@ final class ARKitRangingSource: NSObject, RangingCaptureSource, ARSessionDelegat
         let t = camera.transform
         let pose = CameraPose(simd_double4x4(columns: (SIMD4<Double>(t.columns.0), SIMD4<Double>(t.columns.1),
                                                        SIMD4<Double>(t.columns.2), SIMD4<Double>(t.columns.3))))
-        return FrozenFrame(image: cg, intrinsics: k, lens: "Wide (AR)", approximateIntrinsics: false, pose: pose)
+        return FrozenFrame(image: cg, intrinsics: k, lens: lens, approximateIntrinsics: false, pose: pose)
     }
 
     func liveIntrinsics() -> Intrinsics? {

@@ -19,11 +19,12 @@ extension JSONStore where Item == ReticleRecord {
     func csvFile() -> URL {
         let iso = ISO8601DateFormatter()
         func n(_ v: Double?, _ d: Int = 3) -> String { v.map { String(format: "%.\(d)f", $0) } ?? "" }
-        var lines = ["date,true_m,est_m,error_m,sigma_m,line_px,focal_px,pole_h_m,angle_below_deg,bearing_deg,height_diff_m,camera_h_m,lat,lon,gps_acc_m,pole_lat,pole_lon,gate_miss_m,note"]
+        var lines = ["date,true_m,est_m,error_m,sigma_m,line_px,focal_px,image_px,pole_h_m,angle_below_deg,bearing_deg,height_diff_m,camera_h_m,lat,lon,gps_acc_m,pole_lat,pole_lon,gate_miss_m,note"]
         for r in items {
             let l = r.lock
             lines.append([iso.string(from: l.date), n(r.trueDistance), n(l.range), n(r.error), n(l.sigma),
-                          n(l.linePixels, 1), n(l.reticle.focalPixels, 1), n(l.reticle.poleHeight),
+                          n(l.linePixels, 1), n(l.reticle.focalPixels, 1),
+                          l.imageWidth.flatMap { w in l.imageHeight.map { "\(w)x\($0)" } } ?? "", n(l.reticle.poleHeight),
                           n(l.angleBelowLevel, 3), n(l.bearing, 1), n(l.heightDifference), n(l.cameraHeight),
                           n(l.location.latitude, 7), n(l.location.longitude, 7), n(l.horizontalAccuracy, 1),
                           n(l.polePosition.latitude, 7), n(l.polePosition.longitude, 7), n(r.gateMiss, 1),

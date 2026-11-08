@@ -60,6 +60,7 @@ struct RangingView: View {
             }
         }
         .navigationTitle("Multi-photo cross-check")
+        .toolbar(.hidden, for: .tabBar)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $pending) { frame in
             MarkPhotoSheet(frame: frame) { tip, base in

@@ -137,4 +137,25 @@ final class CameraAimTests: XCTestCase {
         XCTAssertEqual(aim.angleBelowLevel, Geo.degrees(atan(1.5 / 50)), accuracy: 1e-9)
         XCTAssertEqual(CameraPose.portrait(eye: eye, facing: base).aim.angleBelowLevel, 0, accuracy: 1e-9)
     }
+
+    /// A full-resolution still (about 3,000 px focal length) halves the error of 1440p live video (about 1,500 px).
+    func testFullResolutionStillHalvesTheError() {
+        let live = ReticleRange(focalPixels: 1500, poleHeight: 2.4384)
+        let still = ReticleRange(focalPixels: 3000, poleHeight: 2.4384)
+        XCTAssertEqual(still.sigma(range: 60) / live.sigma(range: 60), 0.5, accuracy: 1e-9)
+        XCTAssertEqual(live.sigma(range: 60), 1.39, accuracy: 0.01)
+    }
+
+    /// Locks logged before the image size was recorded still load.
+    func testOldLockRecordsDecodeWithoutImageSize() throws {
+        let lock = ReticleLock(reticle: ReticleRange(focalPixels: 1500, poleHeight: 2.4384), range: 30, bearing: 10,
+                               cameraHeight: 1.5, location: GeoPoint(latitude: 42.36, longitude: -71.06),
+                               horizontalAccuracy: 4, imageWidth: 4032, imageHeight: 3024)
+        var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(lock)) as! [String: Any]
+        XCTAssertEqual(json["imageWidth"] as? Int, 4032)
+        json["imageWidth"] = nil; json["imageHeight"] = nil
+        let old = try JSONDecoder().decode(ReticleLock.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertNil(old.imageWidth)
+        XCTAssertEqual(old.range, 30)
+    }
 }

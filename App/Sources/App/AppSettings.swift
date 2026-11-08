@@ -16,9 +16,9 @@ enum Settings {
 
 enum Units {
     static func feetInches(_ m: Double) -> String {
-        let inches = m / 0.0254
-        let ft = Int(inches / 12)
-        return String(format: "%d ft %.1f in", ft, inches - Double(ft) * 12)
+        // Round to the tenth of an inch first, so 2.4384 m reads "8 ft 0.0 in", not "7 ft 12.0 in".
+        let tenths = Int((m / 0.0254 * 10).rounded())
+        return String(format: "%d ft %.1f in", tenths / 120, Double(tenths % 120) / 10)
     }
     static func yards(_ m: Double) -> String { String(format: "%.1f yd", m / 0.9144) }
     static func metres(_ m: Double) -> String { m < 10 ? String(format: "%.2f m", m) : String(format: "%.1f m", m) }
