@@ -41,6 +41,7 @@
 		DE1452806D6020CB0741687C /* ToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42B175AD5A532DDE2201A1D /* ToolsView.swift */; };
 		EA0FB4BBE754C7D64CD92FB1 /* SpudGunGolfApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0502B6763FEB460945C51624 /* SpudGunGolfApp.swift */; };
 		ED15A3B0669DB05DBE20DD3D /* SightingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C51A940D33C796DF2A866B /* SightingView.swift */; };
+		F5C088DF7343E3AE34A239F6 /* CameraHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +64,7 @@
 		6FFE521AEBEB67F465CAA9E6 /* RoundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundView.swift; sourceTree = "<group>"; };
 		7230BC9CD26B3C17565509AE /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
 		86B45B7403F091985D78297E /* SimulatedRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatedRangingSource.swift; sourceTree = "<group>"; };
+		9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraHUD.swift; sourceTree = "<group>"; };
 		AC575A2D9586FD6E557618AD /* PoleHeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleHeightView.swift; sourceTree = "<group>"; };
 		AE8331D4584229CE4D7A8756 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		B045324F460255AFAFCFE722 /* FieldLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldLog.swift; sourceTree = "<group>"; };
@@ -170,6 +172,7 @@
 			isa = PBXGroup;
 			children = (
 				2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */,
+				9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */,
 				1956E8D95530FA7EA760FD87 /* RangingLog.swift */,
 				311424D16BF397C1CD80DDFE /* RangingSession.swift */,
 				D29F67AAE33283A8171918D7 /* RangingView.swift */,
@@ -327,6 +330,7 @@
 				42FCF884DB4D1292750E9C3A /* ARKitRangingSource.swift in Sources */,
 				02A1B855EAFC04BFFF0A95E5 /* AppSettings.swift in Sources */,
 				1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */,
+				F5C088DF7343E3AE34A239F6 /* CameraHUD.swift in Sources */,
 				9214CC0F333393CF432A7B65 /* CourseStore.swift in Sources */,
 				981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */,
 				724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */,
