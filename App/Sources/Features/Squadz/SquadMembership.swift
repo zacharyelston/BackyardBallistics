@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import CoreGeo
+import RangingKit
 import GroupKit
 import GroupLink
 
@@ -29,6 +30,15 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
     @Published private(set) var spotRequest: SpotRequest?
     @Published private(set) var lastFix: CLLocation?
     @Published private(set) var lastSent: Date?
+    /// Locks this phone sent to the commander, newest last, with what the commander did with each.
+    @Published private(set) var sentLocks: [SentLock] = []
+
+    struct SentLock: Identifiable, Equatable {
+        var id: UUID
+        var purpose: LockPurpose
+        var date: Date
+        var receipt: LockReceipt?
+    }
 
     /// How often this phone reports its position while joined.
     static let positionInterval: TimeInterval = 3
@@ -52,6 +62,9 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         super.init()
         location.delegate = self
         location.desiredAccuracy = kCLLocationAccuracyBest
+        location.distanceFilter = kCLDistanceFilterNone
+        location.pausesLocationUpdatesAutomatically = false
+        location.activityType = .fitness
     }
 
     var me: Member? {
@@ -137,6 +150,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         welcome = nil
         status = nil
         spotRequest = nil
+        sentLocks = []
         state = .idle
     }
 
@@ -177,16 +191,42 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
             spotRequest = r
         case let .refused(reason):
             state = .refused(reason)   // GroupClient stops on a refusal
+        case let .lockReceipt(r):
+            if let i = sentLocks.firstIndex(where: { $0.id == r.lock }) { sentLocks[i].receipt = r }
         default:
-            break   // lock receipts, observer-only messages and the rest come with G5 or aren't for phones
+            break   // observer-only messages and the rest aren't for phones
         }
+    }
+
+    // MARK: Locks
+
+    /// Sends a raw reticle lock to the commander's iPad, which checks it against its own course flag
+    /// and uses it for `purpose`. The phone shows what the commander did with it, not firing data.
+    /// Nil when not linked to a squad.
+    @discardableResult
+    func sendLock(_ lock: ReticleLock, purpose: LockPurpose) -> UUID? {
+        guard state == .joined, let c = client, c.status == .connected else { return nil }
+        let report = LockReport(purpose: purpose, lock: lock)
+        c.send(.lock(report))
+        sentLocks.append(SentLock(id: report.id, purpose: purpose, date: Date()))
+        if sentLocks.count > 20 { sentLocks.removeFirst(sentLocks.count - 20) }
+        return report.id
+    }
+
+    func sentLock(_ id: UUID?) -> SentLock? {
+        guard let id else { return nil }
+        return sentLocks.first { $0.id == id }
     }
 
     // MARK: Position reports
 
+    /// Reports keep going with the screen locked or another app in front, while in a squad (the
+    /// background location mode; iOS shows the location indicator). They stop on leaving.
     private func startReporting() {
         guard timer == nil else { return }
         if location.authorizationStatus == .notDetermined { location.requestWhenInUseAuthorization() }
+        location.allowsBackgroundLocationUpdates = true
+        location.showsBackgroundLocationIndicator = true
         location.startUpdatingLocation()
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: Self.positionInterval, repeats: true) { [weak self] _ in
@@ -198,6 +238,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         timer?.invalidate()
         timer = nil
         location.stopUpdatingLocation()
+        location.allowsBackgroundLocationUpdates = false
     }
 
     private func sendPosition() {
@@ -212,7 +253,12 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let last = locations.last else { return }
-        Task { @MainActor in self.lastFix = last }
+        Task { @MainActor in
+            self.lastFix = last
+            // In the background the timer may not fire; location updates keep the app running, so
+            // report from here too, no more often than the interval.
+            if self.lastSent.map({ Date().timeIntervalSince($0) >= Self.positionInterval }) ?? true { self.sendPosition() }
+        }
     }
 
     var locationDenied: Bool {
