@@ -25,6 +25,10 @@ public enum CourseWriter {
                 "hole.\(n).meta.downrange_play: \(hole.downrangePlay)"
             ]
             for (m, p) in hole.firingPoints.enumerated() { lines.append("hole.\(n).firing_point.\(m + 1): \(position(p))") }
+            for (k, l) in hole.layups.enumerated() {
+                lines.append("hole.\(n).layup.\(k + 1).position: \(position(l.position))")
+                lines.append("hole.\(n).layup.\(k + 1).pole_height_m: \(number(l.poleHeightM, 3))")
+            }
             lines += [
                 "hole.\(n).flag.position: \(position(hole.flag.position))",
                 "hole.\(n).flag.pole_height_m: \(number(hole.flag.poleHeightM, 3))",

@@ -335,13 +335,16 @@ public struct SquadHost {
             return receipt(.refused, ["No hole in play."]) + problem("No hole in play.", now: now)
         }
         let lock = received.report.lock
-        // Recompute with this hole's pole height, in case the phone had another one set.
-        let reticle = ReticleRange(focalPixels: lock.reticle.focalPixels, poleHeight: holeInfo.flag.poleHeightM,
+        // The pole this lock ranged: the next leg's target for a new mission, the current one to
+        // verify. On holes with layups that's a layup marker until the last leg.
+        let target = Self.target(for: received.report.purpose, hole: holeInfo, play: round.hole!)
+        // Recompute with that pole's height, in case the phone had another one set.
+        let reticle = ReticleRange(focalPixels: lock.reticle.focalPixels, poleHeight: target.poleHeightM,
                                    angleBelowLevel: lock.reticle.angleBelowLevel)
         let range = reticle.range(linePixels: lock.linePixels) ?? lock.range
         let b = Geo.radians(lock.bearing)
         let cleared = Safety.clearRange(range, lie: lock.location, east: range * sin(b), north: range * cos(b),
-                                        flag: holeInfo.flag.position)
+                                        flag: target.position)
         guard case let .success(r) = cleared else {
             let reasons = cleared.failureReasons.map(\.description)
             locks[i].status = .refused
@@ -604,12 +607,26 @@ public struct SquadHost {
                            yourTurn: isOurTurn, holds: holds(now: now).sorted { $0.description < $1.description })
     }
 
+    /// The target a lock is for: the first leg's to begin, the next leg's to advance (the flag again
+    /// on the flag leg), the current leg's to verify or observe.
+    static func target(for purpose: LockPurpose, hole: Hole, play: HolePlay) -> HoleTarget {
+        let t = hole.targets
+        let i: Int
+        switch purpose {
+        case .initial: i = 0
+        case .nextMission: i = play.onFlagLeg ? play.targetIndex : play.targetIndex + 1
+        case .verify, .observation: i = play.targetIndex
+        }
+        return t[min(max(0, i), t.count - 1)]
+    }
+
     /// What the match host needs: phase, the active fan, walking out, finished scores.
     public func report() -> SquadReport {
         var fan: Fan?
         if let h = round.hole, let hole = round.currentHole, !round.walkingOut, h.phase == .setup || h.phase == .firing {
             let origin = h.mission?.from ?? hole.firingPoints[min(round.firingPoint, hole.firingPoints.count - 1)]
-            fan = Fan(origin: origin, bearing: Geo.bearing(from: origin, to: hole.flag.position))
+            let aim = hole.targets[min(h.targetIndex, hole.targets.count - 1)].position
+            fan = Fan(origin: origin, bearing: Geo.bearing(from: origin, to: aim))
         }
         var scores: [Int: Double] = [:]
         for s in round.card.holes { if let v = s.score { scores[s.number] = v } }

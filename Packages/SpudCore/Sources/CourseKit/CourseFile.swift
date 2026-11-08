@@ -199,6 +199,14 @@ private struct Builder {
             problems.append(CourseProblem(key: "\(p).firing_point.1", "Hole \(n) has no firing point."))
         }
 
+        let layups = indexed(prefix: ["hole", "\(n)", "layup"], what: "layup point").compactMap { k -> Layup? in
+            let lp = "\(p).layup.\(k)"
+            let at = point("\(lp).position", required: true)
+            let h = double("\(lp).pole_height_m", required: true)
+            guard let at, let h else { return nil }
+            return Layup(position: at, poleHeightM: h)
+        }
+
         let position = point("\(p).flag.position", required: true)
         let height = double("\(p).flag.pole_height_m", required: true)
         let lean = double("\(p).flag.lean_deg", required: true)
@@ -220,7 +228,7 @@ private struct Builder {
         guard let name, let par, let position, let height, let lean, !firingPoints.isEmpty,
               firingPoints.count == firingIndices.count else { return nil }
         return Hole(number: n, name: name, par: par, downrangePlay: downrange, firingPoints: firingPoints,
-                    flag: Flag(position: position, poleHeightM: height, leanDeg: lean, inRadiusM: radius),
+                    layups: layups, flag: Flag(position: position, poleHeightM: height, leanDeg: lean, inRadiusM: radius),
                     lidDiameterM: lid, hazards: hazards)
     }
 

@@ -343,4 +343,69 @@ final class PracticeOnlyCourseTests: XCTestCase {
         XCTAssertTrue(CourseValidator.isPracticeOnly(c))
         XCTAssertTrue(CourseValidator.blockingProblems(for: c).isEmpty)
     }
+
+    // MARK: Layups
+
+    private func longHole(layups: [Layup], flagNorth: Double = 160) -> Course {
+        let box = GeoPolygon([Geo.offset(origin, east: -400, north: -400), Geo.offset(origin, east: 400, north: -400),
+                              Geo.offset(origin, east: 400, north: 400), Geo.offset(origin, east: -400, north: 400)])
+        let hole = Hole(number: 1, name: "Long", par: 6, firingPoints: [origin], layups: layups,
+                        flag: Flag(position: Geo.offset(origin, east: 0, north: flagNorth), poleHeightM: 2.438, leanDeg: 0.1))
+        return Course(format: 1, id: "long", name: "Long", version: 1, boundary: box, holes: [hole])
+    }
+
+    func testALongHoleNeedsALayup() {
+        let c = longHole(layups: [])
+        let r = CourseLoadResult(course: c, problems: CourseValidator.problems(for: c))
+        XCTAssertTrue(r.errors.contains { $0.kind == .range && $0.message.contains("layup") }, "\(r.errors)")
+        XCTAssertTrue(r.isPracticeOnly)
+    }
+
+    func testALayupSplitsTheHoleIntoLegsWithinReach() {
+        let c = longHole(layups: [Layup(position: Geo.offset(origin, east: 0, north: 80), poleHeightM: 2.438)])
+        let r = CourseLoadResult(course: c, problems: CourseValidator.problems(for: c))
+        XCTAssertTrue(r.errors.isEmpty, "\(r.errors)")
+        XCTAssertEqual(r.playableCourse, c)
+        XCTAssertEqual(c.holes[0].targets.map(\.isFlag), [false, true])
+        XCTAssertEqual(c.holes[0].targets.first?.name, "layup 1")
+    }
+
+    func testEachLegIsCheckedForReachAndFan() {
+        // Layup 1 is 30 m out, then 130 m on to the flag: the second leg is too long.
+        var c = longHole(layups: [Layup(position: Geo.offset(origin, east: 0, north: 30), poleHeightM: 2.438)])
+        var r = CourseLoadResult(course: c, problems: CourseValidator.problems(for: c))
+        XCTAssertTrue(r.errors.contains { $0.key == "hole.1.layup.1.position" && $0.kind == .range }, "\(r.errors)")
+        // A layup near the boundary: its leg's fan leaves it.
+        c = longHole(layups: [Layup(position: Geo.offset(origin, east: 0, north: 80), poleHeightM: 2.438)])
+        c.boundary = GeoPolygon([Geo.offset(origin, east: -60, north: -20), Geo.offset(origin, east: 60, north: -20),
+                                 Geo.offset(origin, east: 60, north: 170), Geo.offset(origin, east: -60, north: 170)])
+        r = CourseLoadResult(course: c, problems: CourseValidator.problems(for: c))
+        XCTAssertTrue(r.errors.contains { $0.key == "hole.1.layup.1.position" && $0.kind == .fan }, "\(r.errors)")
+        // And a marker pole outside the kit.
+        c = longHole(layups: [Layup(position: Geo.offset(origin, east: 0, north: 80), poleHeightM: 0.5)])
+        r = CourseLoadResult(course: c, problems: CourseValidator.problems(for: c))
+        XCTAssertTrue(r.errors.contains { $0.key == "hole.1.layup.1.pole_height_m" })
+    }
+
+    func testLayupsRoundTripThroughTheFile() throws {
+        let c = longHole(layups: [Layup(position: Geo.offset(origin, east: 3, north: 80), poleHeightM: 2.438),
+                                  Layup(position: Geo.offset(origin, east: 5, north: 120), poleHeightM: 3.048)], flagNorth: 190)
+        let text = CourseWriter.text(for: c)
+        XCTAssertTrue(text.contains("hole.1.layup.2.pole_height_m: 3.048"), text)
+        let back = try XCTUnwrap(CourseFile.load(text).course)
+        XCTAssertEqual(back.holes[0].layups.count, 2)
+        XCTAssertEqual(back.holes[0].layups[1].poleHeightM, 3.048, accuracy: 1e-9)
+        XCTAssertLessThan(Geo.distance(back.holes[0].layups[0].position, c.holes[0].layups[0].position), 0.01)
+    }
+
+    func testCoursesSavedBeforeLayupsStillDecode() throws {
+        let c = longHole(layups: [], flagNorth: 40)
+        var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(c)) as! [String: Any]
+        var holes = json["holes"] as! [[String: Any]]
+        holes[0].removeValue(forKey: "layups")
+        json["holes"] = holes
+        let back = try JSONDecoder().decode(Course.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertEqual(back.holes[0].layups, [])
+        XCTAssertEqual(back, c)
+    }
 }

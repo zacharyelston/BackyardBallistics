@@ -91,26 +91,53 @@ public enum CourseValidator {
         if hole.firingPoints.isEmpty {
             out.append(CourseProblem(key: "\(p).firing_point.1", "\(title) has no firing point."))
         }
+        // Every leg is one shot: firing point → first layup (or the flag), layup → next, … → flag. Each
+        // must be within the firing computer's reach, and each leg's safety fan inside the boundary.
+        let targets = hole.targets
+        let first = targets[0]
         for (i, start) in hole.firingPoints.enumerated() {
-            let key = "\(p).firing_point.\(i + 1)"
-            let where_ = "\(title), firing point \(i + 1)"
-            if let boundary, !boundary.contains(start) {
-                out.append(CourseProblem(key: key, "\(where_): the firing point is outside the course boundary."))
+            out += legProblems(from: start, to: first, key: "\(p).firing_point.\(i + 1)",
+                               where_: "\(title), firing point \(i + 1)" + (first.isFlag ? "" : " to layup 1"),
+                               boundary: boundary, limits: limits, startName: "firing point")
+        }
+        for (k, layup) in hole.layups.enumerated() {
+            let key = "\(p).layup.\(k + 1)"
+            let heights = CourseRules.poleHeightRangeM
+            if !heights.contains(layup.poleHeightM) {
+                out.append(CourseProblem(key: "\(key).pole_height_m", String(format:
+                    "%@, layup %d: a marker pole of %.3f m is outside the flag kit's %.2f–%.2f m. Re-measure it.",
+                    title, k + 1, layup.poleHeightM, heights.lowerBound, heights.upperBound)))
             }
-            let distance = Geo.distance(start, flag.position)
-            if distance < 1 {
-                out.append(CourseProblem(key: key, "\(where_): the firing point is on the flag."))
-                continue
-            }
-            if distance > limits.maxSolutionRange {
-                let reason = SafetyReason.beyondSolutionRange(distance: distance, limit: limits.maxSolutionRange)
-                out.append(CourseProblem(key: key, kind: .range, "\(where_): \(reason.description)"))
-            }
-            // Without a boundary the course-level problem above already says so, once.
-            guard let boundary else { continue }
-            for reason in Safety.checkFan(start: start, hole: flag.position, boundary: boundary).reasons {
-                out.append(CourseProblem(key: key, kind: .fan, "\(where_): \(reason.description)"))
-            }
+            let next = targets[k + 1]
+            out += legProblems(from: layup.position, to: next, key: "\(key).position",
+                               where_: "\(title), layup \(k + 1) to " + (next.isFlag ? "the flag" : "layup \(k + 2)"),
+                               boundary: boundary, limits: limits, startName: "layup")
+        }
+        return out
+    }
+
+    /// One leg of a hole: from a firing point or layup to the next target.
+    static func legProblems(from start: GeoPoint, to target: HoleTarget, key: String, where_: String,
+                            boundary: GeoPolygon?, limits: SafetyLimits, startName: String) -> [CourseProblem] {
+        var out: [CourseProblem] = []
+        if let boundary, !boundary.contains(start) {
+            out.append(CourseProblem(key: key, "\(where_): the \(startName) is outside the course boundary."))
+        }
+        let distance = Geo.distance(start, target.position)
+        if distance < 1 {
+            out.append(CourseProblem(key: key, "\(where_): the \(startName) is on \(target.name)."))
+            return out
+        }
+        if distance > limits.maxSolutionRange {
+            let reason = SafetyReason.beyondSolutionRange(distance: distance, limit: limits.maxSolutionRange)
+            let fix = target.isFlag && startName == "firing point"
+                ? " Or add a layup point between them." : ""
+            out.append(CourseProblem(key: key, kind: .range, "\(where_): \(reason.description)\(fix)"))
+        }
+        // Without a boundary the course-level problem already says so, once.
+        guard let boundary else { return out }
+        for reason in Safety.checkFan(start: start, hole: target.position, boundary: boundary).reasons {
+            out.append(CourseProblem(key: key, kind: .fan, "\(where_): \(reason.description)"))
         }
         return out
     }

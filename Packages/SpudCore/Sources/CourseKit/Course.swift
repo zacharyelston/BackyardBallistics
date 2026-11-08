@@ -37,6 +37,9 @@ public struct Hole: Codable, Equatable, Sendable, Identifiable {
     public var downrangePlay: Bool
     /// In `M` order. Farther points make harder versions of the hole.
     public var firingPoints: [GeoPoint]
+    /// Marker poles between the firing point and the flag, in playing order, for holes longer than
+    /// one shot. Each leg (firing point → first layup → … → flag) is within one shot's reach.
+    public var layups: [Layup]
     public var flag: Flag
     public var lidDiameterM: Double?
     public var hazards: [Hazard]
@@ -44,19 +47,67 @@ public struct Hole: Codable, Equatable, Sendable, Identifiable {
     public var id: Int { number }
 
     public init(number: Int, name: String, par: Int, downrangePlay: Bool = false, firingPoints: [GeoPoint],
-                flag: Flag, lidDiameterM: Double? = nil, hazards: [Hazard] = []) {
+                layups: [Layup] = [], flag: Flag, lidDiameterM: Double? = nil, hazards: [Hazard] = []) {
         self.number = number
         self.name = name
         self.par = par
         self.downrangePlay = downrangePlay
         self.firingPoints = firingPoints
+        self.layups = layups
         self.flag = flag
         self.lidDiameterM = lidDiameterM
         self.hazards = hazards
     }
 
+    private enum CodingKeys: String, CodingKey {
+        case number, name, par, downrangePlay, firingPoints, layups, flag, lidDiameterM, hazards
+    }
+
+    /// Courses saved before layups existed decode with none.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        number = try c.decode(Int.self, forKey: .number)
+        name = try c.decode(String.self, forKey: .name)
+        par = try c.decode(Int.self, forKey: .par)
+        downrangePlay = try c.decode(Bool.self, forKey: .downrangePlay)
+        firingPoints = try c.decode([GeoPoint].self, forKey: .firingPoints)
+        layups = try c.decodeIfPresent([Layup].self, forKey: .layups) ?? []
+        flag = try c.decode(Flag.self, forKey: .flag)
+        lidDiameterM = try c.decodeIfPresent(Double.self, forKey: .lidDiameterM)
+        hazards = try c.decodeIfPresent([Hazard].self, forKey: .hazards) ?? []
+    }
+
+    /// Where each mission aims, in order: the layups, then the flag.
+    public var targets: [HoleTarget] {
+        layups.enumerated().map { i, l in HoleTarget(index: i, position: l.position, poleHeightM: l.poleHeightM, isFlag: false) }
+            + [HoleTarget(index: layups.count, position: flag.position, poleHeightM: flag.poleHeightM, isFlag: true)]
+    }
+
     /// Ground distance from each firing point to the flag, metres, in firing-point order.
     public var firingDistances: [Double] { firingPoints.map { Geo.distance($0, flag.position) } }
+}
+
+/// A marker pole partway down a long hole. Ranged like a flag (its pole height is known), but it
+/// has no ring and isn't scored: it's where the next leg starts from.
+public struct Layup: Codable, Equatable, Sendable {
+    public var position: GeoPoint
+    public var poleHeightM: Double
+
+    public init(position: GeoPoint, poleHeightM: Double) {
+        self.position = position
+        self.poleHeightM = poleHeightM
+    }
+}
+
+/// What a mission aims at: a layup marker, or the flag.
+public struct HoleTarget: Equatable, Sendable {
+    /// 0-based: layups first, the flag last.
+    public var index: Int
+    public var position: GeoPoint
+    public var poleHeightM: Double
+    public var isFlag: Bool
+
+    public var name: String { isFlag ? "the flag" : "layup \(index + 1)" }
 }
 
 public struct Flag: Codable, Equatable, Sendable {
