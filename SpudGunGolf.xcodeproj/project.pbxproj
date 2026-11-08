@@ -19,12 +19,13 @@
 		1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B045324F460255AFAFCFE722 /* FieldLog.swift */; };
 		213FAEF9984EE5CF8F8711E5 /* CourseSurveyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */; };
 		2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */; };
-		3EFC1974454B6AB94800DE8B /* CourseKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0C5EE927A1EE9007CDD1FE51 /* CourseKit */; };
+		3EFC1974454B6AB94800DE8B /* SafetyKit in Frameworks */ = {isa = PBXBuildFile; productRef = 624B5971BCEFE3276F13D796 /* SafetyKit */; };
 		42FCF884DB4D1292750E9C3A /* ARKitRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */; };
+		47FEF687AF2EBDB3FFE0AC73 /* GroupLink in Frameworks */ = {isa = PBXBuildFile; productRef = 205C0B8F75E83E48DA0B80BF /* GroupLink */; };
 		4C17D03F0FA06FE37704E92C /* PoleHeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC575A2D9586FD6E557618AD /* PoleHeightView.swift */; };
 		4F2B51B4E6257E189C5A7746 /* RoundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FFE521AEBEB67F465CAA9E6 /* RoundView.swift */; };
 		50761EB52A9A37C9E24D8403 /* JoinSquadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDE461F8C92C1AE4841587B3 /* JoinSquadView.swift */; };
-		661D2D673DB0316E8869D598 /* GroupKit in Frameworks */ = {isa = PBXBuildFile; productRef = 42F3226CD1FFA1EDFE808E86 /* GroupKit */; };
+		661D2D673DB0316E8869D598 /* CourseKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0C5EE927A1EE9007CDD1FE51 /* CourseKit */; };
 		723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */; };
 		724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AFC18B1FD4637E46C11CA7 /* CrosshairSpotView.swift */; };
 		77084244531EA1125D1C00E1 /* BallisticsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 957114E8D0EB2D87927F3B83 /* BallisticsKit */; };
@@ -39,7 +40,7 @@
 		981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7230BC9CD26B3C17565509AE /* CourseView.swift */; };
 		9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA6EB5E25631668DAC5462C /* JSONStore.swift */; };
 		A3A842FBA87CAC888247D14E /* SquadCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */; };
-		A5E0A234EC6642A523EE480F /* GroupLink in Frameworks */ = {isa = PBXBuildFile; productRef = 205C0B8F75E83E48DA0B80BF /* GroupLink */; };
+		A5E0A234EC6642A523EE480F /* GroupKit in Frameworks */ = {isa = PBXBuildFile; productRef = 42F3226CD1FFA1EDFE808E86 /* GroupKit */; };
 		AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058FD02EB37A4DD2D60E9425 /* LauncherView.swift */; };
 		ABC854639A4529209FB9DA2B /* RangingLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1956E8D95530FA7EA760FD87 /* RangingLog.swift */; };
 		ADCBF1C6E705A2F12C6A84FC /* ReticleRangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E87C56614F017F0224D65F /* ReticleRangingView.swift */; };
@@ -128,9 +129,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				87F94927E6C765892683FE20 /* CoreGeo in Frameworks */,
-				3EFC1974454B6AB94800DE8B /* CourseKit in Frameworks */,
-				661D2D673DB0316E8869D598 /* GroupKit in Frameworks */,
-				A5E0A234EC6642A523EE480F /* GroupLink in Frameworks */,
+				3EFC1974454B6AB94800DE8B /* SafetyKit in Frameworks */,
+				661D2D673DB0316E8869D598 /* CourseKit in Frameworks */,
+				A5E0A234EC6642A523EE480F /* GroupKit in Frameworks */,
+				47FEF687AF2EBDB3FFE0AC73 /* GroupLink in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -332,6 +334,7 @@
 			name = SpudTheater;
 			packageProductDependencies = (
 				6D7643BBB300C31D6097E331 /* CoreGeo */,
+				624B5971BCEFE3276F13D796 /* SafetyKit */,
 				0C5EE927A1EE9007CDD1FE51 /* CourseKit */,
 				42F3226CD1FFA1EDFE808E86 /* GroupKit */,
 				205C0B8F75E83E48DA0B80BF /* GroupLink */,
@@ -733,6 +736,10 @@
 		5E31597492CC0E5465EB5069 /* RangingKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = RangingKit;
+		};
+		624B5971BCEFE3276F13D796 /* SafetyKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SafetyKit;
 		};
 		6D7643BBB300C31D6097E331 /* CoreGeo */ = {
 			isa = XCSwiftPackageProductDependency;
