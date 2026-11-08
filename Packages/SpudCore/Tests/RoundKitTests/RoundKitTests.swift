@@ -199,3 +199,30 @@ final class RoundKitTests: XCTestCase {
         XCTAssertLessThan(mean, 8, "mean practice score \(mean)")
     }
 }
+
+final class HoleEventTests: XCTestCase {
+    func testReplayRebuildsTheSameHole() throws {
+        var h = HolePlay(holeNumber: 1, par: 4, inRadius: 1, downrangePlay: true)
+        let events: [HoleEvent] = [
+            .begin(lockedRange: 60, bearing: 10, heightDifference: 0.3, from: nil),
+            .spot(Spot(call: .short, lateral: 0.8)), .lost, .spot(Spot(call: .over, lateral: -0.2)),
+            .ceaseFire(closest: nil), .ceaseFire(closest: 6), .advance(lockedRange: 6, bearing: 15, heightDifference: 0, from: nil),
+            .spot(Spot(call: .rangeCorrect, lateral: 0.1)), .ceaseFire(closest: 0.6), .finish
+        ]
+        for e in events { try h.apply(e) }
+        XCTAssertEqual(try h.replayed(events), h)
+        XCTAssertEqual(h.score, 4)
+        let data = try JSONEncoder().encode(events)
+        XCTAssertEqual(try JSONDecoder().decode([HoleEvent].self, from: data), events)
+    }
+
+    func testOldScorecardsDecodeWithoutAPlayerID() throws {
+        let card = Scorecard(course: Course(format: 1, id: "t", name: "T", version: 1, boundary: GeoPolygon([]), holes: []),
+                             player: "Me", practice: false)
+        var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(card)) as! [String: Any]
+        json["playerID"] = nil
+        let old = try JSONDecoder().decode(Scorecard.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertNil(old.playerID)
+        XCTAssertEqual(old.player, "Me")
+    }
+}

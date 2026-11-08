@@ -83,6 +83,8 @@ public struct DownrangeLog: Codable, Equatable, Sendable {
     private static func key(_ player: String, _ hole: Int) -> String { "\(hole)|\(player)" }
     public mutating func confirm(player: String, hole: Int) { confirmed.insert(Self.key(player, hole)) }
     public func isConfirmed(player: String, hole: Int) -> Bool { confirmed.contains(Self.key(player, hole)) }
+    /// Withdraws every player's confirmation for a hole (after a check fire), so each must confirm again.
+    public mutating func revoke(hole: Int) { confirmed = confirmed.filter { !$0.hasPrefix("\(hole)|") } }
 }
 
 public enum Safety {

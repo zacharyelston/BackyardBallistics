@@ -26,7 +26,7 @@ Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 | Path | What it is |
 | --- | --- |
 | `App/` | SwiftUI iPhone app (iOS 17+): `App/` tabs and settings, `Shared/` capture and marking, `Features/` one folder per feature |
-| `Packages/SpudCore/` | Platform-free core: `CoreGeo`, `SafetyKit`, `RangingKit`, with unit tests |
+| `Packages/SpudCore/` | Platform-free core: `CoreGeo`, `SafetyKit`, `RangingKit`, `BallisticsKit`, `CourseKit`, `RoundKit`, `GroupKit`, with unit tests |
 | `docs/ARCHITECTURE.md` | Modules, dependency rules, the safety gate and the app design |
 | `docs/FLAG_KIT.md` | How to build and set up a flag |
 | `docs/FIELD_TEST.md` | Field-test protocols for milestones 1 and 2 |
@@ -91,7 +91,7 @@ scripts/typecheck-ios.sh
 3. **Course file and validator** — built: `CourseKit` reads and validates course files (every SafetyKit course check, with readable problems and line numbers), and the Play tab's **Course** screen loads the bundled sample, the course server or a typed address, and keeps the last good course for offline play.
 4. **Fire control in Swift** — built: `BallisticsKit` (flight with drag and wind shear, roll-out, the low/lob solver, dispersion), matched to the browser prototype by parity tests.
 5. Calibration shots. Until then real fire missions stop at initial data: SafetyKit holds every solution without a calibrated, conforming launcher.
-6. **Missions and scorecard** — built: `RoundKit` plays each hole as fire missions (confirm downrange, range, initial data, fire and spot, bracketing corrections, cease fire with Resume, verify, downrange next mission) and keeps the scorecard. **Practice** plays the whole flow with simulated rounds on the loaded course. Multi-player turns are still to come.
+6. **Missions and scorecard** — built: `RoundKit` plays each hole as fire missions (confirm downrange, range, initial data, fire and spot, bracketing corrections, cease fire with Resume, verify, downrange next mission) and keeps the scorecard. **Practice** plays the whole flow with simulated rounds on the loaded course. Multi-player turns: the v3 Squadz core (`GroupKit`: squad and match hosts, holds, messages, loopback transport) is built and tested; the network link and screens are next.
 7. Sight mode
 8. Course server and registry
 

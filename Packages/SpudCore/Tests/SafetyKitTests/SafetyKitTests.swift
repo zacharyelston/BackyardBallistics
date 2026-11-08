@@ -112,3 +112,18 @@ final class SafetyChecksTests: XCTestCase {
         }
     }
 }
+
+final class DownrangeRevokeTests: XCTestCase {
+    func testRevokeClearsOnlyThatHole() {
+        var log = DownrangeLog()
+        log.confirm(player: "Red", hole: 1)
+        log.confirm(player: "Blue", hole: 1)
+        log.confirm(player: "Red", hole: 11)
+        log.confirm(player: "Red", hole: 2)
+        log.revoke(hole: 1)
+        XCTAssertFalse(log.isConfirmed(player: "Red", hole: 1))
+        XCTAssertFalse(log.isConfirmed(player: "Blue", hole: 1))
+        XCTAssertTrue(log.isConfirmed(player: "Red", hole: 11))
+        XCTAssertTrue(log.isConfirmed(player: "Red", hole: 2))
+    }
+}

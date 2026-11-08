@@ -21,6 +21,8 @@ public struct Scorecard: Codable, Equatable, Sendable, Identifiable {
     public var id = UUID()
     public var date = Date()
     public var player: String
+    /// Stable ID of the player (in v3 Squadz, the squad). Nil on solo cards and older files.
+    public var playerID: UUID?
     public var courseID: String
     public var courseName: String
     public var courseVersion: Int
@@ -28,8 +30,9 @@ public struct Scorecard: Codable, Equatable, Sendable, Identifiable {
     public var practice: Bool
     public var holes: [HoleScore]
 
-    public init(course: Course, player: String, practice: Bool) {
+    public init(course: Course, player: String, practice: Bool, playerID: UUID? = nil) {
         self.player = player
+        self.playerID = playerID
         self.courseID = course.id
         self.courseName = course.name
         self.courseVersion = course.version

@@ -25,6 +25,7 @@ module RangingKit
 module BallisticsKit
 module CourseKit
 module RoundKit
+module GroupKit
 
 # shellcheck disable=SC2046
 xcrun --sdk iphoneos swiftc -typecheck -module-name SpudGunGolf "${T[@]}" -I "$OUT" -swift-version 5 \
