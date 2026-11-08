@@ -85,7 +85,9 @@ struct ReticleRangingView: View {
 
     private var shownRange: Double { lock?.range ?? dialRange }
 
-    var body: some View {
+    var body: some View { cameraContent.cameraNeedsPortrait() }
+
+    @ViewBuilder private var cameraContent: some View {
         ZStack {
             feed.ignoresSafeArea(edges: .bottom)
             controls.environment(\.colorScheme, .dark)

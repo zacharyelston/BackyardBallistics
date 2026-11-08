@@ -7,7 +7,9 @@ struct SightingView: View {
     @StateObject private var camera = CameraController()
     @State private var frame: FrozenFrame?
 
-    var body: some View {
+    var body: some View { cameraContent.cameraNeedsPortrait() }
+
+    @ViewBuilder private var cameraContent: some View {
         Group {
             if let frame {
                 MarkingView(frame: frame) { self.frame = nil }
