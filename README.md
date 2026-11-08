@@ -30,7 +30,7 @@ Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 | `docs/ARCHITECTURE.md` | Modules, dependency rules, the safety gate and the app design |
 | `docs/FLAG_KIT.md` | How to build and set up a flag |
 | `docs/FIELD_TEST.md` | Field-test protocols for milestones 1 and 2 |
-| `docs/GROUP_PLAY.md` | Design for group play: an iPad hub, linked phones and spotters |
+| `docs/GROUP_PLAY.md` | Design for Squadz mode: group play hosted on an iPad, with phones as rangefinders and spotters |
 | `docs/COURSE_FORMAT.md` | The flat-key YAML course file a course's web server serves |
 | `courses/sample-course.yaml` | Example course file |
 | `prototype/` | Browser prototypes: v1 Classic and v2 Fire Missions |

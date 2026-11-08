@@ -1,125 +1,118 @@
-# Group play: an iPad hub with linked phones
+# Group play: Squadz mode, hosted on an iPad
 
-Status: design, not built. This covers the "multi-player turns" item in milestone 6 and goes further. One iPad is the group's shared device, and each player's phone links to it as an extension of the platform. A phone shares its data with the group, and any phone can act as a spotter for someone else's round.
-
-Read [ARCHITECTURE.md](ARCHITECTURE.md) first. This doc uses its modules, its safety gate and its dependency rules.
+Status: design, not built. This covers the "multi-player turns" item in milestone 6. Read [ARCHITECTURE.md](ARCHITECTURE.md) first; this doc uses its modules, its safety gate and its dependency rules.
 
 ## Contents
 
-1. [Goals and non-goals](#goals-and-non-goals)
-2. [Roles](#roles)
+1. [Two modes](#two-modes)
+2. [Roles in Squadz mode](#roles-in-squadz-mode)
 3. [Transport](#transport)
 4. [What is synced and who owns it](#what-is-synced-and-who-owns-it)
 5. [Safety](#safety)
 6. [The iPad interface](#the-ipad-interface)
-7. [Phone changes](#phone-changes)
+7. [The phone in Squadz mode](#the-phone-in-squadz-mode)
 8. [Prior work: Squadz](#prior-work-squadz)
 9. [Milestone plan](#milestone-plan)
 10. [Open questions](#open-questions)
 
-## Goals and non-goals
+## Two modes
 
-**Goals**
+| | **Solo** (mode 1) | **Squadz** (group) |
+| --- | --- | --- |
+| Devices | One phone | One iPad hosting the group, plus any number of phones (zero is fine) |
+| Where the game runs | On the phone, as it does today | **On the iPad.** It owns every player's round, every shot and the scorecard |
+| Ranging | The phone ranges and shows the result | A phone (or the iPad's camera) takes the lock; **the range and firing data are shown on the iPad** |
+| Spotting | The phone spots | Any phone spots, including the shooter's own; reports go to the iPad |
+| SafetyKit | Runs on the phone | Runs on the iPad, the only device that shows firing data |
+| Network | None | The iPad hosts a local group on the backyard's Wi-Fi (peer-to-peer Wi-Fi when there's no router). No internet |
 
-- Two to six players play one course together with one shared iPad. A phone is optional: a player without one plays pass-and-play on the iPad.
-- The group plays fully offline. A backyard often has no internet and sometimes no Wi-Fi, so devices link directly.
-- The iPad shows the course map, every player's scorecard and the turn order.
-- A phone at a different position can spot another player's round.
-- A phone that drops out (locked screen, walking out to verify, out of range) keeps working and catches up when it comes back.
-- SafetyKit stays authoritative on the device that shows firing data. Linking devices can add holds, but it can never remove one.
+Solo stays exactly as built. Squadz mode needs an iPad, and the iPad **owns the shot**. A phone in Squadz mode is a remote camera, a remote control and a spotting scope for the iPad. It never computes or shows firing data.
 
-**Non-goals**
+This model keeps group play simple:
 
-- Internet play, accounts or a cloud server during a round. See [Prior work: Squadz](#prior-work-squadz) for a later, optional online layer.
-- More than one launcher firing at a time. A group shares the firing line, one shooter at a time.
-- Sharing launcher profiles between devices. This waits until after calibration (m5); see [Open questions](#open-questions).
-- Android or a web hub.
+- **There is one authority.** Every rule, score and safety check runs on one device, so devices never have to resolve competing versions of a hole.
+- **Safety stays where it is today.** SafetyKit runs on the one device that shows firing data, as it does in solo. Phones send measurements and calls, the iPad checks them, and nothing that unlocks a solution ever crosses the wire.
+- **Everyone sees the same thing.** The group gathers around one big screen showing the map, the shot and the scorecard.
 
-## Roles
+**Non-goals:** internet play or a cloud server during a round, more than one shooter at a time, a phone hosting a group, and Android or web clients.
 
-A device takes one or more roles in a **group round**. Roles belong to a device for the current hole and can change from hole to hole.
+## Roles in Squadz mode
 
 | Role | Device | Does | Never does |
 | --- | --- | --- | --- |
-| **Hub** | The iPad (one per group) | Hosts the group: roster, join code, course check, turn order, the line (who may fire now), the shared scorecard and the course map. Plays pass-and-play players who have no phone. | Show firing data for a player whose phone is their firing device, or accept a remote safety confirmation. |
-| **Firing device** | The shooter's phone, or the hub for a pass-and-play player | Owns that player's `HolePlay`: ranges the pole, runs `Safety.clearRange` and `Safety.clearSolution`, shows initial data and corrections, records spots, ceases fire, verifies. | Fire without the line, or accept a lock or a confirmation it did not make itself. |
-| **Spotter** | Any other phone, or the iPad as a spotting scope | Watches someone else's round and sends a spot report: a long/short call and, when it can measure one, a left/right miss. Anyone, spotter or not, can call **check fire**. | Send anything that could unlock a solution. Its message types can't carry one (see [Safety](#safety)). |
+| **Host** | The iPad (one per group) | Runs the game: roster, join code, course, turn order, every player's `HolePlay`, `Scorecard`s, `DownrangeLog`. Runs `Safety.clearRange` and `Safety.clearSolution`. Shows range, initial data, corrections, the map and the scorecard. Ranges and spots with its own camera when wanted. | Accept a safety confirmation or a cleared value from a phone. |
+| **Rangefinder** | The shooter's phone (or any phone, or the iPad camera) | Runs today's reticle screen and sends the raw `ReticleLock` to the iPad. | Show the range result or firing data. |
+| **Spotter** | Any phone, the shooter's included, or the iPad camera | Sends a spot report for the round in flight: short / over / range correct, plus the measured left/right. Anyone can call **check fire**. | Send anything that can unlock a solution; its message types can't carry one. |
 
-A phone is usually the firing device on its owner's turn and a spotter on everyone else's. The hub is always the hub, and it may also be a spotter (the [iPad camera as a spotting scope](#the-ipad-camera-as-a-spotting-scope)) or a pass-and-play firing device.
+A player without a phone plays entirely on the iPad: ranging with the iPad camera, spotting by eye with the call buttons, or both.
 
-### A hole with three players
+### One shot, end to end
 
 ```mermaid
 sequenceDiagram
-  participant H as Hub (iPad)
-  participant A as Ana's phone (shooter)
-  participant B as Ben's phone (spotter, flank)
-  participant C as Cy (pass-and-play on the iPad)
-  H->>A: Line granted: Ana, hole 3
-  A->>A: Confirm downrange, range the pole, clearRange, clearSolution, initial data
-  A->>H: HolePlay rev 4 (mission 1, firing)
-  Note over A: Fire round 1
-  B->>A: SpotReport(round 1, over, flank geometry)
-  A->>A: Shooter accepts, HolePlay.record(spot), correction
-  A->>H: HolePlay rev 5
-  A->>A: Cease fire
-  A->>H: HolePlay rev 6 (ceased)
-  Note over H: Someone is walking out, so the line is held for everyone
-  A->>H: HolePlay rev 7 (finished, score 4.6)
-  H->>H: Scorecard.record, next in turn order
-  H->>C: Line granted: Cy (the hub is Cy's firing device)
+  participant Ana as Ana's phone (shooter)
+  participant H as iPad (host)
+  participant Ben as Ben's phone (spotter, flank)
+  H->>H: Ana's turn, hole 3. Ana confirms downrange on the iPad
+  Ana->>H: Lock(raw ReticleLock: line px, focal length, tilt, bearing, GPS)
+  H->>H: Recompute range, clearRange vs course flag, HolePlay.begin
+  H->>H: clearSolution, show initial data on the iPad
+  Note over Ana,Ben: Fire round 1
+  Ana->>H: SpotReport(round 1, short, −0.8 m)
+  Ben->>H: SpotReport(round 1, over, flank)
+  H->>H: Shooter picks Ben's call on the iPad, HolePlay.record(spot)
+  H->>H: clearSolution again, show the correction
+  H->>H: Cease fire. Everyone walks out, line held
+  Ana->>H: Lock from the closest round (verify)
+  H->>H: HolePlay.ceaseFire, finish, Scorecard.record, next player
 ```
 
 ## Transport
 
-The requirement is offline peer-to-peer: no internet, and preferably no Wi-Fi router either. The topology is a star, with the hub as the server and every phone as a client.
+The iPad is a server and phones are its clients: a star, not a mesh. It hosts on the backyard's Wi-Fi and falls back to peer-to-peer Wi-Fi when there is no router. There is never any internet.
 
-### Options
-
-| Option | Offline, no router | Fits a hub and clients | Status and API | Notes |
+| Option | On home Wi-Fi | With no router | Fits a host and clients | Notes |
 | --- | --- | --- | --- | --- |
-| **MultipeerConnectivity** | Yes: peer-to-peer Wi-Fi, plus infrastructure Wi-Fi when present | Poorly. It is a mesh of equal peers. Server authority, reconnects and backpressure have to be built on top, and its state callbacks are hard to reason about | Old Objective-C API, little change in years, no structured concurrency. Apple's networking engineers point new work at Network.framework | Least code to get two devices talking. An `MCSession` holds up to 8 peers. Message delivery and reconnect behaviour are opaque |
-| **Network.framework with Bonjour** (`NWListener`, `NWBrowser`, `NWConnection`) | Yes. Set `includePeerToPeer = true` and it uses the same peer-to-peer Wi-Fi underneath as Multipeer, and infrastructure Wi-Fi when there is one | Well. The hub is an `NWListener` advertising a Bonjour service, and each phone browses and connects | Current, supported since iOS 12, and works with the iOS 17 deployment target | You frame your own messages (`NWProtocolFramer` or a length prefix). TLS with a pre-shared key gives an encrypted link keyed by the join code; Apple's peer-to-peer sample game does exactly this |
-| **Network.framework's async API** (`NetworkConnection`, `NetworkListener`, `NetworkBrowser`) | Yes, as above | Well | iOS 26 and later. It is the same framework with a structured-concurrency surface | The best fit eventually. It needs iOS 26, and the app targets iOS 17 |
-| **Wi-Fi Aware** | Yes, with no router at all | Well. Discovery and pairing come from Wi-Fi Aware, and the data goes over Network.framework | iOS 26 and later, recent hardware only, and it needs a system pairing step | Worth watching. Too new and too narrow for a group of mixed family phones today |
-| SharePlay / GroupActivities, CloudKit | No: they need FaceTime or iCloud infrastructure | — | — | Ruled out by the offline requirement |
-| Nearby Interaction (UWB) | Not a data transport | — | — | Could later give a phone's direction and distance from the iPad. Not needed |
+| **MultipeerConnectivity** | Yes | Yes (peer-to-peer Wi-Fi) | Poorly: a mesh of equal peers, with server authority and reconnects built on top | Old Objective-C API, little change in years; an `MCSession` holds up to 8 peers; delivery and reconnects are opaque |
+| **Network.framework with Bonjour** (`NWListener`, `NWBrowser`, `NWConnection`) | Yes | Yes, with `includePeerToPeer = true` (the same radio layer Multipeer uses) | Well: the iPad is an `NWListener`, phones browse and connect | Current, iOS 12+, works with the iOS 17 target. You frame your own messages. TLS with a pre-shared key encrypts the link with a key from the join code; Apple's peer-to-peer sample game does this |
+| **Network.framework async API** (`NetworkConnection`, `NetworkListener`, `NetworkBrowser`) | Yes | Yes | Well | iOS 26+. The same framework with structured concurrency. Adopt when the target allows |
+| **Wi-Fi Aware** | — | Yes | Well (data still over Network.framework) | iOS 26+, recent hardware, a system pairing step. Worth watching |
+| SharePlay, CloudKit | — | No | — | Need FaceTime or iCloud infrastructure; ruled out |
 
-Field reports put a practical ceiling of about 8 connected peers on peer-to-peer Wi-Fi, whatever the API, and Apple doesn't document the limit. Six players is well inside it.
+Field reports put a practical ceiling of about 8 peers on peer-to-peer Wi-Fi (undocumented). On a home router the limit is much higher.
 
 ### Recommendation: Network.framework with Bonjour, behind a seam
 
-1. **The hub listens, and phones connect.** The hub runs an `NWListener` with `includePeerToPeer = true`, advertising `_spudgolf._tcp` with a TXT record holding the group name, protocol version and course ID. Phones run an `NWBrowser` for the same service. This works with or without the home Wi-Fi, and it needs no internet.
-2. **The join code keys the link.** The hub shows a 6-character join code (and a QR code). The phone derives a TLS pre-shared key from it, so only phones that have seen the iPad's screen can connect, and nothing travels in the clear.
-3. **The framing is length-prefixed JSON.** Every message is a Codable `GroupMessage` in an envelope `{protocolVersion, sender, seq, body}`. The models are small (a `HolePlay` is a few KB), so JSON is fine and easy to log.
-4. **Use the `NWConnection` API now.** Move to `NetworkConnection` when the deployment target reaches iOS 26.
-5. **Hide the transport behind a `GroupTransport` protocol** in `App/Sources/Shared`, the same way `RangingCaptureSource` hides the camera. Ship three implementations: `NetworkGroupTransport` (the real one), `LoopbackGroupTransport` (in memory, for `swift test` and the Simulator) and later, if wanted, a Wi-Fi Aware one. Nothing above the seam knows which radio is in use.
+1. **The iPad listens and phones connect.** The iPad runs an `NWListener` with `includePeerToPeer = true`, advertising `_spudgolf._tcp`. Its TXT record holds the group name, protocol version and course ID. Phones run an `NWBrowser`. The same code works on the home Wi-Fi and with no router.
+2. **The join code keys the link.** The iPad shows a 6-character join code and a QR code, and the phone derives the TLS pre-shared key from it. Only phones that have seen the iPad can join, and nothing travels in the clear.
+3. **The framing is length-prefixed JSON.** Every message is a Codable `GroupMessage` in an envelope `{protocolVersion, sender, seq, body}`. Messages are small and easy to log.
+4. **Use the `NWConnection` API now**, and move to `NetworkConnection` at iOS 26.
+5. **Hide it behind a `GroupTransport` protocol** in `App/Sources/Shared`, the way `RangingCaptureSource` hides the camera. Ship `NetworkGroupTransport` and `LoopbackGroupTransport` (in memory, for `swift test` and the Simulator). Multipeer or Wi-Fi Aware would be one more implementation.
 
-Info.plist needs `NSBonjourServices` = `_spudgolf._tcp`, and the `NSLocalNetworkUsageDescription` string should also mention linking to the group's iPad. The first link shows the system's local network prompt on every device; the lobby should explain it before it appears.
-
-Multipeer is the fallback if peer-to-peer Network.framework misbehaves in the field. The protocol seam keeps that a one-file swap.
+Info.plist needs `NSBonjourServices` = `_spudgolf._tcp`, and `NSLocalNetworkUsageDescription` should mention joining the group's iPad. The lobby explains the system's local network prompt before it appears.
 
 ## What is synced and who owns it
 
-### The rule: every object has exactly one owner
+**The iPad owns everything that matters.** Phones send *inputs* (locks, spots, check fire) and receive *views* (whose turn it is, what to spot, holds, the scorecard). No synced state has two writers, so there is nothing to merge.
 
-Conflicts are avoided rather than resolved. Each synced object has a single owning device, and only the owner changes it. Every change bumps a revision number, and the owner sends a full snapshot. Receivers keep the highest revision they have seen from the current owner and ignore everything else. With no shared writers, no clocks to sync and no merge logic, a dropped message is simply superseded by the next snapshot.
-
-| Object | Owner | Synced how | Conflict rule |
+| Object | Owner | Phones get | Phones send |
 | --- | --- | --- | --- |
-| `GroupRound`: roster, players' IDs and names, course reference, practice flag | Hub | Snapshot on change | Hub only |
-| Turn order and the line (`LineState`: who may fire, holds) | Hub | Snapshot on change | Hub only |
-| `HolePlay` for one player on the current hole | That player's firing device | Snapshot on every change, with revision | Highest revision from the owner wins; writes from non-owners are dropped and logged |
-| `Scorecard` for each player | Derived, not owned | Each device recomputes it with `Scorecard.record(HolePlay)` from finished `HolePlay`s | Nothing to resolve: same input, same card |
-| `SpotReport` | Its author (a spotter) | Sent once, immutable, acknowledged | Applied only by the firing device that owns the round; see [Spots](#spots) |
-| `ReticleLock` | The device that took it | Sent as data inside `HolePlay` context or a `SpotReport` | Never trusted as cleared; any consumer re-runs the gate |
-| `DownrangeLog` confirmations | The firing device, by the shooter's own tap | Mirrored to the hub for display only | Never accepted from another device |
-| Check fire | Whoever raised it | Broadcast through the hub | Any device can raise one; see [Safety](#safety) for lifting it |
-| Course | Hub chooses it; every device validates its own copy | Course ID, version and a content hash in the hello. The hub can send `course.yaml` text to a phone that lacks it, and the phone validates it with `CourseValidator` itself | Mismatch: the phone can't join until it holds the same validated course |
+| `GroupRound`: roster, course reference, practice flag | iPad | Snapshot | Join request |
+| Turn order and the line (`LineState`: who's up, holds) | iPad | Snapshot | — |
+| `HolePlay` per player (RoundKit, unchanged) | iPad | A read-only summary: phase, rounds fired, the calls and add/drop in metres, the round awaiting a spot | — |
+| `Scorecard` per player | iPad (`Scorecard.record(HolePlay)`) | Snapshot | — |
+| `DownrangeLog` | iPad, by the shooter's tap on the iPad | Who has confirmed (display) | — |
+| Firing solution | iPad only | **Never sent** | — |
+| Locks | Taken on a phone, *used* on the iPad | — | `LockReport` with the raw `ReticleLock` |
+| Spots | Proposed by a phone, *committed* on the iPad | Whether it was applied | `SpotReport` |
+| Check fire | Whoever raised it; the iPad enforces it | Snapshot of holds | `checkFire` |
+| Course | iPad | `course.yaml` text if the phone lacks it | Its course hash in the hello |
 
-### Types, built on RoundKit
+Revisions still matter for display. Every iPad snapshot carries an increasing revision number, and phones keep the highest. A phone that reconnects asks for fresh snapshots, so dropped messages never need replaying.
 
-A new platform-free module, **GroupKit**, sits above RoundKit in the graph. It holds the messages, ownership and revisions, turn order and the line rules. It imports nothing from UIKit or Network.framework, so the whole protocol is tested with `swift test` over the loopback transport.
+### Types: a new GroupKit module on RoundKit
+
+**GroupKit** is platform free and sits above RoundKit. It holds the messages, the host's game state (`SquadzHost`), turn order, the line and `GroupGate`. The whole host runs under `swift test` over the loopback transport.
 
 ```swift
 // GroupKit (sketch)
@@ -129,208 +122,195 @@ public struct DeviceID: Codable, Hashable, Sendable { public let raw: UUID }
 public struct GroupPlayer: Codable, Equatable, Sendable {
     public var id: PlayerID
     public var name: String
-    /// The device that fires for this player: their phone, or the hub for pass-and-play.
-    public var firingDevice: DeviceID
+    public var phone: DeviceID?        // nil: plays on the iPad only
 }
 
-public struct GroupRound: Codable, Equatable, Sendable {
+/// The game, as the iPad holds it. Persisted to round-in-progress.json on the iPad.
+public struct SquadzRound: Codable, Equatable, Sendable {
     public var id: UUID
-    public var courseID: String, courseVersion: Int, courseHash: String
+    public var course: Course          // CourseKit, validated on the iPad
     public var practice: Bool
     public var players: [GroupPlayer]
-    public var currentHole: Int
+    public var cards: [PlayerID: Scorecard]
+    public var holes: [PlayerID: HolePlay]   // the current hole per player
+    public var downrange: DownrangeLog
+    public var line: LineState
     public var revision: Int
 }
 
-/// One player's hole, as its owner last sent it.
-public struct OwnedHolePlay: Codable, Equatable, Sendable {
-    public var player: PlayerID
-    public var owner: DeviceID
-    public var revision: Int
-    public var play: HolePlay          // RoundKit's Codable HolePlay, unchanged
-    public var firingPoint: Int
-}
-
-public struct SpotReport: Codable, Equatable, Sendable, Identifiable {
+public struct LockReport: Codable, Equatable, Sendable {
     public var id: UUID
-    public var author: DeviceID
+    public var from: DeviceID
     public var player: PlayerID
-    public var hole: Int, mission: Int, round: Int   // which FiredRound this is for
-    public var call: RangeCall                       // RangingKit
-    public var lateral: Double?                      // metres, + right of the pole, nil if not measured
-    public var vantage: SpotterVantage?              // where the spotter stood; see "Spotting from a flank"
+    public var purpose: Purpose        // .initial, .nextMission, .verify, .spotterVantage
+    public var lock: ReticleLock       // RangingKit's raw record: line pixels, focal length, tilt, bearing, GPS
+}
+
+public struct SpotReport: Codable, Equatable, Sendable {
+    public var id: UUID
+    public var from: DeviceID
+    public var player: PlayerID
+    public var hole: Int, mission: Int, round: Int
+    public var call: RangeCall
+    public var lateral: Double?        // metres, + right; nil if not measured
+    public var vantage: SpotterVantage?
 }
 
 public enum GroupMessage: Codable, Sendable {
-    // Hub → phones
-    case round(GroupRound)
-    case line(LineState)
+    // iPad → phones
+    case round(RoundView), line(LineState), awaitingSpot(SpotRequest), applied(id: UUID, ok: Bool, reason: String?)
     case course(text: String)
-    // Firing device → hub (and hub → everyone, for display)
-    case holePlay(OwnedHolePlay)
-    case downrangeShown(player: PlayerID, hole: Int)     // display only
-    // Spotter → firing device, through the hub
-    case spot(SpotReport)
-    case spotAck(id: UUID, applied: Bool)
-    // Anyone
-    case checkFire(CheckFire)
-    case hello(Hello), bye
+    // Phone → iPad
+    case lock(LockReport), spot(SpotReport), checkFire(CheckFire), hello(Hello), bye
 }
 ```
 
-`HolePlay`, `Mission`, `FiredRound`, `Scorecard` and `Spot` travel unchanged. RoundKit needs only small additions:
+`HolePlay`, `Mission`, `FiredRound`, `Scorecard`, `Spot` and `ReticleLock` are reused unchanged. Small additions:
 
-- `Scorecard` gains an optional `playerID: UUID?`. It stays decodable from old files.
-- `RoundStore.Active` gains `group: GroupMembership?` (round ID, hub, own player ID, last revisions seen), so a relaunched phone rejoins mid-hole.
-- `HolePlay` gains an event log and a replay initializer (`HolePlay(replaying: [HoleEvent])`). Fire control is deterministic, so amending a spot means rebuilding from events rather than patching state. The snapshot stays the unit of sync, and the log is the owner's local undo.
+- `Scorecard.playerID: UUID?`, still decodable from old files.
+- `HolePlay(replaying: [HoleEvent])` and an event log, so the iPad can amend a spot by replaying. Fire control is deterministic.
+- `DownrangeLog.revoke(hole:)` for check fire.
+- `SquadzStore` on the iPad next to `RoundStore`, persisting `SquadzRound` after every change. A closed app resumes mid-hole, as solo does.
+
+### Locks
+
+1. The shooter (or whoever is ranging) uses today's reticle screen on their phone. **Lock** sends a `LockReport` with the whole raw `ReticleLock`. The phone says "Lock sent to the iPad"; it does not show the range.
+2. The iPad recomputes the range from the raw fields with RangingKit, runs `Safety.clearRange` against its own course's flag, and shows the result. If the check blocks, it shows the reasons on the iPad and the phone is told to range again.
+3. A cleared lock is used for the purpose it was sent for: begin a mission, the next downrange mission, verify after cease fire, or a spotter's vantage.
+
+The iPad camera can do the same on the iPad itself, with no phone.
 
 ### Spots
 
-A round has exactly one committed spot: the one recorded into the owner's `HolePlay`. Reports are proposals.
-
-1. A spotter sends a `SpotReport` for `(player, hole, mission, round)`. The hub relays it to the firing device and shows it on the board.
-2. The firing device accepts the report only if its `HolePlay` is `.firing`, the round number is `roundsFired + 1` and the mission matches. Anything else is acknowledged with `applied: false` and kept in the log.
-3. **The shooter commits.** The phone shows the reports next to its own crosshair spot: "Ben (flank): Over · Ana: Short · −0.8 m". One tap takes a report, an edit or their own call. A group setting, *auto-accept from the designated spotter*, commits the designated spotter's report directly. The firing device still applies it, never the spotter.
-4. When reports disagree, the shooter decides, and the hub board shows the disagreement. There is no voting.
-5. An amendment (a wrong call found after the fact) is a new commit on the firing device: it replays the hole's events with the corrected spot, bumps the revision and sends the snapshot.
+1. When a round is fired (the shooter taps **Fired** on the iPad, or on their phone), the iPad sends `awaitingSpot` for `(player, hole, mission, round)` to every phone.
+2. Any phone, the shooter's included, can answer with a `SpotReport` from `CrosshairSpotView`. The iPad's own call buttons and camera work too.
+3. The iPad accepts a report only if that player's `HolePlay` is `.firing` and the round number is `roundsFired + 1`. Anything else is answered `applied: false` with the reason.
+4. **The shooter commits on the iPad.** The mission view lists the reports ("Ben (flank): Over · Ana: Short −0.8 m"), and one tap records one; the call and the left/right can come from different reports. A group setting, *auto-accept from the designated spotter*, commits that spotter's report as soon as it arrives. Either way, the iPad's `HolePlay.record` is the only place a spot enters the game.
+5. An amendment replays the hole's events with the corrected spot.
 
 ### Lost links
 
-- **A phone drops out.** It stays the owner of its `HolePlay` and keeps playing the steps that need no line: spot rounds already fired, cease fire, walk out, verify, finish. On reconnect it sends its latest snapshot, and the hub takes the higher revision. Without the hub it shows no *new* firing data in a group round (see [The line](#the-line-turns-and-holds)), and the player can leave the group to play solo.
-- **The hub drops out.** Phones keep their own holes as above. When the hub returns, it rebuilds the board from their snapshots, since everything the hub owns is small and re-announced.
-- **Ownership moves** only by explicit handoff, for example when a phone dies and the player continues on the iPad. The hub asks for confirmation, then becomes the owner at `revision + 1`. If the old phone returns, it sees a newer owner and goes read-only for that hole. The new firing device starts with no downrange confirmation and needs the shooter to confirm again.
+- **A phone drops out.** Nothing is lost, because the game lives on the iPad. That player ranges and spots with the iPad until the phone rejoins with the same player ID (the iPad remembers the device).
+- **The iPad goes away** (locked, app closed, out of range). The round stops for everyone: there's no shot without the host. Phones show "Waiting for the iPad". The iPad resumes from `SquadzStore`, and phones reconnect on their own.
 
 ## Safety
 
-The architecture's rule still holds: `Cleared<T>` is created only inside SafetyKit, on the device that will show the result. Group play adds devices that send data, so it adds these rules.
+The architecture's rule holds unchanged: `Cleared<T>` is created only in SafetyKit, on the device that shows the result. In Squadz mode that device is always the iPad.
 
-1. **Gates run on the firing device, on its own inputs.** `Safety.clearRange` and `Safety.clearSolution` run on the device that shows the range or the firing data. A lock, spot or course received from elsewhere is input data and is gated again where it is used. `checkFlag` runs on a spotter's lock too, before the spotter's position is used.
-2. **`Cleared` never crosses the wire.** `Cleared` is not `Codable`, and its initializer is file-private, so it can't be decoded. Keep it that way, and add a test that `Cleared<Int>.self` is not `Decodable` and that no `GroupMessage` case contains one.
-3. **Firing data stays on the firing device.** The solution (charge setting, elevation, aim) is not part of `HolePlay`, and it is never sent. The hub shows the mission log: calls, add/drop and right/left in metres, rounds and score. It never shows another player's solution.
-4. **Downrange confirmations are local.** `DownrangeLog.confirm` is called only from the shooter's own tap on the firing device. The hub can show who has confirmed, but no message can confirm on someone's behalf.
-5. **A spotter can never unlock a solution.** Spotter messages are limited by type to `spot`, `spotAck`, `checkFire` and `hello`/`bye`. None carries a launcher profile, a downrange confirmation, a lock that bypasses `clearRange`, or a solution. A committed spot moves fire control's aim, and the new aim goes back through `clearSolution` (including the 100 yd distance check) before it is shown. A spot can change *where* fire control aims, never *whether* firing data is shown.
-6. **The group can only add holds.** In a group round the firing device shows firing data only when **both** are true:
-   - `Safety.clearSolution` returns `.success`, and
-   - GroupKit's `GroupGate` has no holds for this player.
+1. **The iPad is the only firing device.** `Safety.clearRange` and `Safety.clearSolution` run on the iPad, on the iPad's validated course, launcher profile and `DownrangeLog`. A phone in Squadz mode has no code path that shows a solution.
+2. **Phone input is untrusted data.** A lock arrives raw and is recomputed and gated on the iPad. A spot is a call and a number in metres, and it is applied by the iPad's `HolePlay`. The course hash is checked on join, and a phone's course never replaces the iPad's.
+3. **`Cleared` never crosses the wire.** It isn't `Codable` and its initializer is file-private. Keep it that way, with a test that `Cleared<Int>.self` is not `Decodable` and that no `GroupMessage` case contains one.
+4. **Firing data stays on the iPad.** No message carries a charge setting, elevation or aim. Phones see the mission summary (calls, add/drop and right/left in metres, score).
+5. **Confirmations happen on the iPad.** The downrange confirmation is a tap on the iPad by the shooter for their hole, with their name on the button. No message can confirm.
+6. **Spotters can never unlock a solution.** Phone message types are limited to `lock`, `spot`, `checkFire`, `hello` and `bye`. A committed spot moves fire control's aim, and the new aim goes back through `clearSolution`, including the 100 yd distance check, before it is shown. A spot changes *where* fire control aims, never *whether* a solution is shown.
+7. **Group holds only add.** The iPad shows firing data only when `clearSolution` succeeds **and** GroupKit's `GroupGate` has no holds. `GroupGate` turns allowed into blocked, never the reverse. Its holds are turn rules, not safety numbers, so they live in GroupKit.
+8. **Check fire.** Any phone or the iPad can raise check fire at any time. It blocks all firing data and revokes the hole's downrange confirmations. It lifts only when it is withdrawn on the iPad **and** each shooter confirms downrange again there. A phone dropping its link never lifts it.
+9. **Fail closed.** A protocol or course mismatch keeps a phone out. The iPad going away stops the round.
 
-   `GroupGate` can turn allowed into blocked, never blocked into allowed. Its holds are game and turn rules, not safety numbers, so they live in GroupKit, not SafetyKit. They are shown with SafetyKit's reasons, in the same readable style.
-7. **Check fire.** Any device can raise check fire with one button, at any time. It holds the line for everyone at once and clears every downrange confirmation for the current hole (this needs `DownrangeLog.revoke(hole:)`). It lifts only when the device that raised it or the hub withdraws it **and** each shooter confirms downrange again on their own phone. A dropped link never lifts it.
-8. **Fail closed.** No line grant, a stale grant (hub unreachable), a protocol version mismatch or a course mismatch all mean no new firing data. Practice rounds fire nothing real, so they skip the line, but they still show the same holds so players learn the flow.
-9. **No pass-through of launcher data.** Launcher profiles and per-round inspections aren't synced in group play's first version. Each firing device uses its own, as now.
-
-Tests for these rules live in GroupKit. One is a property test: random sequences of spotter and hub messages applied to a firing device never turn a blocked verdict into an allowed one.
+GroupKit includes a property test: random sequences of phone messages applied to a `SquadzHost` never turn a blocked verdict into an allowed one.
 
 ### The line: turns and holds
 
-The hub owns `LineState`: whose turn it is and a list of holds. A player holds the **line** while it is their turn; only that player's firing device may show new firing data.
-
-Holds that block everyone:
-
 | Hold | When |
 | --- | --- |
+| `notYourTurn` | Firing data is shown only for the player whose turn it is |
 | `walkingOut(player)` | Any player's `HolePlay` is `.ceased`: someone is downrange verifying |
 | `checkFire(by)` | Check fire is raised |
-| `hubLost` | The firing device hasn't heard from the hub within the grant's lease (a few seconds of heartbeat) |
-| `courseMismatch`, `protocolMismatch` | The device can't take part safely |
 
-**Turn order** is game logic in GroupKit. Hole 1 follows roster order. On later holes, the lowest score on the previous hole goes first (the honour), and ties keep the previous order. The hub can reorder before a hole starts. Each player plays the whole hole on their turn (every mission, cease fire, verify), and then the line passes on. On downrange holes, a player's next mission waits for their turn again, so the course clears between missions.
+**Turn order.** Hole 1 goes in roster order. On later holes, the lowest score on the previous hole goes first, and ties keep the previous order. The iPad can reorder before a hole. Each player plays their whole hole on their turn (every mission, cease fire and verify), then the turn passes. On downrange holes a player's next mission waits for their next turn, so the course clears between missions.
 
 ## The iPad interface
 
-The hub is the same app, launched on an iPad. `TARGETED_DEVICE_FAMILY` becomes `"1,2"`, and the Play tab gets a **Group** screen built for regular size classes. Phones keep today's layouts.
+Same app, `TARGETED_DEVICE_FAMILY "1,2"`. On an iPad the Play tab offers **Solo** and **Host a Squadz round**. Phones offer **Solo** and **Join a Squadz round**.
 
-### Layout: a three-column split
+### Layout
 
-`NavigationSplitView` in landscape, with **holes and players** in the sidebar, the **course map** in the content column, and the **scorecard or mission detail** on the right:
+`NavigationSplitView` in landscape: **players and holds** on the left, the **course map** in the middle, and **the shot** (or the scorecard) on the right.
 
 ```
-┌──────────────┬───────────────────────────────────┬────────────────────────┐
-│ Hole 3  par 6│            COURSE MAP             │ SCORECARD    1 2 3 4 … │
-│ ● Ana  ▶ line│    ⊙ flag   ring 1.5 m             │ Ana   5.2 4.6 ·        │
-│ ○ Ben   spot │      ╲    · · ticks per round     │ Ben   6.0 5.1 ·        │
-│ ○ Cy    next │       ╲  fan ±30°                  │ Cy    7.3 6.8 ·        │
-│              │        ▲ firing point 1            │────────────────────────│
-│ Holds        │                                   │ ANA · MISSION 1        │
-│  none        │  [walking out] banner when ceased │ 1 Over   −1.2  drop 3  │
-│              │                                   │ 2 Short  +0.4  add 1.5 │
-│ [CHECK FIRE] │                                   │ 3 RC     +0.1          │
-│ Join: K7Q-2MX│                                   │ spots: Ben ✓ Ana ✓     │
-└──────────────┴───────────────────────────────────┴────────────────────────┘
+┌──────────────┬──────────────────────────────┬─────────────────────────────┐
+│ Hole 3 par 6 │          COURSE MAP          │ ANA · MISSION 1             │
+│ ▶ Ana  firing│   ⊙ flag  ring 1.5 m          │ Range 62.4 m ± 0.7  ✓ flag  │
+│   Ben  spot  │     ╲  ticks per round        │ Initial data / correction   │
+│   Cy   next  │      ╲  fan ±30°              │   (iPad only)               │
+│              │       ▲ firing point 1        │ Round 2 awaiting spot       │
+│ Holds: none  │                              │  Ben (flank)  Over      [✓] │
+│              │                              │  Ana          Short −0.8 [✓]│
+│ Phones ●●○   │                              │ 1 Over  −1.2  drop 3.7      │
+│ [CHECK FIRE] │                              │ [Fired] [Lost] [Cease fire] │
+│ Code K7Q-2MX │                              │ [Scorecard]                 │
+└──────────────┴──────────────────────────────┴─────────────────────────────┘
 ```
 
-- **The sidebar** shows the current hole, the turn queue (who holds the line, who's spotting, who's next), any holds, the big **Check fire** button, and the join code with linked devices and their link health.
-- **The map** is a top-down drawing of the hole from the course file: boundary, hazards, firing points, flag and ring, and the ±30° safety fan from the active firing point. Each mission's aim points are drawn too. Real rounds have a measured left/right and only a *called* long/short, so they are drawn as ticks across the line at the measured lateral, not as dots, and the verified closest round is drawn as a dot. Practice rounds have true rest positions and are drawn as dots. One colour per player.
-- **The right column** switches between the scorecard grid (every player, every hole, total and to-par, built from the derived `Scorecard`s) and the selected player's mission log with each round's spot reports. It never shows a solution.
-- **Pass-and-play.** Selecting a player whose firing device is the hub opens today's `HoleMissionView`, full screen, as that player's turn. Everything there behaves exactly as on a phone, including the confirmations.
-- In portrait or Split View, the map collapses into a tab beside the scorecard.
+- **The left column** shows the hole, turn queue, holds, linked phones and their link health, the **Check fire** button and the join code. The downrange confirmation appears here at the start of each player's turn, with that player's name.
+- **The map** is drawn top-down from the course file: boundary, hazards, firing points, the flag and its ring, and the ±30° fan from the active firing point. It also shows each mission's aim points. Real rounds have a measured lateral but only a called long/short, so they are drawn as ticks across the line, and the verified closest round as a dot. Practice rounds have true positions and are drawn as dots. One colour per player.
+- **The right column** is today's `HoleMissionView` steps, laid out for the big screen: the range from the received lock, initial data and corrections, the spot reports with one-tap commit, and the Fired, Lost, Cease fire and Verify actions. **Scorecard** swaps in the grid for all players and holes.
+- In portrait or Split View the map moves to a tab.
 
-### The iPad camera as a spotting scope
+### The iPad camera as a rangefinder and spotting scope
 
-An iPad on a tripod at the flank makes a steady spotting scope with a big screen. It reuses `CrosshairSpotView` and the reticle code with a few changes:
+The iPad can range and spot by itself: for a phone-less player, or on a tripod at the flank as a steady, big-screen scope.
 
-- **Intrinsics come from the device.** RangingKit already works in sensor pixels from ARKit's per-frame intrinsics (dependency rule 6), so an iPad camera needs no new math. Field-check it like an iPhone, using [FIELD_TEST.md](FIELD_TEST.md)'s reticle protocol.
-- **Orientation.** The capture path assumes a phone held in portrait. An iPad scope is landscape, so the plumb line, the reticle overlay and the still-frame crop have to handle landscape-left and landscape-right. That is the main app-side work.
-- **Position.** Many iPads are Wi-Fi only and have **no GPS**, and an offline backyard gives no Wi-Fi location fix either. The scope finds its vantage another way: (a) range the pole from the tripod (`ReticleLock` gives range and compass bearing to a known flag, so the scope's position is the flag minus that offset), (b) tap its spot on the course map, or (c) copy a phone's fix by holding the phone next to it. Option (a) is the default, because it is relative to the flag, which is what the geometry needs.
-- **Steadiness.** A tripod makes the pinch-zoomed still more useful. Freeze on the splash, zoom, and put the crosshair on the round.
+- **Intrinsics.** RangingKit works in sensor pixels from ARKit's per-frame intrinsics (dependency rule 6), so the math carries over. Field-check the iPad with [FIELD_TEST.md](FIELD_TEST.md)'s reticle protocol.
+- **Orientation.** Capture assumes a phone in portrait. On the iPad, the plumb line, reticle overlay and still crop need landscape-left and landscape-right. That is the main app-side work.
+- **Position.** Many iPads are Wi-Fi only and have **no GPS**, and an offline backyard gives no Wi-Fi fix. Ranging *for a shot* needs the firing point's position for `clearRange`, so the iPad uses (a) the firing point's published position, when the shooter stands at it, or (b) a fix from the shooter's phone. As a flank scope, its vantage comes from a lock on the pole: range and bearing to a known flag.
 
 ### Spotting from a flank
 
-A spotter on or near the gun–target line spots exactly as the shooter does: they call long/short by eye and measure left/right with the crosshair. A spotter out at the flank sees *range* error as left/right in their own view, which is the reason to stand there. GroupKit turns that view into the same `Spot(call:lateral:)` that the game already uses, so scoring and fire control don't change:
+A spotter near the gun–target line spots as today: they call long/short by eye and measure left/right. A spotter out at the flank sees *range* error as left/right in their own view. The iPad turns that into the same `Spot(call:lateral:)`, so scoring and fire control are unchanged:
 
-- **Inputs.** The shooter's line (firing point and bearing, from their `Mission`), the spotter's vantage (from their own lock on the pole, checked with `checkFlag`), the spotter's crosshair angle from the pole to the round, and the shooter's measured lateral if they have one.
-- **Geometry** (pure math, in RangingKit next to `Spotting`). Intersect the spotter's ray to the round with the shooter's ray (or with the aim line, if the shooter measured no lateral). Taking the round's offset from the pole, the along-line component becomes the **call** and the across-line component becomes the **lateral**.
-- **The call stays a call.** Over or short beyond a range-correct band, and range correct inside it. The band is a game rule in RoundKit (start at 0.5 m, fire control's minimum step), not a safety number. The game keeps calling long/short rather than measuring it, and the flank only makes the call more reliable.
-- **Conditioning.** When the spotter's line and the shooter's line meet at less than about 20°, the intersection is unreliable, and the app takes only the spotter's eye call.
+- **Inputs:** the shooter's line (from the `Mission`), the spotter's vantage (a pole lock, checked with `checkFlag`), the spotter's crosshair angle from the pole to the round, and the shooter's measured lateral when there is one.
+- **Geometry** (pure math, in RangingKit next to `Spotting`): intersect the spotter's ray with the shooter's ray, or with the aim line. The round's offset from the pole splits into an along-line part, which becomes the **call**, and an across-line part, which becomes the **lateral**.
+- **The call stays a call.** Over or short beyond a range-correct band; range correct inside it. The band is a RoundKit game rule, starting at 0.5 m.
+- **Conditioning:** when the two lines meet at less than about 20°, the iPad uses only the spotter's eye call.
 
-Tests run on synthetic scenes, like `PoleSolver`'s.
+## The phone in Squadz mode
 
-## Phone changes
-
-- **Join.** Play → **Join group** browses for hubs, shows each group's name and players, and asks for the code (or scans the QR code). On joining, the phone checks the course and fetches it from the hub if needed.
-- **A group bar** on the round screens shows the turn and holds ("Ben's turn · you're spotting", "Hold: Cy is walking out"), link health, and a **Check fire** button.
-- **Spotter mode** opens when another player fires. It shows that shooter's line and the next round number, then opens `CrosshairSpotView` with Short / Over / Range correct, and sends the report.
-- **Shooter view.** Spot reports appear next to the shooter's own spot, with one tap to take one.
-- **Solo is unchanged.** Without a group, nothing above runs.
+- **Join.** **Join a Squadz round** browses for iPads, shows each group's name and players, and asks for the code (or scans the QR code). The phone picks its player or adds one, and gets the course from the iPad if needed.
+- **The group bar** shows the turn, holds, link health and **Check fire**.
+- **Range.** On your turn (or when asked), today's reticle screen with the dial, Freeze and Lock. Lock sends the lock to the iPad, and the result appears there.
+- **Spot.** When a round is in the air, `CrosshairSpotView` opens on every phone, with Short / Over / Range correct and the crosshair for left/right. It sends a report, and the phone shows whether the iPad applied it.
+- **Watch.** A read-only mission summary and the scorecard. No firing data.
+- **Solo is unchanged.** Leaving the group, or never joining, gives today's app.
 
 ## Prior work: Squadz
 
-[Squadz](https://github.com/zacharyelston/squadz) is an earlier project with the same shape: a group, a join code, a leader, members, and live positions on a shared map. It is a Rust (Axum) REST server with a Next.js and Leaflet web client, polling every 10 seconds over the internet.
+[Squadz](https://github.com/zacharyelston/squadz) is an earlier project with the same shape: a group, a join code, a leader, members, and live positions on a shared map. It is a Rust (Axum) REST server with a Next.js and Leaflet web client, polling over the internet. Group play takes its name and its model.
 
-**What carries over: the model and the lessons.**
-
-| Squadz | Group play |
+| Squadz | Squadz mode |
 | --- | --- |
-| Squad with a leader and a 6-character join code | `GroupRound` with the hub as leader; the same 6-character code, here also the TLS pre-shared key |
-| Member (ID, display name, joined at, is-leader) | `GroupPlayer` plus `DeviceID` |
-| `SquadSettings.require_approval` | The hub can approve each join (default on for a new group) |
-| Location TTL and stale flag | Link health and the line's lease: a stale firing device loses the line |
-| Session with expiry and last-seen | `GroupMembership` in `round-in-progress.json` and a heartbeat |
-| `SquadMap` (members on a map) | The hub's course map, with players' positions from their last lock |
+| Squad with a leader and a 6-character join code | `SquadzRound`, with the iPad as leader; the same 6-character code, here also the TLS pre-shared key |
+| Member (ID, display name, joined at, is-leader) | `GroupPlayer` with an optional phone `DeviceID` |
+| `SquadSettings.require_approval` | The iPad approves each join (default on) |
+| Location TTL and stale flag | Phone link health on the iPad |
+| Session with expiry and last-seen | Phone rejoin by device ID; heartbeat |
+| Server holds the state; clients post updates | The iPad holds the game; phones post locks and spots |
+| `SquadMap` (members on a map) | The iPad's course map, with players at their last lock |
 
-**What doesn't carry over: the code.** A Rust server and a web client can't run in an offline backyard on an iPad and phones without a server to reach, and a Swift-only codebase keeps one language and the `swift test` workflow. Squadz's request/response polling also gives way to a push of owner-held snapshots.
+**The code doesn't carry over.** The host has to run on an iPad in a backyard with no internet, and a Swift-only codebase keeps one language and the `swift test` workflow. The architecture does carry over: one server holding the state, and clients that post updates and get snapshots back. The iPad is that server, and push replaces polling.
 
-**Where it could come back.** A Squadz-style server fits milestone 8 (course server and registry) and optional online extras after a round: uploading finished scorecards, a leaderboard per course, or remote spectators. That layer would sit *outside* play and talk to the hub after the round, never in the firing path.
+**Where a Squadz server could come back:** milestone 8 (course server and registry), and online extras after a round, such as scorecard upload, course leaderboards and remote spectators. The iPad would talk to it after play, never in the firing path.
 
 ## Milestone plan
 
-Each step is small, tested and usable on its own. The steps are numbered G1–G7 so they don't collide with the main milestones. They need milestone 6 (built) and are independent of calibration (m5): until m5, real missions stop at initial data and practice mode exercises the whole flow.
+The steps are numbered G1–G7 to keep them apart from the main milestones. They need milestone 6 (built), and they don't depend on calibration (m5): until then, real missions stop at initial data and practice exercises everything.
 
 | Step | Builds | Done when |
 | --- | --- | --- |
-| **G1. The app on iPad** | `TARGETED_DEVICE_FAMILY "1,2"`, size-class-safe layouts for today's screens, and landscape handling in the reticle and capture path | Every current screen works on an iPad in both orientations; the reticle ranging field test passes on the iPad camera |
-| **G2. GroupKit core** | Module, `GroupMessage` and envelope, ownership and revisions, `GroupRound`, turn order, `LineState` and `GroupGate`, `LoopbackGroupTransport`; `Scorecard.playerID`; `DownrangeLog.revoke` | `swift test` plays a 3-player practice round over loopback, with drops and reconnects; the safety tests pass (no `Cleared` on the wire, spotter fuzz can't unlock, holds only add) |
-| **G3. Link and lobby** | `NetworkGroupTransport` (listener, browser, peer-to-peer, PSK from join code, framing), Info.plist Bonjour entry, the hub lobby (code, QR, roster, approve) and phone **Join group**; course check and transfer | An iPad and two phones link in a backyard with home Wi-Fi off; course mismatch is refused; a locked phone rejoins |
-| **G4. Shared round** | Phones send `HolePlay` snapshots; the hub's derived scorecards and turn queue; the line, its holds and the group bar; check fire | A 3-player practice round runs with one shooter at a time; `walkingOut` holds everyone; check fire stops everyone and needs re-confirmation |
-| **G5. Spotters** | Spotter mode, `SpotReport`, shooter accept/edit, auto-accept from the designated spotter, `HolePlay` event log and replay for amendments | A spotter's call drives fire control in practice; a late or wrong-round report is refused; an amendment replays correctly |
-| **G6. Hub screens** | The three-column split (map, scorecard, mission log), the map drawing, pass-and-play on the hub, ownership handoff | A group plays a full practice course with one pass-and-play player and a phone that hands off to the iPad mid-hole |
-| **G7. iPad scope and flank spotting** | Flank geometry in RangingKit (with synthetic tests), the scope's vantage from a pole lock, a tripod spotting flow | Field test: flank calls from the iPad match taped positions at least as often as calls from the firing point |
+| **G1. Solo on iPad** | `TARGETED_DEVICE_FAMILY "1,2"`, size-class-safe layouts, landscape reticle and capture, ranging without GPS (published firing point) | A solo practice round plays on the iPad in landscape; the reticle field test passes on the iPad camera |
+| **G2. GroupKit host** | `SquadzRound`, `SquadzHost` (turns, locks, spots, line, `GroupGate`, check fire), messages, `LoopbackGroupTransport`; `Scorecard.playerID`, `DownrangeLog.revoke`, `HolePlay` replay | `swift test` plays a 3-player practice round with simulated phones over loopback; the safety tests pass (no `Cleared` on the wire, phone-message fuzz can't unlock, holds only add) |
+| **G3. Squadz round on the iPad alone** | Host mode with pass-and-play: roster, turn order, the three-column layout, `SquadzStore` | A 3-player practice round runs on one iPad with no phones |
+| **G4. Link and lobby** | `NetworkGroupTransport` (listener, browser, peer-to-peer, pre-shared key from the code, framing), Bonjour Info.plist, host lobby (code, QR, approve) and phone **Join**; course transfer | Two phones join on home Wi-Fi and with the router off; a course mismatch is refused; a locked phone rejoins as the same player |
+| **G5. Phones as rangefinders** | `LockReport` from the phone's reticle screen; the iPad recomputes, gates and shows the range | A shooter's phone lock begins the mission on the iPad; a lock off the flag is refused, with reasons on the iPad |
+| **G6. Phones as spotters** | `awaitingSpot`, `SpotReport`, commit on the iPad, auto-accept from the designated spotter, amendments | The shooter's and a spotter's reports both reach the iPad; a wrong-round report is refused; a full practice course plays with phones spotting |
+| **G7. Flank spotting and the iPad scope** | Flank geometry in RangingKit with synthetic tests; a vantage from a pole lock; the tripod scope flow | Field test: flank calls match taped positions at least as often as calls from the firing point |
 
-G1 can start as soon as the iPad arrives. G2 needs no device at all.
+G1 can start when the iPad arrives. G2 needs no device. G3 is playable group golf before any networking.
 
 ## Open questions
 
-1. **Launcher profiles in a group.** A group often shares one launcher. Should a calibrated profile be shareable as data, with the pre-round inspection still done on each firing device? Decide after m5. Until then, nothing launcher-related is synced.
-2. **Phone-less hub players and confirmations.** On the shared iPad, the downrange confirmation is a tap by whoever is holding it. Is a per-player PIN or a name re-entry worth the friction?
-3. **More than one shooter at a time** on holes with separate, non-overlapping fans. The line model supports it (several grants, with a check that no two fans overlap), but the first version keeps one shooter.
-4. **Range-correct band** for flank calls: 0.5 m to start; tune it from G7's field data.
-5. **When to move to iOS 26 APIs** (`NetworkConnection`, and perhaps Wi-Fi Aware). The transport seam makes this a contained change.
+1. **A phone-less player's downrange tap** happens on the shared iPad by whoever holds it. Is a per-player PIN worth the friction?
+2. **Fired:** should "Fired" be tapped on the iPad only, or also from the shooter's phone? The current sketch allows both; the round only counts on the iPad.
+3. **Launcher profile.** After m5 the profile and per-round inspection live on the iPad, since it shows the firing data. Should a solo phone's calibrated profile transfer to the iPad, and how is it re-checked there?
+4. **The range-correct band** for flank calls: 0.5 m to start, tuned from G7's field data.
+5. **iOS 26 APIs** (`NetworkConnection`, perhaps Wi-Fi Aware): when the deployment target allows; the transport seam contains the change.
