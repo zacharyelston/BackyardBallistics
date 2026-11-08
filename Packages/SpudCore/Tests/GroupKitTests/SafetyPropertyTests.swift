@@ -42,6 +42,7 @@ final class SafetyPropertyTests: XCTestCase {
             .checkFire(CheckFire(by: "Ana")),
             .welcome(Welcome(member: MemberID(), squad: squad)),
             .observing(squad),
+            .course(testCourse()),
             .refused("no"),
             .squadStatus(SquadStatus(revision: 1, squad: squad, hole: 1, phase: .firing, walkingOut: false, missions: 1,
                                      rounds: [RoundSummary(number: 1, mission: 1, call: .short, lateral: 0.2, addDrop: 4,
@@ -57,7 +58,7 @@ final class SafetyPropertyTests: XCTestCase {
         ]
         for body in all {
             switch body {   // exhaustive on purpose
-            case .hello, .bye, .position, .lock, .spot, .fired, .checkFire, .welcome, .observing, .refused, .squadStatus,
+            case .hello, .bye, .position, .lock, .spot, .fired, .checkFire, .welcome, .observing, .course, .refused, .squadStatus,
                  .spotRequest, .lockReceipt, .joinMatch, .squadReport, .positions, .matchState: break
             }
         }

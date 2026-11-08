@@ -336,6 +336,7 @@ final class GroupKitTests: XCTestCase {
         f.send(theater, .hello(Hello(name: "Theater", device: UUID(), joinCode: "RED", role: .observer)))
         guard case let .observing(squad)? = watched.first else { return XCTFail("\(watched)") }
         XCTAssertEqual(squad.members.map(\.name), ["Ana"], "an observer isn't added to the roster")
+        XCTAssertTrue(watched.contains(.course(f.course)), "the observer gets the course for its site map")
         XCTAssertTrue(watched.contains { if case .positions = $0 { return true }; return false }, "known positions on joining")
 
         // Live positions and status reach it.

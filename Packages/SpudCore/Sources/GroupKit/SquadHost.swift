@@ -196,6 +196,7 @@ public struct SquadHost {
             observers.insert(peer)
             let known = positions.values.sorted { $0.time < $1.time }
             return [Outgoing(to: peer, .observing(round.squad)),
+                    Outgoing(to: peer, .course(round.course)),
                     Outgoing(to: peer, .squadStatus(status(now: now)))]
                 + (known.isEmpty ? [] : [Outgoing(to: peer, .positions(squad: squadID, known))])
         }
