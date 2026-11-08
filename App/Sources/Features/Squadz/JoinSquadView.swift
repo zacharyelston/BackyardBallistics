@@ -28,6 +28,8 @@ struct JoinSquadView: View {
             }
         }
         .navigationTitle("Join squad")
+        .onAppear { membership.showingJoinScreen = true }
+        .onDisappear { membership.showingJoinScreen = false }
         .sheet(isPresented: $scanning) {
             JoinCodeScanSheet { scanned in
                 code = scanned
@@ -146,12 +148,20 @@ struct JoinSquadView: View {
         if !membership.orders.isEmpty {
             Section {
                 ForEach(membership.orders.reversed()) { order in
-                    OrderCard(order: order).padding(.vertical, 4)
+                    VStack(alignment: .leading, spacing: 8) {
+                        OrderCard(order: order)
+                        if order.at != nil {
+                            NavigationLink { OrderDetailView(order: order) } label: {
+                                Label("Map and details", systemImage: "map").font(.footnote)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
                 }
             } header: {
                 Text("Orders")
             } footer: {
-                Text("From the squad leader. Done or Can't takes an order off your list.")
+                Text("From the squad leader. Each order opens the tool it needs; Done or Can't takes it off your list.")
             }
         }
         if let s = membership.status {

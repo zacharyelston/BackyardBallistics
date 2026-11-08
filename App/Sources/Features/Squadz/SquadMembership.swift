@@ -31,6 +31,11 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
     /// The round the commander asked members to spot (spotting over the link comes in G5).
     @Published private(set) var spotRequest: SpotRequest?
     @Published private(set) var lastFix: CLLocation?
+    /// Which way the phone points, degrees from true north (magnetic if true isn't available), for
+    /// the order pointer. Nil until the compass reports.
+    @Published private(set) var heading: Double?
+    /// Join squad is on screen (it lists the orders itself, so the banner stays out of the way).
+    @Published var showingJoinScreen = false
     @Published private(set) var lastSent: Date?
     /// Locks this phone sent to the commander, newest last, with what the commander did with each.
     @Published private(set) var sentLocks: [SentLock] = []
@@ -248,6 +253,13 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: o.id.uuidString, content: content, trigger: nil))
     }
 
+    /// Bearing (degrees from north) and distance (metres) from this phone's latest fix to an order's place.
+    func pointer(to order: Order) -> (bearing: Double, distance: Double)? {
+        guard let at = order.at, let fix = lastFix else { return nil }
+        let here = GeoPoint(latitude: fix.coordinate.latitude, longitude: fix.coordinate.longitude)
+        return (Geo.bearing(from: here, to: at), Geo.distance(here, at))
+    }
+
     /// Distance and compass direction from this phone's latest fix to an order's place, if both are known.
     func directions(to order: Order) -> String? {
         guard let at = order.at, let fix = lastFix else { return nil }
@@ -289,6 +301,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         location.allowsBackgroundLocationUpdates = true
         location.showsBackgroundLocationIndicator = true
         location.startUpdatingLocation()
+        if CLLocationManager.headingAvailable() { location.startUpdatingHeading() }
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: Self.positionInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.sendPosition() }
@@ -299,6 +312,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         timer?.invalidate()
         timer = nil
         location.stopUpdatingLocation()
+        location.stopUpdatingHeading()
         location.allowsBackgroundLocationUpdates = false
     }
 
@@ -310,6 +324,11 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
                                heading: fix.course >= 0 ? fix.course : nil, time: fix.timestamp)
         c.send(.position(p))
         lastSent = Date()
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        let h = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+        Task { @MainActor in self.heading = h }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

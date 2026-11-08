@@ -21,6 +21,8 @@ struct SiteMapSquad: Identifiable {
     var rays: [SiteMapRay] = []
     /// Orders with a place on the field, drawn as pins with the kind's icon.
     var orders: [Order] = []
+    /// Pointers: from a member to the place an unfinished order sends them, dashed.
+    var pointers: [SiteMapRay] = []
 }
 
 extension Order.Kind {
@@ -108,6 +110,10 @@ struct SiteMap: View {
                 ForEach(Array(squad.rays.enumerated()), id: \.offset) { _, ray in
                     MapPolyline(coordinates: [ray.from.coordinate, ray.to.coordinate])
                         .stroke(color.opacity(0.9), lineWidth: 1)
+                }
+                ForEach(Array(squad.pointers.enumerated()), id: \.offset) { _, ray in
+                    MapPolyline(coordinates: [ray.from.coordinate, ray.to.coordinate])
+                        .stroke(.yellow, style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
                 }
                 ForEach(squad.members) { m in
                     if let p = squad.positions[m.id] {

@@ -134,11 +134,20 @@ struct SquadLobbyView: View {
                                           rays: host.locks.filter { $0.status == .used }.map {
                                               SiteMapRay(from: $0.report.lock.location, to: $0.report.lock.polePosition)
                                           },
-                                          orders: Array(host.orders.suffix(20)))],
+                                          orders: Array(host.orders.suffix(20)),
+                                          pointers: command.orderPointers)],
                     selected: command.orderTargets,
                     draftPlace: command.orderPlace,
-                    onTapPlace: command.placingOrder ? { p in command.orderPlace = p; command.placingOrder = false } : nil,
-                    onTapMember: { command.toggleTarget($0) })
+                    onTapPlace: command.placingOrder ? { command.setPlace($0) } : nil,
+                    onTapMember: command.placingOrder ? nil : { command.toggleTarget($0) })
+                .overlay(alignment: .top) {
+                    if command.placingOrder, let kind = command.orderKind {
+                        Label("Tap where: \(kind.title)", systemImage: "hand.tap.fill")
+                            .font(.headline).padding(.horizontal, 14).padding(.vertical, 8)
+                            .background(.orange, in: Capsule()).foregroundStyle(.white)
+                            .padding(.top, 12)
+                    }
+                }
         }
     }
 
@@ -213,7 +222,10 @@ struct SquadLobbyView: View {
     private func row(_ line: SquadCommand.RosterLine, now: Date) -> some View {
         HStack(spacing: 12) {
             Image(systemName: command.orderTargets.contains(line.id) ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
                 .foregroundStyle(command.orderTargets.contains(line.id) ? Color.accentColor : .secondary)
+                .frame(width: 36, height: 36)
+                .contentShape(Rectangle())
                 .onTapGesture { command.toggleTarget(line.id) }
                 .accessibilityLabel(command.orderTargets.contains(line.id) ? "Picked for the next order" : "Pick for the next order")
             Circle().fill(line.online ? Color.green : Color.gray.opacity(0.5)).frame(width: 10, height: 10)
@@ -265,6 +277,10 @@ struct SquadLobbyView: View {
                     Text("Holds").font(.subheadline.weight(.semibold)).padding(.top, 4)
                     ForEach(s.holds, id: \.self) { h in
                         Label(h.description, systemImage: "hand.raised.fill").font(.footnote).foregroundStyle(.orange)
+                    }
+                    if s.holds.contains(.noMatch) {
+                        Text("A squad on its own has no match host, so firing data stays held. That's expected in practice; holds never stop orders, locks or the map.")
+                            .font(.caption).foregroundStyle(.secondary)
                     }
                 }
             }
