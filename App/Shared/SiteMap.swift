@@ -15,6 +15,9 @@ struct SiteMapSquad: Identifiable {
     var positions: [MemberID: MemberPosition]
     /// The hole in play, highlighted (its fan drawn strong). Nil between holes.
     var activeHole: Int?
+    /// On a hole with layups, the leg in play (0 = firing point to the first target; `Hole.targets`
+    /// index of what it aims at). Nil means the flag leg.
+    var activeLeg: Int? = nil
     /// Cease fire: people are walking out, so no fan is live.
     var walkingOut: Bool
     /// Lines of sight of locks the commander used: from where the member stood to the ranged pole.
@@ -88,15 +91,26 @@ struct SiteMap: View {
                     .foregroundStyle(.clear)
                     .stroke(.white.opacity(0.9), lineWidth: 2)
                 ForEach(course.holes) { hole in
-                    let active = activeHoles.contains(HoleKey(course: course.id, hole: hole.number))
-                    ForEach(Array(hole.firingPoints.enumerated()), id: \.offset) { i, fp in
-                        MapPolygon(coordinates: Self.fan(from: fp, to: hole.flag.position))
+                    let targets = hole.targets
+                    let activeLeg = activeLegs[HoleKey(course: course.id, hole: hole.number)]
+                    // Each leg's fan: firing points toward the first target (leg 0), then each layup
+                    // toward the next. The leg in play on the active hole is drawn strong.
+                    ForEach(Array(Self.legs(of: hole).enumerated()), id: \.offset) { _, leg in
+                        let active = activeLeg.map { min($0, targets.count - 1) == leg.index } ?? false
+                        MapPolygon(coordinates: Self.fan(from: leg.from, to: leg.to))
                             .foregroundStyle(.red.opacity(active ? 0.22 : 0.06))
                             .stroke(.red.opacity(active ? 0.8 : 0.25), lineWidth: active ? 1.5 : 0.5)
-                        MapPolyline(coordinates: [fp.coordinate, hole.flag.position.coordinate])
-                            .stroke(.white.opacity(0.6), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                        MapPolyline(coordinates: [leg.from.coordinate, leg.to.coordinate])
+                            .stroke(.white.opacity(active ? 0.9 : 0.6), style: StrokeStyle(lineWidth: active ? 1.5 : 1, dash: [4, 4]))
+                    }
+                    ForEach(Array(hole.firingPoints.enumerated()), id: \.offset) { i, fp in
                         Annotation("\(hole.number)·\(i + 1)", coordinate: fp.coordinate, anchor: .center) {
                             Image(systemName: "triangle.fill").font(.caption2).foregroundStyle(.white)
+                        }
+                    }
+                    ForEach(Array(hole.layups.enumerated()), id: \.offset) { k, layup in
+                        Annotation("Layup \(k + 1)", coordinate: layup.position.coordinate, anchor: .bottom) {
+                            Self.markerPole(active: activeLeg.map { min($0, targets.count - 1) == k } ?? false)
                         }
                     }
                     MapCircle(center: hole.flag.position.coordinate, radius: hole.flag.inRadiusM)
@@ -186,11 +200,36 @@ struct SiteMap: View {
         return squads.compactMap(\.course).filter { seen.insert($0.id).inserted }
     }
 
-    private var activeHoles: Set<HoleKey> {
-        Set(squads.compactMap { s in
-            guard let c = s.course, let h = s.activeHole, !s.walkingOut else { return nil }
-            return HoleKey(course: c.id, hole: h)
-        })
+    /// The active hole of each squad, with the leg in play (the flag leg when the squad doesn't say).
+    private var activeLegs: [HoleKey: Int] {
+        var out: [HoleKey: Int] = [:]
+        for s in squads {
+            guard let c = s.course, let h = s.activeHole, !s.walkingOut,
+                  let hole = c.holes.first(where: { $0.number == h }) else { continue }
+            out[HoleKey(course: c.id, hole: h)] = s.activeLeg ?? (hole.targets.count - 1)
+        }
+        return out
+    }
+
+    /// One leg of a hole: from a firing point or layup to the target it aims at (`Hole.targets` index).
+    struct Leg { var index: Int; var from: GeoPoint; var to: GeoPoint }
+
+    /// Every firing point to the first target, then each layup to the next target.
+    static func legs(of hole: Hole) -> [Leg] {
+        let t = hole.targets
+        return hole.firingPoints.map { Leg(index: 0, from: $0, to: t[0].position) }
+            + hole.layups.enumerated().map { k, l in Leg(index: k + 1, from: l.position, to: t[k + 1].position) }
+    }
+
+    /// A layup's marker pole: a striped stick on a base, brighter when it's the leg's target.
+    static func markerPole(active: Bool) -> some View {
+        VStack(spacing: 0) {
+            Capsule().fill(active ? Color.yellow : .orange)
+                .frame(width: 5, height: 24)
+                .overlay(Capsule().stroke(.white, lineWidth: 1))
+            Circle().fill(.white).frame(width: 5, height: 5)
+        }
+        .shadow(radius: 2)
     }
 
     /// Frames the course and every member with a position. On its own only once per course;

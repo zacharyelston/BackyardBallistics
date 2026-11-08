@@ -3,6 +3,7 @@ import CoreLocation
 import CoreGeo
 import CourseKit
 import GroupKit
+import SafetyKit
 
 /// A survey in progress: one hole's pole, its firing point and the boundary corners, kept between
 /// launches so the walk around the property can be paused.
@@ -24,10 +25,57 @@ struct CourseSurvey: Codable, Equatable {
     var flag: Fix?
     var firingPoint: Fix?
     var boundary: [Fix] = []
+    /// Optional so drafts saved before layups existed still decode; use `layups`.
+    var layupPoints: [LayupPoint]?
+
+    /// A marker pole partway down a long hole, with its height.
+    struct LayupPoint: Codable, Equatable {
+        var fix: Fix
+        var poleHeightM: Double
+    }
+
+    /// In playing order: firing point → layup 1 → … → flag.
+    var layups: [LayupPoint] {
+        get { layupPoints ?? [] }
+        set { layupPoints = newValue.isEmpty ? nil : newValue }
+    }
+
+    /// Adds a layup where it fits the path best (the least detour), so they stay in playing order
+    /// whichever order they were walked in. Appended if the firing point or flag isn't recorded yet.
+    mutating func insertLayup(_ point: LayupPoint) {
+        guard let firingPoint, let flag else { layups.append(point); return }
+        let path = [firingPoint.point] + layups.map(\.fix.point) + [flag.point]
+        let p = point.fix.point
+        let best = (0..<(path.count - 1)).min { a, b in
+            func detour(_ k: Int) -> Double { Geo.distance(path[k], p) + Geo.distance(p, path[k + 1]) - Geo.distance(path[k], path[k + 1]) }
+            return detour(a) < detour(b)
+        } ?? layups.count
+        layups.insert(point, at: best)
+    }
+
+    /// Each leg: from the firing point or a layup to the next target, with its ground distance.
+    struct Leg: Equatable {
+        var from: String
+        var to: String
+        var distance: Double
+        var start: GeoPoint
+        var end: GeoPoint
+    }
+
+    var legs: [Leg] {
+        guard let firingPoint, let flag else { return [] }
+        let stops = [("the firing point", firingPoint.point)]
+            + layups.enumerated().map { ("layup \($0.offset + 1)", $0.element.fix.point) }
+            + [("the flag", flag.point)]
+        return zip(stops, stops.dropFirst()).map { a, b in
+            Leg(from: a.0, to: b.0, distance: Geo.distance(a.1, b.1), start: a.1, end: b.1)
+        }
+    }
 
     var course: Course? {
         guard let flag, let firingPoint else { return nil }
         let hole = Hole(number: 1, name: holeName, par: par, firingPoints: [firingPoint.point],
+                        layups: layups.map { Layup(position: $0.fix.point, poleHeightM: $0.poleHeightM) },
                         flag: Flag(position: flag.point, poleHeightM: poleHeightM, leanDeg: leanDeg, inRadiusM: inRadiusM))
         return Course(format: 1, id: CourseWriter.clean(name), name: name, version: version,
                       boundary: GeoPolygon(boundary.map(\.point)), holes: [hole])
@@ -159,14 +207,16 @@ struct CourseSurveyView: View {
             Section {
                 pointRow("Pole base", systemImage: "flag", fix: survey.flag, id: "flag") { survey.flag = $0 }
                 pointRow("Firing point", systemImage: "scope", fix: survey.firingPoint, id: "fp") { survey.firingPoint = $0 }
-                if let f = survey.flag, let p = survey.firingPoint {
-                    LabeledContent("Firing distance", value: String(format: "%.1f m", Geo.distance(p.point, f.point)))
+                if survey.layups.isEmpty, let leg = survey.legs.first {
+                    LabeledContent("Firing distance", value: String(format: "%.1f m", leg.distance))
                 }
             } header: {
                 Text("Hole 1")
             } footer: {
                 Text("Stand on the spot and tap Record. Each point averages GPS for \(Int(SurveySampler.seconds)) seconds; keep still.")
             }
+
+            layupSection
 
             Section {
                 ForEach(Array(survey.boundary.enumerated()), id: \.offset) { i, fix in
@@ -294,8 +344,14 @@ struct CourseSurveyView: View {
                 Label("Passes every check", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
             } else {
                 if isPracticeOnly {
-                    Label("Practice only: everything passes except the safety fan or a firing point past 100 yd, so real rounds stay off. Practice and demos work. To play for real, record the firing point within 91 m of the pole.",
+                    Label("Practice only: everything passes except the safety fan or a shot past 100 yd, so real rounds stay off. Practice and demos work. To play for real, keep every leg within 91 m: move the firing point closer, or add layup points.",
                           systemImage: "gamecontroller").foregroundStyle(.orange).font(.footnote)
+                }
+                ForEach(layupHints, id: \.self) { hint in
+                    Label(hint, systemImage: "mappin.and.ellipse")
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(.blue)
+                        .padding(.vertical, 4)
                 }
                 ForEach(problems, id: \.self) { p in
                     Label(p.message, systemImage: p.severity == .error ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
@@ -305,6 +361,76 @@ struct CourseSurveyView: View {
             }
         } header: {
             Text("Check")
+        }
+    }
+
+    // MARK: Layups
+
+    @ViewBuilder private var layupSection: some View {
+        Section {
+            ForEach(Array(survey.layups.enumerated()), id: \.offset) { i, layup in
+                HStack {
+                    Label("Layup \(i + 1)", systemImage: "mappin.and.ellipse")
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Menu {
+                            ForEach(Self.poleHeights, id: \.m) { h in
+                                Button(h.title) { survey.layups[i].poleHeightM = h.m }
+                            }
+                        } label: {
+                            Text(Self.poleTitle(layup.poleHeightM)).font(.footnote)
+                        }
+                        Text(describe(layup.fix)).font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .onDelete { survey.layups.remove(atOffsets: $0) }
+            Button {
+                let height = survey.poleHeightM
+                record("layup") { if let f = $0 { survey.insertLayup(.init(fix: f, poleHeightM: height)) } }
+            } label: {
+                Label(recording == "layup" ? "Recording…" : "Add a layup point here", systemImage: "plus.circle")
+            }
+            .disabled(recording != nil)
+            if survey.legs.count > 1 {
+                ForEach(Array(survey.legs.enumerated()), id: \.offset) { i, leg in
+                    LabeledContent("Leg \(i + 1): \(leg.from) → \(leg.to)") {
+                        Text(String(format: "%.1f m", leg.distance))
+                            .foregroundStyle(leg.distance > Safety.limits.maxSolutionRange ? .red : .secondary)
+                    }
+                    .font(.footnote)
+                }
+            }
+        } header: {
+            Text("Layup points")
+        } footer: {
+            Text("For a hole longer than one shot (91 m, 100 yd): stand a marker pole partway and record its base. Each leg is one shot. Layups go in playing order by where they are, whichever order you walk them. Swipe to delete.")
+        }
+    }
+
+    private static let poleHeights: [(title: String, m: Double)] = [
+        ("8 ft (2.438 m)", 2.438), ("10 ft (3.048 m)", 3.048), ("12 ft (3.658 m)", 3.658),
+    ]
+
+    private static func poleTitle(_ m: Double) -> String {
+        poleHeights.first { abs($0.m - m) < 0.001 }?.title ?? String(format: "%.3f m pole", m)
+    }
+
+    /// For each leg past one shot: where to put layup points to fix it, and how far.
+    private var layupHints: [String] {
+        let limit = Safety.limits.maxSolutionRange
+        return survey.legs.compactMap { leg in
+            guard leg.distance > limit else { return nil }
+            let extra = Int((leg.distance / limit).rounded(.up)) - 1
+            let step = leg.distance / Double(extra + 1)
+            let over = String(format: "From %@ to %@ is %.0f m, past the %.0f m (100 yd) one shot can go.",
+                              leg.from, leg.to, leg.distance, limit)
+            if extra == 1 {
+                return over + String(format: " Walk about %.0f m from %@ toward %@ (about halfway), stand a marker pole there and tap Add a layup point here.",
+                                     step, leg.from, leg.to)
+            }
+            return over + String(format: " Add %d layup points about %.0f m apart: the first about %.0f m from %@ toward %@.",
+                                 extra, step, step, leg.from, leg.to)
         }
     }
 
