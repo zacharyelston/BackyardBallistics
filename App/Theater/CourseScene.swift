@@ -31,6 +31,9 @@ struct FieldSceneContent {
     var exaggeration: Double
     /// Holes in play (their fans drawn strong).
     var activeHoles: Set<Int>
+    /// On active holes with layups, the leg in play (`Hole.targets` index it aims at). A hole not
+    /// listed is on its flag leg.
+    var activeLegs: [Int: Int] = [:]
 }
 
 enum CourseScene {
@@ -164,33 +167,55 @@ enum CourseScene {
             let active = c.activeHoles.contains(hole.number)
             let flag = en(hole.flag.position, grid)
 
-            // Safety fans first (lowest), one per firing point.
-            for (i, fp) in hole.firingPoints.enumerated() {
-                let apex = en(fp, grid)
+            let targets = hole.targets
+            let activeLeg = min(c.activeLegs[hole.number] ?? targets.count - 1, targets.count - 1)
+
+            // Each leg: every firing point toward the first target (leg 0), then each layup toward
+            // the next target. Safety fans first (lowest), one per leg; the leg in play drawn strong.
+            let legs: [(index: Int, from: GeoPoint, to: GeoPoint)] =
+                hole.firingPoints.map { (index: 0, from: $0, to: targets[0].position) }
+                + hole.layups.enumerated().map { (k, l) in (index: k + 1, from: l.position, to: targets[k + 1].position) }
+            for leg in legs {
+                let apex = en(leg.from, grid), aim = en(leg.to, grid)
+                let strong = active && leg.index == activeLeg
                 // Vertices about one grid spacing apart, so the wedge follows the ground as closely as
                 // the terrain does; lifted a little more with exaggeration, which sharpens the bumps.
                 let angleStep = max(0.75, grid.spacing / limits.fanRange * 180 / .pi)
-                let w = Drape.wedge(apex: apex, toward: flag, halfAngle: limits.fanHalfAngle, range: limits.fanRange,
+                let w = Drape.wedge(apex: apex, toward: aim, halfAngle: limits.fanHalfAngle, range: limits.fanRange,
                                     radialStep: grid.spacing, angleStep: angleStep)
                 let fan = area(w.points, indices: w.indices, grid: grid, above: 0.1 * k + Double(hole.number) * 0.01, k: k,
-                               color: NSColor.systemRed.withAlphaComponent(active ? 0.32 : 0.07))
-                fan.renderingOrder = active ? 2 : 1
+                               color: NSColor.systemRed.withAlphaComponent(strong ? 0.32 : 0.07))
+                fan.renderingOrder = strong ? 2 : 1
                 root.addChildNode(fan)
-                if active {
+                if strong {
                     // Its outline: the two edges and the arc (the wedge's outer ring).
                     let spokes = max(1, Int((2 * limits.fanHalfAngle / angleStep).rounded(.up)))
                     let arc = Array(w.points.suffix(spokes + 1))
                     root.addChildNode(ribbon(Drape.line([apex] + arc + [apex], on: grid, step: 1), width: 0.3,
                                              above: 0.25 * k, k: k, color: .systemRed))
                 }
-                // Firing point: a white pyramid, with a line to the flag.
+                // The leg's line, start to target.
+                root.addChildNode(ribbon(Drape.line([apex, aim], on: grid, step: 1), width: strong ? 0.12 : 0.08,
+                                         above: lift * 1.2, k: k,
+                                         color: NSColor.white.withAlphaComponent(strong ? 0.85 : 0.6)))
+            }
+
+            // Firing points: white pyramids.
+            for (i, fp) in hole.firingPoints.enumerated() {
+                let apex = en(fp, grid)
                 let marker = SCNNode(geometry: SCNPyramid(width: 0.8, height: 0.9, length: 0.8))
                 marker.geometry?.firstMaterial = solid(.white)
                 marker.position = ground(apex, grid: grid, k: k)
                 root.addChildNode(marker)
                 root.addChildNode(label("\(hole.number)·\(i + 1)", at: ground(apex, grid: grid, k: k, above: 1.8), size: 1.4))
-                root.addChildNode(ribbon(Drape.line([apex, flag], on: grid, step: 1), width: 0.08, above: lift * 1.2, k: k,
-                                         color: NSColor.white.withAlphaComponent(0.6)))
+            }
+
+            // Layup marker poles: their real height, striped orange and white, no ring.
+            for (k2, layup) in hole.layups.enumerated() {
+                let p = en(layup.position, grid)
+                root.addChildNode(markerPole(height: layup.poleHeightM, at: ground(p, grid: grid, k: k),
+                                             highlighted: active && activeLeg == k2))
+                root.addChildNode(label("Layup \(k2 + 1)", at: ground(p, grid: grid, k: k, above: layup.poleHeightM + 0.8), size: 1.6))
             }
 
             // The in-radius ring.
@@ -213,6 +238,23 @@ enum CourseScene {
             root.addChildNode(label("Hole \(hole.number)", at: ground(flag, grid: grid, k: k, above: h + 0.8), size: 2))
         }
         return root
+    }
+
+    /// A layup's marker pole: alternating orange and white bands about 0.5 m long, yellow tip when
+    /// it's the leg's target.
+    static func markerPole(height h: Double, at position: SCNVector3, highlighted: Bool) -> SCNNode {
+        let pole = SCNNode()
+        pole.position = position
+        let bands = max(2, Int((h / 0.5).rounded()))
+        let bandH = h / Double(bands)
+        for b in 0..<bands {
+            let seg = SCNNode(geometry: SCNCylinder(radius: 0.045, height: CGFloat(bandH)))
+            let top = b == bands - 1
+            seg.geometry?.firstMaterial = solid(top && highlighted ? .systemYellow : (b % 2 == 0 ? .systemOrange : .white))
+            seg.position = SCNVector3(0, CGFloat(bandH * (Double(b) + 0.5)), 0)
+            pole.addChildNode(seg)
+        }
+        return pole
     }
 
     // MARK: Members
