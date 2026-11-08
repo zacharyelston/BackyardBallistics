@@ -34,7 +34,11 @@
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>SpudGunGolf finds and joins your squad's iPad on the local Wi-Fi, and downloads the course file from the course server.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>SpudGunGolf uses your location to find the hole and check that a range lands on a course flag.</string>
+	<string>SpudGunGolf uses your location to find the hole, check that a range lands on a course flag, and show your squad where you are while you're in one.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIRequiredDeviceCapabilities</key>
