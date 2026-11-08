@@ -48,6 +48,7 @@ struct PlayView: View {
                     Text("Ranging works now from the Tools tab. Course loading and scoring come in milestones 3 and 6.")
                 }
                 Section {
+                    NavigationLink { CourseView() } label: { Label("Course", systemImage: "map") }
                     NavigationLink { ReticleRangingView() } label: {
                         Label("Range a pole now", systemImage: "scope")
                     }

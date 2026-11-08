@@ -18,6 +18,8 @@ targets:
     platform: iOS
     sources:
       - App/Sources
+      - path: courses/sample-course.yaml
+        buildPhase: resources
     dependencies:
       - package: SpudCore
         product: CoreGeo
@@ -25,6 +27,8 @@ targets:
         product: SafetyKit
       - package: SpudCore
         product: RangingKit
+      - package: SpudCore
+        product: CourseKit
     info:
       path: App/Resources/Info.plist
       properties:
@@ -34,6 +38,9 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSCameraUsageDescription: SpudGunGolf uses the camera to measure flag poles and range the hole.
         NSLocationWhenInUseUsageDescription: SpudGunGolf uses your location to find the hole and check that a range lands on a course flag.
+        NSLocalNetworkUsageDescription: SpudGunGolf downloads the course file from the course server on the local Wi-Fi.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     configFiles:
       Debug: Config/Signing.xcconfig
       Release: Config/Signing.xcconfig
