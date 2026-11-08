@@ -89,9 +89,9 @@ scripts/typecheck-ios.sh
 1. **Flag kit guide and setup flow** — built: lean check, pole height and the sighting field-test tool. Field results pending.
 2. **Ranging** — built: reticle (stadia) ranging as the main method: crosshair on the pole's base, a CoreMotion-plumb line sized by the range dial, and a lock that records range, bearing, angle below level and GPS, then runs the 10 m flag check. The multi-photo AR solve (triangulation, outlier drop, height difference) stays as an optional cross-check. The spotting model (called long/short, measured left/right, bracketing) is in RangingKit. Device tuning pending.
 3. **Course file and validator** — built: `CourseKit` reads and validates course files (every SafetyKit course check, with readable problems and line numbers), and the Play tab's **Course** screen loads the bundled sample, the course server or a typed address, and keeps the last good course for offline play.
-4. Fire control in Swift
-5. Calibration shots
-6. Missions and scorecard
+4. **Fire control in Swift** — built: `BallisticsKit` (flight with drag and wind shear, roll-out, the low/lob solver, dispersion), matched to the browser prototype by parity tests.
+5. Calibration shots. Until then real fire missions stop at initial data: SafetyKit holds every solution without a calibrated, conforming launcher.
+6. **Missions and scorecard** — built: `RoundKit` plays each hole as fire missions (confirm downrange, range, initial data, fire and spot, bracketing corrections, cease fire with Resume, verify, downrange next mission) and keeps the scorecard. **Practice** plays the whole flow with simulated rounds on the loaded course. Multi-player turns are still to come.
 7. Sight mode
 8. Course server and registry
 

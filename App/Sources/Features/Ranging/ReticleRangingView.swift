@@ -12,7 +12,18 @@ import SafetyKit
 ///
 /// The dial sets the line's length in sensor pixels (`ReticleRange`), which is then drawn in screen
 /// points. Pinch zoom enlarges the feed and the line together, so it never changes the range.
+/// Ranging inside a fire mission: the hole's pole height and flag, and a button that hands the lock back.
+struct MissionRangingContext {
+    var title: String
+    var poleHeight: Double
+    var flag: GeoPoint
+    var onUse: (ReticleLock) -> Void
+}
+
 struct ReticleRangingView: View {
+    /// Set when a fire mission opens the ranging; nil for the Tools field test.
+    var mission: MissionRangingContext? = nil
+
     @StateObject private var session = RangingSession.make()
     @StateObject private var motion = MotionReader()
     @EnvironmentObject private var reticleLog: ReticleLogStore
@@ -44,8 +55,12 @@ struct ReticleRangingView: View {
     private static let polePresets: [(label: String, feet: Double)] = [("8 ft", 8), ("10 ft", 10), ("12 ft", 12)]
 
     private var flagPoint: GeoPoint? {
-        flagLat == 0 && flagLon == 0 ? nil : GeoPoint(latitude: flagLat, longitude: flagLon)
+        if let mission { return mission.flag }
+        return flagLat == 0 && flagLon == 0 ? nil : GeoPoint(latitude: flagLat, longitude: flagLon)
     }
+
+    /// The hole's pole in a mission; the Tools setting otherwise.
+    private var activePoleHeight: Double { mission?.poleHeight ?? poleHeight }
 
     /// CoreMotion on a phone; the capture source's own aim in the Simulator.
     private var angleBelowLevel: Double? {
@@ -61,7 +76,7 @@ struct ReticleRangingView: View {
         if let lock { return lock.reticle }
         guard let k = activeIntrinsics else { return nil }
         // In portrait the screen's vertical runs along the buffer's x axis, so the line uses fx.
-        return ReticleRange(focalPixels: k.fx, poleHeight: poleHeight,
+        return ReticleRange(focalPixels: k.fx, poleHeight: activePoleHeight,
                             angleBelowLevel: still != nil ? stillAngleBelow : (angleBelowLevel ?? 0))
     }
 
@@ -74,10 +89,11 @@ struct ReticleRangingView: View {
                 dialSection
                 if let lock { resultSection(lock) }
                 flagSection
-                if lock != nil { logSection }
+                if let mission, let lock { useSection(mission, lock) }
+                if lock != nil && mission == nil { logSection }
             }
         }
-        .navigationTitle("Range the pole")
+        .navigationTitle(mission?.title ?? "Range the pole")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar) // the floating tab bar would cover the dial
         .onAppear {
@@ -212,9 +228,9 @@ struct ReticleRangingView: View {
                         Button(p.label) { poleHeight = p.feet * 0.3048 }
                     }
                 } label: {
-                    Text("\(Units.feetInches(poleHeight)) (\(String(format: "%.3f m", poleHeight)))").monospacedDigit()
+                    Text("\(Units.feetInches(activePoleHeight)) (\(String(format: "%.3f m", activePoleHeight)))").monospacedDigit()
                 }
-                .disabled(lock != nil)
+                .disabled(lock != nil || mission != nil)
             }
             if lock == nil {
                 if still == nil {
@@ -266,7 +282,7 @@ struct ReticleRangingView: View {
             stillAim = aim
             // Zoom about the middle of the line at the dial's current range.
             let k = frame.intrinsics
-            let r = ReticleRange(focalPixels: k.fx, poleHeight: poleHeight, angleBelowLevel: below)
+            let r = ReticleRange(focalPixels: k.fx, poleHeight: activePoleHeight, angleBelowLevel: below)
             let viewH = 380.0, viewW = UIScreen.main.bounds.width
             let perPixel = max(viewW / Double(k.height), viewH / Double(k.width))
             let half = r.linePixels(range: dialRange) * perPixel / 2
@@ -290,7 +306,7 @@ struct ReticleRangingView: View {
         guard let aim = stillAim ?? session.source.liveAim() else { lockProblem = "No compass bearing yet. Wait for tracking, then lock again."; return }
         guard let location = session.currentLocation else { lockProblem = "Waiting for GPS. Lock again once it has a fix."; return }
         let below = still != nil ? stillAngleBelow : (angleBelowLevel ?? aim.angleBelowLevel)
-        let l = ReticleLock(reticle: ReticleRange(focalPixels: k.fx, poleHeight: poleHeight, angleBelowLevel: below),
+        let l = ReticleLock(reticle: ReticleRange(focalPixels: k.fx, poleHeight: activePoleHeight, angleBelowLevel: below),
                             range: dialRange, bearing: aim.bearing, cameraHeight: cameraHeight,
                             location: location, horizontalAccuracy: session.horizontalAccuracy,
                             imageWidth: k.width, imageHeight: k.height)
@@ -348,11 +364,13 @@ struct ReticleRangingView: View {
             } else {
                 Text("Lock to run the flag check.").font(.footnote).foregroundStyle(.secondary)
             }
-            Button("Save my GPS position as the flag point") {
-                if let c = session.currentLocation { flagLat = c.latitude; flagLon = c.longitude }
+            if mission == nil {
+                Button("Save my GPS position as the flag point") {
+                    if let c = session.currentLocation { flagLat = c.latitude; flagLon = c.longitude }
+                }
+                .disabled(session.currentLocation == nil || lock != nil)
             }
-            .disabled(session.currentLocation == nil || lock != nil)
-            if let sim = session.source as? SimulatedRangingSource {
+            if mission == nil, let sim = session.source as? SimulatedRangingSource {
                 Button("Use the simulated scene's flag point") {
                     flagLat = sim.flagPoint.latitude
                     flagLon = sim.flagPoint.longitude
@@ -366,6 +384,20 @@ struct ReticleRangingView: View {
             Text("Flag check")
         } footer: {
             Text(String(format: "GPS position + bearing + range places the pole. A lock more than %.0f m from a published flag is refused.", Safety.limits.flagGateTolerance))
+        }
+    }
+
+    private func useSection(_ mission: MissionRangingContext, _ lock: ReticleLock) -> some View {
+        Section {
+            Button {
+                mission.onUse(lock)
+            } label: {
+                Label("Use this range", systemImage: "checkmark.circle.fill").font(.headline).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(gate?.verdict.isAllowed != true)
+        } footer: {
+            Text("Only a range that lands on this hole's flag goes to the firing computer.")
         }
     }
 

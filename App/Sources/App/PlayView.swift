@@ -1,60 +1,81 @@
 import SwiftUI
 import SafetyKit
+import CourseKit
 
-/// The round. Today it lays out the hole loop and links to the parts already built;
-/// course loading (milestone 3) and scoring (milestone 6) fill it in.
+/// The round: start or continue one on the loaded course, as real fire missions or as practice
+/// with simulated rounds, and look back at saved scorecards.
 struct PlayView: View {
-    private struct Step: Identifiable {
-        let id: Int
-        let title: String
-        let detail: String
-        let milestone: Int
-        let ready: Bool
-    }
-
-    private let steps = [
-        Step(id: 1, title: "Load a course", detail: "Join the course Wi-Fi; the app downloads it from the course server.", milestone: 3, ready: false),
-        Step(id: 2, title: "Confirm downrange", detail: DownrangeLog.prompt, milestone: 6, ready: false),
-        Step(id: 3, title: "Range the pole", detail: "Crosshair on the base, dial the plumb line to the pole's top, lock.", milestone: 2, ready: true),
-        Step(id: 4, title: "Initial data", detail: "Charge, elevation and aim, cleared by the safety checks.", milestone: 4, ready: false),
-        Step(id: 5, title: "Fire and spot", detail: "Call short, over or range correct; left/right is measured with the crosshair.", milestone: 4, ready: false),
-        Step(id: 6, title: "Adjust or cease fire", detail: "Add or drop, left or right, until a round rests in the ring.", milestone: 4, ready: false),
-        Step(id: 7, title: "Verify and score", detail: "Walk out together; score is rounds plus metres outside the ring.", milestone: 6, ready: false)
-    ]
+    @EnvironmentObject private var courses: CourseStore
+    @EnvironmentObject private var rounds: RoundStore
+    @AppStorage(Settings.playerNameKey) private var player = Settings.defaultPlayerName
+    @State private var openRound = false
+    @State private var confirmReplace: Bool?
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(steps) { step in
-                        HStack(alignment: .top, spacing: 12) {
-                            Text("\(step.id)")
-                                .font(.headline.monospacedDigit())
-                                .frame(width: 26, height: 26)
-                                .background(step.ready ? Color.orange.opacity(0.25) : Color.secondary.opacity(0.15), in: Circle())
+                    if let a = rounds.active {
+                        NavigationLink {
+                            RoundView()
+                        } label: {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(step.title).font(.headline)
-                                Text(step.detail).font(.footnote).foregroundStyle(.secondary)
-                                if !step.ready {
-                                    Text("Milestone \(step.milestone)").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
-                                }
+                                Text(a.practice ? "Continue practice round" : "Continue round").font(.headline)
+                                Text("\(a.course.name) · \(a.card.played.count) of \(a.card.holes.count) holes")
+                                    .font(.footnote).foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.vertical, 2)
+                    }
+                    if let course = courses.playableCourse {
+                        Button {
+                            begin(course, practice: false)
+                        } label: {
+                            Label("Play \(course.name)", systemImage: "flag.fill")
+                        }
+                        Button {
+                            begin(course, practice: true)
+                        } label: {
+                            Label("Practice with simulated rounds", systemImage: "gamecontroller")
+                        }
+                    } else {
+                        Text("No playable course loaded.").foregroundStyle(.secondary)
+                    }
+                    LabeledContent("Player") {
+                        TextField("Name", text: $player).multilineTextAlignment(.trailing)
                     }
                 } header: {
-                    Text("Each hole: a fire mission")
+                    Text("Round")
                 } footer: {
-                    Text("Ranging works now from the Tools tab. Course loading and scoring come in milestones 3 and 6.")
+                    Text("Each hole is a fire mission: confirm downrange, range the pole, fire and spot, let fire control correct, cease fire and verify. Score is rounds plus metres outside the ring. Practice plays the same flow with simulated rounds and no launcher.")
                 }
                 Section {
                     NavigationLink { CourseView() } label: { Label("Course", systemImage: "map") }
-                    NavigationLink { ReticleRangingView() } label: {
-                        Label("Range a pole now", systemImage: "scope")
+                    NavigationLink { ScorecardHistoryView(saved: rounds.saved) } label: {
+                        Label("Scorecards", systemImage: "list.number")
                     }
+                    NavigationLink { ReticleRangingView() } label: { Label("Range a pole now", systemImage: "scope") }
                 }
             }
             .navigationTitle("Play")
+            .navigationDestination(isPresented: $openRound) { RoundView() }
+            .confirmationDialog("A round is in progress", isPresented: Binding(get: { confirmReplace != nil }, set: { if !$0 { confirmReplace = nil } }),
+                                titleVisibility: .visible) {
+                Button("End it and start a new one", role: .destructive) {
+                    if let practice = confirmReplace, let course = courses.playableCourse {
+                        rounds.endRound()
+                        rounds.start(course: course, player: player, practice: practice)
+                        openRound = true
+                    }
+                }
+            } message: {
+                Text("Finished holes from the current round are saved to a scorecard.")
+            }
         }
+    }
+
+    private func begin(_ course: Course, practice: Bool) {
+        if rounds.active != nil { confirmReplace = practice; return }
+        rounds.start(course: course, player: player, practice: practice)
+        openRound = true
     }
 }

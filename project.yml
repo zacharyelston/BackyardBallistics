@@ -29,6 +29,10 @@ targets:
         product: RangingKit
       - package: SpudCore
         product: CourseKit
+      - package: SpudCore
+        product: BallisticsKit
+      - package: SpudCore
+        product: RoundKit
     info:
       path: App/Resources/Info.plist
       properties:

@@ -10,21 +10,25 @@ graph BT
   SafetyKit["SafetyKit<br/>limits, checks, Cleared&lt;T&gt;"]
   RangingKit["RangingKit<br/>reticle range, spotting, rays, lean, pole solver"]
   CourseKit["CourseKit<br/>course file, validator"]
-  FireControlKit["FireControlKit (m4–5)<br/>initial data, spotting, corrections, calibration"]
-  RoundKit["RoundKit (m6)<br/>missions, turns, scoring"]
+  BallisticsKit["BallisticsKit<br/>flight, roll-out, solver, dispersion"]
+  FireControlKit["FireControlKit (m5)<br/>calibration fitting"]
+  RoundKit["RoundKit<br/>missions, scoring, scorecard, practice"]
   App["SpudGunGolf app<br/>SwiftUI, ARKit, AVFoundation"]
   SafetyKit --> CoreGeo
   RangingKit --> CoreGeo
   CourseKit --> CoreGeo
   CourseKit --> SafetyKit
-  FireControlKit --> SafetyKit
-  FireControlKit --> RangingKit
-  RoundKit --> SafetyKit
+  BallisticsKit --> SafetyKit
+  FireControlKit --> BallisticsKit
+  RoundKit --> RangingKit
+  RoundKit --> BallisticsKit
+  RoundKit --> CourseKit
   App --> RangingKit
   App --> SafetyKit
   App --> CourseKit
-  App --> FireControlKit
+  App --> BallisticsKit
   App --> RoundKit
+  App --> FireControlKit
 ```
 
 Modules marked with a milestone don't exist yet; they slot in at the place shown.
@@ -35,8 +39,9 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 | SafetyKit | Every safety limit, the checks, `Cleared<T>`, `DownrangeLog`, launcher conformance, `safety-limits.json` | CoreGeo | `swift test`, including a check that the browser prototype uses the same numbers |
 | RangingKit | `ReticleRange` and `ReticleLock` (the main ranging method), the spotting model (`Spot`, `RangeCall`, `FireControl` bracketing and left/right), camera intrinsics and rays, lean, pole height, the multi-photo `PoleSolver` cross-check | CoreGeo | `swift test` on synthetic scenes and the spec's reticle table |
 | CourseKit | The course file parser (`CourseFile`), `Course`/`Hole`/`Flag`/`Hazard`, `CourseValidator` (calls `Safety.checkFan` and the 100 yd limit; flag kit rules in `CourseRules`) | CoreGeo, SafetyKit | `swift test` on the sample course, malformed files and fan or boundary violations |
-| FireControlKit (m4–5) | Trajectory and roll-out model, initial data, calibration fitting; takes over the spotting model from RangingKit when it lands | SafetyKit, RangingKit | planned |
-| RoundKit (m6) | Fire missions per hole, turns, cease fire and verify, the downrange-play switch, scoring (rounds + metres outside the ring) | SafetyKit | planned |
+| BallisticsKit | Point-mass flight with drag and wind shear, roll-out per surface, the low/lob `Solver` with roll allowance, `Charge` (uncalibrated until m5, capped by SafetyKit), `Dispersion` and `SeededGenerator` | SafetyKit | `swift test`, including parity with the browser prototype's own numbers |
+| RoundKit | `HolePlay` (one hole as fire missions: begin, record spots or lost rounds, cease fire, resume, advance downrange, finish), `Mission` (a lock and its `FireControl`, aim point), `HoleRules` scoring, `Scorecard`, and `PracticeRange` (simulated locks, rounds and spots on a course's geometry) | CoreGeo, RangingKit, BallisticsKit, CourseKit | `swift test`, including 40 simulated practice holes that must converge |
+| FireControlKit (m5) | Calibration fitting: per-setting velocities from calibration shots | BallisticsKit | planned |
 
 ### Dependency rules
 
@@ -102,7 +107,7 @@ Three tabs, one per job:
 
 | Tab | For | Now | Later |
 | --- | --- | --- | --- |
-| Play | Playing a round as fire missions | The mission loop, with ranging live; the Course screen (load, holes, distances, problems) | Fire control (m4), missions and scoring (m6) |
+| Play | Playing a round as fire missions | Play or practice a round on the loaded course, hole by hole, with the scorecard saved at the end; the Course screen; saved scorecards | Multi-player turns; real initial data once a launcher is calibrated (m5) |
 | Launcher | Your launcher's profile and the limits | Fixed safety limits | Calibration shots and per-setting velocities (m5), sight mode (m7) |
 | Tools | Setting up flags and testing | Lean check, pole height, ranging, sighting test, logs | Course authoring and publishing (m3, m8) |
 
@@ -114,7 +119,7 @@ sequenceDiagram
   participant A as App
   participant R as RangingKit
   participant S as SafetyKit
-  participant F as FireControlKit
+  participant F as Fire control (BallisticsKit, RoundKit)
   P->>A: Crosshair on the base, dial the plumb line to the pole's top, Lock
   A->>R: ReticleLock(range, bearing, angle below level, GPS)
   R-->>A: distance, ±, height difference, pole position
@@ -145,7 +150,7 @@ Features talk to SpudCore, not to each other. Shared UI that two features need m
 
 ### Persistence
 
-Each log is a `JSONStore<Item>` file in Documents (`reticlelog.json`, `ranginglog.json`, `fieldlog.json`). Reticle records keep the whole lock (line pixels, focal length, tilt, bearing, GPS); multi-photo records keep every photo's pose and marks so field data can be re-solved on a Mac when the solver changes. Courses and launcher profiles will follow the same pattern.
+Each log is a `JSONStore<Item>` file in Documents (`reticlelog.json`, `ranginglog.json`, `fieldlog.json`). Reticle records keep the whole lock (line pixels, focal length, tilt, bearing, GPS); multi-photo records keep every photo's pose and marks so field data can be re-solved on a Mac when the solver changes. Scorecards are saved to `scorecards.json` when a round ends, and the round in progress (card, current hole, downrange confirmations, practice state) to `round-in-progress.json` after every change, so a locked phone or a closed app resumes mid-hole. Launcher profiles will follow the same pattern.
 
 ## Checking work
 
