@@ -44,6 +44,8 @@ final class CourseStore: ObservableObject {
 
     /// The course to play, only if it passed every check. Mission screens read this.
     var playableCourse: Course? { loaded?.result.playableCourse }
+    /// The course for practice: playable, or refused only because a safety fan leaves the boundary.
+    var practiceCourse: Course? { loaded?.result.practiceCourse }
 
     private let cacheURL: URL
 
@@ -121,7 +123,7 @@ final class CourseStore: ObservableObject {
     private func accept(_ result: CourseLoadResult, from source: Source) {
         let next = Loaded(result: result, source: source, loadedAt: Date())
         loaded = next
-        if result.playableCourse != nil { saveCache(next) }
+        if result.practiceCourse != nil { saveCache(next) }
     }
 
     // MARK: Cache

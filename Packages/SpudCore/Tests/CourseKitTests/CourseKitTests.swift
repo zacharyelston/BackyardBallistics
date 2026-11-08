@@ -286,3 +286,45 @@ final class CourseWriterTests: XCTestCase {
         XCTAssertEqual(CourseWriter.clean("The Barn!"), "the-barn")
     }
 }
+
+final class PracticeOnlyCourseTests: XCTestCase {
+    private let origin = GeoPoint(latitude: 42.36, longitude: -71.058)
+
+    private func course(boundaryHalfWidth w: Double, flagNorth: Double = 40, firingPointInside: Bool = true) -> Course {
+        let fp = firingPointInside ? origin : Geo.offset(origin, east: w + 10, north: 0)
+        let hole = Hole(number: 1, name: "Orchard", par: 4, firingPoints: [fp],
+                        flag: Flag(position: Geo.offset(origin, east: 0, north: flagNorth), poleHeightM: 2.438, leanDeg: 0.1))
+        let box = GeoPolygon([Geo.offset(origin, east: -w, north: -10), Geo.offset(origin, east: w, north: -10),
+                              Geo.offset(origin, east: w, north: 80), Geo.offset(origin, east: -w, north: 80)])
+        return Course(format: 1, id: "small", name: "Small", version: 1, boundary: box, holes: [hole])
+    }
+
+    func testFanOnlyErrorsAllowPracticeButNotPlay() {
+        let c = course(boundaryHalfWidth: 30)
+        let r = CourseLoadResult(course: c, problems: CourseValidator.problems(for: c))
+        XCTAssertFalse(r.errors.isEmpty)
+        XCTAssertTrue(r.errors.allSatisfy { $0.kind == .fan })
+        XCTAssertNil(r.playableCourse)
+        XCTAssertEqual(r.practiceCourse, c)
+        XCTAssertTrue(r.isPracticeOnly)
+    }
+
+    func testOtherErrorsRefuseEvenPractice() {
+        let c = course(boundaryHalfWidth: 30, firingPointInside: false)
+        let r = CourseLoadResult(course: c, problems: CourseValidator.problems(for: c))
+        XCTAssertTrue(r.errors.contains { $0.kind == nil })
+        XCTAssertNil(r.practiceCourse)
+        XCTAssertFalse(r.isPracticeOnly)
+    }
+
+    func testAPlayableCourseIsAlsoAPracticeCourse() {
+        let c = course(boundaryHalfWidth: 200, flagNorth: 40)
+        var big = c
+        big.boundary = GeoPolygon([Geo.offset(origin, east: -200, north: -200), Geo.offset(origin, east: 200, north: -200),
+                                   Geo.offset(origin, east: 200, north: 200), Geo.offset(origin, east: -200, north: 200)])
+        let r = CourseLoadResult(course: big, problems: CourseValidator.problems(for: big))
+        XCTAssertEqual(r.playableCourse, big)
+        XCTAssertEqual(r.practiceCourse, big)
+        XCTAssertFalse(r.isPracticeOnly)
+    }
+}

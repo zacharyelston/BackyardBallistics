@@ -202,11 +202,15 @@ struct CourseSurveyView: View {
 
             Section {
                 Button {
-                    if let text = survey.text { store.loadSurveyed(text); message = "Loaded as this device's course." }
+                    if let text = survey.text {
+                        store.loadSurveyed(text)
+                        message = isPracticeOnly ? "Loaded as this device's course, for practice only." : "Loaded as this device's course."
+                    }
                 } label: {
-                    Label("Use this course on this device", systemImage: "checkmark.circle")
+                    Label(isPracticeOnly ? "Use this course for practice on this device" : "Use this course on this device",
+                          systemImage: "checkmark.circle")
                 }
-                .disabled(!isValid)
+                .disabled(!isValid && !isPracticeOnly)
                 if let text = survey.text {
                     ShareLink(item: text, preview: SharePreview("\(survey.name) course file")) {
                         Label("Share course file", systemImage: "square.and.arrow.up")
@@ -238,6 +242,10 @@ struct CourseSurveyView: View {
     }
 
     private var isValid: Bool { survey.text != nil && !problems.contains { $0.severity == .error } }
+    /// Only the safety fan fails: fine for practice and demos, not for real rounds.
+    private var isPracticeOnly: Bool {
+        survey.text != nil && !isValid && problems.filter { $0.severity == .error }.allSatisfy { $0.kind == .fan }
+    }
 
     @ViewBuilder private var checkSection: some View {
         Section {
@@ -246,6 +254,10 @@ struct CourseSurveyView: View {
             } else if problems.isEmpty {
                 Label("Passes every check", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
             } else {
+                if isPracticeOnly {
+                    Label("Practice only: everything passes except the safety fan, so real rounds stay off. Practice and demos work.",
+                          systemImage: "gamecontroller").foregroundStyle(.orange).font(.footnote)
+                }
                 ForEach(problems, id: \.self) { p in
                     Label(p.message, systemImage: p.severity == .error ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(p.severity == .error ? .red : .orange)

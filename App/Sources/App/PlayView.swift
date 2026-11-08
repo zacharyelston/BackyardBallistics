@@ -26,11 +26,23 @@ struct PlayView: View {
                             }
                         }
                     }
-                    if let course = courses.playableCourse {
-                        Button {
-                            begin(course, practice: false)
-                        } label: {
-                            Label("Play \(course.name)", systemImage: "flag.fill")
+                    if let course = courses.practiceCourse {
+                        if courses.playableCourse != nil {
+                            Button {
+                                begin(course, practice: false)
+                            } label: {
+                                Label("Play \(course.name)", systemImage: "flag.fill")
+                            }
+                        } else {
+                            Label {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("\(course.name) is practice only")
+                                    Text("Its safety fan leaves the boundary, so real rounds are off. Practice and demos fire nothing.")
+                                        .font(.footnote).foregroundStyle(.secondary)
+                                }
+                            } icon: {
+                                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                            }
                         }
                         Button {
                             begin(course, practice: true)
@@ -61,7 +73,7 @@ struct PlayView: View {
             .confirmationDialog("A round is in progress", isPresented: Binding(get: { confirmReplace != nil }, set: { if !$0 { confirmReplace = nil } }),
                                 titleVisibility: .visible) {
                 Button("End it and start a new one", role: .destructive) {
-                    if let practice = confirmReplace, let course = courses.playableCourse {
+                    if let practice = confirmReplace, let course = practice ? courses.practiceCourse : courses.playableCourse {
                         rounds.endRound()
                         rounds.start(course: course, player: player, practice: practice)
                         openRound = true
