@@ -126,28 +126,38 @@ struct OrderCard: View {
     private var tool: OrderTool { OrderTool(order) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: compact ? 6 : 8) {
-            HStack(alignment: .firstTextBaseline) {
-                Label(order.kind.title, systemImage: order.kind.systemImage)
-                    .font(compact ? .subheadline.weight(.bold) : .headline)
-                Spacer()
-                Text(order.to == nil ? "Team" : "You").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: compact ? 6 : 10) {
+            // The order is the title; tapping it opens the tool it needs.
+            Button {
+                if tool != .none { openTool() }
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Label(order.kind.title, systemImage: order.kind.systemImage)
+                        .font(compact ? .subheadline.weight(.bold) : .title3.weight(.bold))
+                        .foregroundStyle(.primary)
+                    Text(order.to == nil ? "Team" : "You").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    Spacer(minLength: 4)
+                    if tool != .none {
+                        Image(systemName: "chevron.right").font(.subheadline.weight(.semibold)).foregroundStyle(.tint)
+                    }
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.borderless)
+            .disabled(tool == .none)
+            .accessibilityHint(tool == .none ? "" : "Opens \(Self.toolName(tool))")
             if !order.text.isEmpty {
                 Text(order.text).font(compact ? .footnote : .body).lineLimit(compact ? 2 : nil)
             }
             if order.at != nil { OrderPointer(order: order, size: compact ? 22 : 34) }
-            if tool != .none && !compact {
-                Text("Seen opens \(Self.toolName(tool)).").font(.caption).foregroundStyle(.secondary)
-            }
+            // The commands: one even row that never wraps.
             HStack(spacing: 8) {
-                if tool != .none {
-                    Button { openTool() } label: { Label(tool.title, systemImage: tool.systemImage) }
-                        .buttonStyle(.borderedProminent).controlSize(compact ? .small : .regular)
-                }
                 answer("Seen", .seen, tint: .blue)
                 answer("Done", .done, tint: .green)
                 answer("Can't", .cannot, tint: .red)
+            }
+            if tool != .none && !compact {
+                Text("Tap the order or Seen to open \(Self.toolName(tool)).").font(.caption).foregroundStyle(.secondary)
             }
         }
         .sheet(isPresented: $showingTool) {
@@ -165,9 +175,12 @@ struct OrderCard: View {
     }
 
     private func answer(_ title: String, _ r: OrderAck.Response, tint: Color) -> some View {
-        Button(title) {
+        Button {
             membership.ack(order, r)
             if r == .seen && tool != .none { openTool() }
+        } label: {
+            Text(title).font(.subheadline.weight(.semibold)).lineLimit(1).fixedSize()
+                .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
         .tint(tint)
