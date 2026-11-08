@@ -136,4 +136,25 @@ final class GroupLinkTests: XCTestCase {
         client.start()
         wait(for: [stopped], timeout: 10)
     }
+
+    /// Over a real network a wrong code can leave the handshake hanging instead of failing. A host
+    /// that accepts TCP and never answers shows the same thing: the client must stop, not hang.
+    func testAHandshakeThatNeverAnswersStopsTheClient() throws {
+        let silent = try NWListener(using: .tcp)
+        silent.newConnectionHandler = { c in c.start(queue: self.queue) }   // accept, say nothing
+        let ready = expectation(description: "listening")
+        silent.stateUpdateHandler = { if case .ready = $0 { ready.fulfill() } }
+        silent.start(queue: queue)
+        wait(for: [ready], timeout: 5)
+        defer { silent.cancel() }
+        let client = GroupClient(squadName: "Red", joinCode: "ABC234",
+                                 hello: Hello(name: "Eve", device: UUID(), joinCode: "ABC234"), queue: queue)
+        client.fixedEndpoint = local(silent.port!.rawValue)
+        let stopped = expectation(description: "gave up")
+        var why = ""
+        client.onStatus = { s in if case let .stopped(w) = s { why = w; stopped.fulfill() } }
+        client.start()
+        wait(for: [stopped], timeout: 15)
+        XCTAssertEqual(why, "Couldn't connect. Check the code.")
+    }
 }

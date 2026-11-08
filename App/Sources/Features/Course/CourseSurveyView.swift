@@ -235,6 +235,9 @@ struct CourseSurveyView: View {
                                 Label("Send to my squad leader", systemImage: "person.badge.shield.checkmark")
                             }
                             .disabled(!membership.canSendToLeader || (!isValid && !isPracticeOnly))
+                            if let why = leaderBlocker {
+                                Text(why).font(.footnote).foregroundStyle(.orange)
+                            }
                             if let id = sentToLeader, let s = membership.sentToLeader.first(where: { $0.id == id }) {
                                 SentItemRow(title: s.title, receipt: s.receipt)
                             }
@@ -264,6 +267,17 @@ struct CourseSurveyView: View {
     private var problems: [CourseProblem] {
         guard let text = survey.text else { return [] }
         return CourseFile.load(text).problems
+    }
+
+    /// Why Send to my squad leader is greyed out, said under it rather than left silent.
+    private var leaderBlocker: String? {
+        if !isValid && !isPracticeOnly { return "Fix the course's problems above first." }
+        guard !membership.canSendToLeader else { return nil }
+        switch membership.state {
+        case .reconnecting: return "Reconnecting to \(membership.squadName ?? "the squad")'s iPad… Tap again once it's back."
+        case .connecting: return "Joining \(membership.squadName ?? "the squad")…"
+        default: return "Not linked to the squad's iPad. Open Play → Join squad to rejoin."
+        }
     }
 
     private var isValid: Bool { survey.text != nil && !problems.contains { $0.severity == .error } }
