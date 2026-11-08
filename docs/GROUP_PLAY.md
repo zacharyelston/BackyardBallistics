@@ -1,11 +1,11 @@
-# Group play: Squadz mode
+# v3 Squadz: group play
 
-Status: design, not built. This covers the "multi-player turns" item in milestone 6 and goes beyond it. Read [ARCHITECTURE.md](ARCHITECTURE.md) first: this doc uses its modules, its safety gate and its dependency rules.
+Status: design, not built. **v3 Squadz** is the third SpudGunGolf ruleset, after v1 Classic and v2 Fire Missions. It builds on v2: every hole is still played as v2 fire missions (range the pole, fire, spot, let fire control bracket, cease fire and verify, scored as rounds plus metres outside the ring). v3 changes who the player is: a squad of people with linked devices instead of one person with one phone. It covers the "multi-player turns" item in milestone 6 and goes beyond it. Read [ARCHITECTURE.md](ARCHITECTURE.md) first: this doc uses its modules, its safety gate and its dependency rules.
 
 ## Contents
 
 1. [Two modes](#two-modes)
-2. [Roles in Squadz mode](#roles-in-squadz-mode)
+2. [Roles in v3 Squadz](#roles-in-v3-squadz)
 3. [Transport](#transport)
 4. [What is synced and who owns it](#what-is-synced-and-who-owns-it)
 5. [Safety](#safety)
@@ -19,7 +19,7 @@ Status: design, not built. This covers the "multi-player turns" item in mileston
 
 ## Two modes
 
-| | **Solo** | **Squadz** |
+| | **Solo (v2 Fire Missions)** | **v3 Squadz** |
 | --- | --- | --- |
 | Who is the player | One person | **A squad.** Squads play against squads |
 | Devices | One phone, or one iPad | Per squad: one **commander's iPad** and each member's phone. Optionally one Mac as a render host |
@@ -28,13 +28,13 @@ Status: design, not built. This covers the "multi-player turns" item in mileston
 | What the iPad shows | Solo on a bigger screen | A **map of the field only**: every member, every observation, and the 3D field built from them, plus the squad's fire mission |
 | Network | None | The squad's local group on the backyard Wi-Fi, and a match link between the squads' iPads. No internet |
 
-**An iPad in Solo is just a single player.** It is today's app on a bigger screen, using the iPad's camera for ranging and spotting. Nothing in Squadz mode applies to it. Solo on a phone is unchanged.
+**Solo is the v2 Fire Missions game**, on a phone or an iPad. An iPad in Solo is just a single player: today's app on a bigger screen, using the iPad's camera for ranging and spotting. Nothing in v3 applies to it. Solo on a phone is unchanged.
 
-**A Squadz match** is two or more squads playing the same course. Each hole is one fire mission sequence per squad, played in turn. **The squad is the player:** each squad has one `HolePlay` per hole and one `Scorecard`, scored exactly as Solo scores a player (rounds plus metres outside the ring). Members range, spot and observe for their squad. The commander puts it together on the map and directs the mission. The lowest squad total wins.
+**A v3 Squadz match** is two or more squads playing the same course. Each hole is one fire mission sequence per squad, played in turn. **The squad is the player:** each squad has one `HolePlay` per hole and one `Scorecard`, scored exactly as Solo scores a player (rounds plus metres outside the ring). Members range, spot and observe for their squad. The commander puts it together on the map and directs the mission. The lowest squad total wins.
 
 **Non-goals:** internet play, a cloud server during a match, more than one squad firing at once, and Android or web clients.
 
-## Roles in Squadz mode
+## Roles in v3 Squadz
 
 | Role | Device | Does | Never does |
 | --- | --- | --- | --- |
@@ -197,9 +197,9 @@ public struct SpotReport: Codable, Equatable, Sendable {
 
 ## Safety
 
-The architecture's rule holds: `Cleared<T>` is created only in SafetyKit, on the device that shows the result. In Squadz mode that device is the commander's iPad, for its own squad.
+The architecture's rule holds: `Cleared<T>` is created only in SafetyKit, on the device that shows the result. In v3 Squadz that device is the commander's iPad, for its own squad.
 
-1. **The commander's iPad is the squad's only firing display.** `clearRange` and `clearSolution` run there, on its own validated course, launcher profile and `DownrangeLog`. Phones in Squadz mode have no code path that shows a solution.
+1. **The commander's iPad is the squad's only firing display.** `clearRange` and `clearSolution` run there, on its own validated course, launcher profile and `DownrangeLog`. Phones in v3 Squadz have no code path that shows a solution.
 2. **Everything from another device is untrusted data.** That covers locks (recomputed and gated), spots (a call and metres, applied by the iPad's `HolePlay`), positions and observations. A course arriving from elsewhere is validated locally and must match the match's hash.
 3. **The field map is a picture, not an input.** No surface, mesh or position from the map feeds `clearRange` or `clearSolution`. Ranges come only from cleared locks, and height differences from the lock itself. The render host's mesh is display only.
 4. **`Cleared` never crosses the wire.** It isn't `Codable`, and its initializer is file-private. A test pins that `Cleared<Int>.self` is not `Decodable` and that no `GroupMessage` contains one.
@@ -240,7 +240,7 @@ The commander's view is the field, built up during the match from what the membe
 
 ## The commander's iPad
 
-`TARGETED_DEVICE_FAMILY "1,2"`. On an iPad the Play tab offers **Solo** (a single player, with the iPad's camera) and **Squadz**, which offers to command a squad and to host or join a match. Squadz on the iPad never opens the camera.
+`TARGETED_DEVICE_FAMILY "1,2"`. On an iPad the Play tab offers **Solo** (v2 Fire Missions, a single player, with the iPad's camera) and **v3 Squadz**, which offers to command a squad and to host or join a match. Squadz on the iPad never opens the camera.
 
 ```
 ┌─────────────────┬──────────────────────────────────────┬──────────────────────────┐
@@ -291,9 +291,9 @@ A Mac on the same network can take the heavy work off the iPads. It is optional:
 
 ## Prior work: Squadz
 
-[Squadz](https://github.com/zacharyelston/squadz) is the earlier project this mode is named for: squads with a leader and a 6-character join code, members sharing live GPS positions, and a map of everyone with stale-position detection. It is a Rust (Axum) server with a Next.js and Leaflet client, polling over the internet.
+[Squadz](https://github.com/zacharyelston/squadz) is the earlier project v3 is named for: squads with a leader and a 6-character join code, members sharing live GPS positions, and a map of everyone with stale-position detection. It is a Rust (Axum) server with a Next.js and Leaflet client, polling over the internet.
 
-| Squadz | Squadz mode |
+| Squadz (earlier project) | v3 Squadz |
 | --- | --- |
 | Squad with a leader and a join code | Squad with a commander's iPad; the same 6-character code, also used as the TLS pre-shared key |
 | Members sharing GPS locations | Members' phones sharing positions with the commander, and with the match host for the fan hold |
@@ -306,7 +306,7 @@ The code doesn't carry over: play has to run offline on iPads and phones, in Swi
 
 ## Milestone plan
 
-The steps are numbered G1 to G8, separate from the main milestones. They need milestone 6, which is built. They don't need calibration (m5): until then, real missions stop at initial data, and practice mode drives everything.
+These are the v3 build steps. They are numbered G1 to G8 rather than v3.1, v3.2 and so on, because a dotted number reads as a revision of the v3 ruleset (or an app release), while these are build steps toward a single v3. They are also kept separate from the app's main milestones 1 to 8. They need milestone 6, which is built. They don't need calibration (m5): until then, real missions stop at initial data, and practice mode drives everything.
 
 | Step | Builds | Done when |
 | --- | --- | --- |
