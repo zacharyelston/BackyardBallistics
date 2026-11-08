@@ -20,6 +20,7 @@
 		1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B045324F460255AFAFCFE722 /* FieldLog.swift */; };
 		213FAEF9984EE5CF8F8711E5 /* CourseSurveyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */; };
 		2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */; };
+		33EE82BA78FAE6BB5F789431 /* FieldKit in Frameworks */ = {isa = PBXBuildFile; productRef = B412D2A686B1959C5E6A8C5D /* FieldKit */; };
 		3EFC1974454B6AB94800DE8B /* SafetyKit in Frameworks */ = {isa = PBXBuildFile; productRef = 624B5971BCEFE3276F13D796 /* SafetyKit */; };
 		42FCF884DB4D1292750E9C3A /* ARKitRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */; };
 		47FEF687AF2EBDB3FFE0AC73 /* GroupLink in Frameworks */ = {isa = PBXBuildFile; productRef = 205C0B8F75E83E48DA0B80BF /* GroupLink */; };
@@ -39,12 +40,14 @@
 		8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C414C5B4AC53422F7AABC2C /* LeanCheckView.swift */; };
 		915EF4E6CCD9C105BCCAB207 /* local in Resources */ = {isa = PBXBuildFile; fileRef = A44E34B89E1526A64BADF1B3 /* local */; };
 		9214CC0F333393CF432A7B65 /* CourseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 065ED1CBF727D2A9F1C17FFE /* CourseStore.swift */; };
+		92EF6A63E807E77F2D9BC725 /* ElevationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5671E5BAB47DE5DF3169874 /* ElevationService.swift */; };
 		969A1C83E524FD939C7D8B00 /* HoleMissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88FD57DAB3E4CCC46159899 /* HoleMissionView.swift */; };
 		981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7230BC9CD26B3C17565509AE /* CourseView.swift */; };
 		9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA6EB5E25631668DAC5462C /* JSONStore.swift */; };
 		A3A842FBA87CAC888247D14E /* SquadCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */; };
 		A5E0A234EC6642A523EE480F /* GroupKit in Frameworks */ = {isa = PBXBuildFile; productRef = 42F3226CD1FFA1EDFE808E86 /* GroupKit */; };
 		AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058FD02EB37A4DD2D60E9425 /* LauncherView.swift */; };
+		AB94951196D76A1E9372AE9E /* CourseScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 702D725F3416ABA57B751DAD /* CourseScene.swift */; };
 		ABC854639A4529209FB9DA2B /* RangingLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1956E8D95530FA7EA760FD87 /* RangingLog.swift */; };
 		ADCBF1C6E705A2F12C6A84FC /* ReticleRangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E87C56614F017F0224D65F /* ReticleRangingView.swift */; };
 		AEDDACE4EEB3320A9705B535 /* RoundStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD53A79A0D7E172F849F2839 /* RoundStore.swift */; };
@@ -55,6 +58,7 @@
 		C50B4878967B32CF63176FDD /* JoinCodeScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C65BD036734D6BD5C19725B /* JoinCodeScanner.swift */; };
 		C670AE24783CEC45026EA822 /* RangingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311424D16BF397C1CD80DDFE /* RangingSession.swift */; };
 		C9D4F65053E9F8705B55B8AA /* GroupLink in Frameworks */ = {isa = PBXBuildFile; productRef = 305D2A30F81FFD8DBD356D47 /* GroupLink */; };
+		C9FE1167D19F7CCAD7C69BBD /* Field3DView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB73DF938A99A856BB1FB4B /* Field3DView.swift */; };
 		D0A4DFE5B2FF3CA0E1D4EDD8 /* SiteMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21DE58B1664E8C5DF8BD7EEB /* SiteMap.swift */; };
 		D2FDA7DD300BC49CE78F6088 /* SiteMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21DE58B1664E8C5DF8BD7EEB /* SiteMap.swift */; };
 		DD2A092952F63A5FAFDCE4A7 /* RangingCaptureSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C49810F5CD5D313FB0CD103 /* RangingCaptureSource.swift */; };
@@ -93,6 +97,7 @@
 		5C49810F5CD5D313FB0CD103 /* RangingCaptureSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingCaptureSource.swift; sourceTree = "<group>"; };
 		5E021E898D313DF96AEA9B39 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6FFE521AEBEB67F465CAA9E6 /* RoundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundView.swift; sourceTree = "<group>"; };
+		702D725F3416ABA57B751DAD /* CourseScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseScene.swift; sourceTree = "<group>"; };
 		7230BC9CD26B3C17565509AE /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
 		75BC877E68D4709936CE0EB1 /* OrderCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderCard.swift; sourceTree = "<group>"; };
 		7E3297A98DDACEAB482EF66B /* CommandSquadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandSquadView.swift; sourceTree = "<group>"; };
@@ -100,6 +105,7 @@
 		8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadCommand.swift; sourceTree = "<group>"; };
 		8F14AA5B7F89FEA9E804DA95 /* SpudTheaterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpudTheaterApp.swift; sourceTree = "<group>"; };
 		9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraHUD.swift; sourceTree = "<group>"; };
+		9AB73DF938A99A856BB1FB4B /* Field3DView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Field3DView.swift; sourceTree = "<group>"; };
 		A44E34B89E1526A64BADF1B3 /* local */ = {isa = PBXFileReference; lastKnownFileType = folder; name = local; path = courses/local; sourceTree = SOURCE_ROOT; };
 		AC575A2D9586FD6E557618AD /* PoleHeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleHeightView.swift; sourceTree = "<group>"; };
 		AE8331D4584229CE4D7A8756 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
@@ -111,6 +117,7 @@
 		D1E9E1B2EC8B568A9E479CDA /* PoleMarker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleMarker.swift; sourceTree = "<group>"; };
 		D29F67AAE33283A8171918D7 /* RangingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingView.swift; sourceTree = "<group>"; };
 		D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SpudGunGolf.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E5671E5BAB47DE5DF3169874 /* ElevationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevationService.swift; sourceTree = "<group>"; };
 		E88FD57DAB3E4CCC46159899 /* HoleMissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoleMissionView.swift; sourceTree = "<group>"; };
 		E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionReader.swift; sourceTree = "<group>"; };
 		F7AB2145B8AC206B21693A78 /* ReticleLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReticleLog.swift; sourceTree = "<group>"; };
@@ -144,6 +151,7 @@
 				661D2D673DB0316E8869D598 /* CourseKit in Frameworks */,
 				A5E0A234EC6642A523EE480F /* GroupKit in Frameworks */,
 				47FEF687AF2EBDB3FFE0AC73 /* GroupLink in Frameworks */,
+				33EE82BA78FAE6BB5F789431 /* FieldKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -254,6 +262,9 @@
 		9DB93DF1251CA30247971933 /* Theater */ = {
 			isa = PBXGroup;
 			children = (
+				702D725F3416ABA57B751DAD /* CourseScene.swift */,
+				E5671E5BAB47DE5DF3169874 /* ElevationService.swift */,
+				9AB73DF938A99A856BB1FB4B /* Field3DView.swift */,
 				5E021E898D313DF96AEA9B39 /* Info.plist */,
 				8F14AA5B7F89FEA9E804DA95 /* SpudTheaterApp.swift */,
 			);
@@ -362,6 +373,7 @@
 				0C5EE927A1EE9007CDD1FE51 /* CourseKit */,
 				42F3226CD1FFA1EDFE808E86 /* GroupKit */,
 				205C0B8F75E83E48DA0B80BF /* GroupLink */,
+				B412D2A686B1959C5E6A8C5D /* FieldKit */,
 			);
 			productName = SpudTheater;
 			productReference = CB8A578A329DCC609C701191 /* SpudTheater.app */;
@@ -452,6 +464,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB94951196D76A1E9372AE9E /* CourseScene.swift in Sources */,
+				92EF6A63E807E77F2D9BC725 /* ElevationService.swift in Sources */,
+				C9FE1167D19F7CCAD7C69BBD /* Field3DView.swift in Sources */,
 				D2FDA7DD300BC49CE78F6088 /* SiteMap.swift in Sources */,
 				F663DF385477783B5FE4CBDD /* SpudTheaterApp.swift in Sources */,
 			);
@@ -790,6 +805,10 @@
 		A767DE0DBD45719511064F3D /* CoreGeo */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CoreGeo;
+		};
+		B412D2A686B1959C5E6A8C5D /* FieldKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FieldKit;
 		};
 		ED48412377178EFF51799932 /* GroupKit */ = {
 			isa = XCSwiftPackageProductDependency;
