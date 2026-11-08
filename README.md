@@ -29,6 +29,7 @@ Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 | --- | --- |
 | `App/` | SwiftUI iPhone app (iOS 17+): `App/` tabs and settings, `Shared/` capture and marking, `Features/` one folder per feature |
 | `Packages/SpudCore/` | Platform-free core: `CoreGeo`, `SafetyKit`, `RangingKit`, with unit tests |
+| `docs/howto/` | **How to play**: the game, Squadz, orders and safety, with a field picture. Rebuilt from the code by `scripts/build-howto.sh` (`--check` fails if it's out of date); edit `docs/howto/src` |
 | `docs/ARCHITECTURE.md` | Modules, dependency rules, the safety gate and the app design |
 | `docs/FLAG_KIT.md` | How to build and set up a flag |
 | `docs/FIELD_TEST.md` | Field-test protocols for milestones 1 and 2 |
