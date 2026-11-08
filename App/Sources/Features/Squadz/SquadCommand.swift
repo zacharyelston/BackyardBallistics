@@ -161,6 +161,20 @@ final class SquadCommand: ObservableObject {
         act { $0.useLock(id, now: Date()) }
     }
 
+    /// Fired, on the gunner's behalf: the round is in the air and every member is asked to spot it.
+    func fired() {
+        act { $0.fired(now: Date()) }
+    }
+
+    /// Records the round in flight with a member's call (left/right from their report, or none).
+    func commitSpot(from member: MemberID) {
+        act { $0.commit(callFrom: member, lateralFrom: nil, now: Date()) }
+    }
+
+    func commitLost() {
+        act { $0.commitLost(now: Date()) }
+    }
+
     func ceaseFire() {
         act { $0.ceaseFire(now: Date()) }
     }

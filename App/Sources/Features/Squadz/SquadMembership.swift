@@ -34,6 +34,8 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
     /// Which way the phone points, degrees from true north (magnetic if true isn't available), for
     /// the order pointer. Nil until the compass reports.
     @Published private(set) var heading: Double?
+    /// The last spot call this phone sent: which round, and what.
+    @Published private(set) var lastSpot: (round: Int, call: RangeCall)?
     /// Join squad is on screen (it lists the orders itself, so the banner stays out of the way).
     @Published var showingJoinScreen = false
     @Published private(set) var lastSent: Date?
@@ -166,6 +168,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         sentLocks = []
         orders = []
         answers = [:]
+        lastSpot = nil
         finishedOrders = []
         state = .idle
     }
@@ -205,6 +208,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
             squadName = s.squad.name
             if s.roundInFlight == nil { spotRequest = nil }
         case let .spotRequest(r):
+            if spotRequest != r { UINotificationFeedbackGenerator().notificationOccurred(.success) }
             spotRequest = r
         case let .refused(reason):
             state = .refused(reason)   // GroupClient stops on a refusal
@@ -269,6 +273,32 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         let points = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
         let compass = points[Int((b + 22.5) / 45) % 8]
         return String(format: "%.0f m %@ (%03.0f°)", d, compass, b)
+    }
+
+    // MARK: Spotting
+
+    /// This member's role in the squad (the gunner calls Fired).
+    var isGunner: Bool { me?.role == .gunner }
+
+    /// The round the gunner would call Fired for next, if the squad is firing and nothing is in the air.
+    var nextRoundToFire: FiredReport? {
+        guard let s = status, let hole = s.hole, s.phase == .firing, !s.walkingOut, s.roundInFlight == nil, s.missions > 0 else { return nil }
+        return FiredReport(hole: hole, mission: s.missions, round: s.rounds.count + 1)
+    }
+
+    /// The gunner's Fired: the round is in the air, and the commander asks everyone to spot it.
+    func sendFired() {
+        guard isGunner, let f = nextRoundToFire, let c = client, c.status == .connected else { return }
+        c.send(.fired(f))
+    }
+
+    /// Calls the round in flight: short, over or range correct, from where this phone is. Left/right
+    /// isn't measured here (a flank spotter's left/right needs the flank geometry, later).
+    func sendSpot(_ call: RangeCall) {
+        guard let r = spotRequest, let c = client, c.status == .connected else { return }
+        let vantage = lastFix.map { GeoPoint(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude) }
+        c.send(.spot(SpotReport(hole: r.hole, mission: r.mission, round: r.round, call: call, lateral: nil, vantage: vantage)))
+        lastSpot = (r.round, call)
     }
 
     // MARK: Locks

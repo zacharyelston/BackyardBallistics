@@ -34,6 +34,9 @@ struct SquadHolePanel: View {
                         LabeledContent("Verified", value: String(format: "%.1f m · score %.1f", v.closest, v.score))
                     }
                     downrangeRow
+                    if play.phase == .firing && !round.walkingOut {
+                        roundInFlight(host, play: play)
+                    }
                     HStack {
                         if play.phase == .firing && !round.walkingOut {
                             Button("Cease fire") { command.ceaseFire() }.buttonStyle(.bordered)
@@ -72,6 +75,39 @@ struct SquadHolePanel: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    /// Fired, then the members' calls for that round, and the commander records one (or Lost).
+    @ViewBuilder private func roundInFlight(_ host: SquadHost, play: HolePlay) -> some View {
+        if let n = host.roundInFlight {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Round \(n) in the air: spot calls", systemImage: "eye.fill").font(.subheadline.weight(.semibold))
+                if host.spotReports.isEmpty {
+                    Text("Waiting for members' calls…").font(.footnote).foregroundStyle(.secondary)
+                }
+                ForEach(host.spotReports, id: \.member) { spot in
+                    let who = host.round.squad.members.first { $0.id == spot.member }?.name ?? "A member"
+                    HStack {
+                        Text("\(who): \(spot.report.call.label)").font(.footnote.weight(.semibold))
+                        if let l = spot.report.lateral { Text(String(format: "%+.1f m", l)).font(.footnote).foregroundStyle(.secondary) }
+                        Spacer()
+                        Button("Use") { command.commitSpot(from: spot.member) }.buttonStyle(.borderedProminent).controlSize(.small)
+                    }
+                }
+                Button("Lost (not found)") { command.commitLost() }.buttonStyle(.bordered).controlSize(.small)
+            }
+            .padding(10)
+            .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+        } else if play.mission != nil, !play.atRoundLimit {
+            Button {
+                command.fired()
+            } label: {
+                Label("Fired round \(play.roundsFired + 1)", systemImage: "flame.fill")
+            }
+            .buttonStyle(.bordered).tint(.red)
+            Text("Or the gunner calls Fired from their phone. Members then get the spotter card.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
     }
 
     @ViewBuilder private var downrangeRow: some View {

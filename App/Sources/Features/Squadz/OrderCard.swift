@@ -13,12 +13,15 @@ enum OrderTool {
     case ranging
     /// The pointer and map, to walk to the order's place.
     case goTo
+    /// The spotter card: call the round in flight.
+    case spotting
     case none
 
     init(_ order: Order) {
         switch order.kind {
         case .rangeFrom: self = .ranging
-        case .moveTo, .capture, .holdPosition, .returnToFiringPoint, .spot: self = order.at == nil ? .none : .goTo
+        case .spot: self = .spotting
+        case .moveTo, .capture, .holdPosition, .returnToFiringPoint: self = order.at == nil ? .none : .goTo
         case .note: self = .none
         }
     }
@@ -27,6 +30,7 @@ enum OrderTool {
         switch self {
         case .ranging: return "Open ranging"
         case .goTo: return "Go there"
+        case .spotting: return "Spot"
         case .none: return ""
         }
     }
@@ -35,6 +39,7 @@ enum OrderTool {
         switch self {
         case .ranging: return "scope"
         case .goTo: return "location.north.line.fill"
+        case .spotting: return "eye.fill"
         case .none: return ""
         }
     }
@@ -43,6 +48,7 @@ enum OrderTool {
         switch self {
         case .ranging: ReticleRangingView()
         case .goTo: GoToView(order: order)
+        case .spotting: SpotterCard(order: order)
         case .none: EmptyView()
         }
     }
@@ -104,13 +110,20 @@ struct OrderMiniMap: View {
     }
 }
 
-/// One order, compact: what, the note, the pointer, Open (its tool) and Seen / Done / Can't.
+/// One order, compact: what, the note, the pointer, its tool, and Seen / Done / Can't. Seen tells
+/// the commander you've got it and opens the tool the order needs: ranging for Range the pole, the
+/// spotter card for Spot, Go there for an order with a place.
 struct OrderCard: View {
     @EnvironmentObject private var membership: SquadMembership
+    @EnvironmentObject private var reticleLog: ReticleLogStore
     let order: Order
     var compact = false
-    /// When set, Open calls this (the banner opens the orders screen); otherwise Open is a link.
+    /// When set, the tool opens through this (the banner opens the orders screen at the tool);
+    /// otherwise it opens in a sheet over this screen.
     var onOpen: (() -> Void)?
+    @State private var showingTool = false
+
+    private var tool: OrderTool { OrderTool(order) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 6 : 8) {
@@ -124,40 +137,52 @@ struct OrderCard: View {
                 Text(order.text).font(compact ? .footnote : .body).lineLimit(compact ? 2 : nil)
             }
             if order.at != nil { OrderPointer(order: order, size: compact ? 22 : 34) }
-            if order.kind == .spot {
-                Text("Spotting from phones isn't built yet: watch the round and tell the commander.")
-                    .font(.caption).foregroundStyle(.secondary)
+            if tool != .none && !compact {
+                Text("Seen opens \(Self.toolName(tool)).").font(.caption).foregroundStyle(.secondary)
             }
             HStack(spacing: 8) {
-                let tool = OrderTool(order)
                 if tool != .none {
-                    if let onOpen {
-                        Button { onOpen() } label: { Label(tool.title, systemImage: tool.systemImage) }
-                            .buttonStyle(.borderedProminent).controlSize(compact ? .small : .regular)
-                    } else {
-                        NavigationLink { tool.destination(order) } label: { Label(tool.title, systemImage: tool.systemImage) }
-                            .buttonStyle(.borderedProminent).controlSize(compact ? .small : .regular)
-                    }
+                    Button { openTool() } label: { Label(tool.title, systemImage: tool.systemImage) }
+                        .buttonStyle(.borderedProminent).controlSize(compact ? .small : .regular)
                 }
-                answers
+                answer("Seen", .seen, tint: .blue)
+                answer("Done", .done, tint: .green)
+                answer("Can't", .cannot, tint: .red)
             }
+        }
+        .sheet(isPresented: $showingTool) {
+            NavigationStack {
+                tool.destination(order)
+                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Close") { showingTool = false } } }
+            }
+            .environmentObject(membership)
+            .environmentObject(reticleLog)
         }
     }
 
-    private var answers: some View {
-        HStack(spacing: 6) {
-            answer("Seen", .seen, tint: .blue)
-            answer("Done", .done, tint: .green)
-            answer("Can't", .cannot, tint: .red)
-        }
+    private func openTool() {
+        if let onOpen { onOpen() } else { showingTool = true }
     }
 
     private func answer(_ title: String, _ r: OrderAck.Response, tint: Color) -> some View {
-        Button(title) { membership.ack(order, r) }
-            .buttonStyle(.bordered)
-            .tint(tint)
-            .controlSize(compact ? .small : .regular)
-            .disabled(r == .seen && membership.answers[order.id] == .seen)
+        Button(title) {
+            membership.ack(order, r)
+            if r == .seen && tool != .none { openTool() }
+        }
+        .buttonStyle(.bordered)
+        .tint(tint)
+        .controlSize(compact ? .small : .regular)
+        // Seen stays live while it opens a tool, so it can bring the tool back.
+        .disabled(r == .seen && tool == .none && membership.answers[order.id] == .seen)
+    }
+
+    static func toolName(_ t: OrderTool) -> String {
+        switch t {
+        case .ranging: return "the ranging screen"
+        case .spotting: return "the spotter card"
+        case .goTo: return "the pointer to the place"
+        case .none: return ""
+        }
     }
 }
 
@@ -265,6 +290,7 @@ struct OrdersHub: View {
 /// orders screen at that order.
 struct OrderBanner: View {
     @EnvironmentObject private var membership: SquadMembership
+    @EnvironmentObject private var reticleLog: ReticleLogStore
     @State private var opened: Order?
     @State private var openTool = false
 
@@ -287,6 +313,10 @@ struct OrderBanner: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .sheet(item: $opened) { order in OrdersHub(start: openTool ? order : nil, openTool: openTool) }
+        .sheet(item: $opened) { order in
+            OrdersHub(start: openTool ? order : nil, openTool: openTool)
+                .environmentObject(membership)
+                .environmentObject(reticleLog)
+        }
     }
 }
