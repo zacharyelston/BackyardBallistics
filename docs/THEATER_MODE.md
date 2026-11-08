@@ -69,6 +69,14 @@ The Theater station shows the whole course at once:
 - **Coverage.** Where the mesh is thin, so the owner can ask squads to capture there.
 - **Replay.** After the day, every match replayed from the feed.
 
+### The 3D view (built)
+
+SpudTheater's toolbar switches between the 2D site map and a 3D view of the course (SceneKit, macOS 14). The ground is a USGS 3DEP bare-earth grid (public domain, US only), sampled every 2.5 m over the boundary plus 20 m (coarser on big courses, at most 12,000 samples) and cached in `~/Library/Application Support/SpudTheater/Fields/<course>/elevation.json`, so each course is fetched once. Outside the US there is no data: the view says so and draws flat ground. On it: the boundary, each hole's pole at its real height with an orange top band and its in-radius ring, the firing points, every safety fan (SafetyKit's ± half-angle to its fan radius, the hole in play strong), each member at their GPS (grey when stale), and any field meshes saved for the course (`FieldStore`), with a toggle. Height can be exaggerated 2×. Drag to orbit, right- or shift-drag to pan, scroll or pinch to zoom; "Reset view" goes back over the whole course.
+
+Scene axes: x east, y up, z south, metres from the grid's frame origin (FieldKit `SceneAxes`). Field meshes are placed by `FieldMeshInfo.toENU` and then ENU → scene; nothing else swaps axes. The geometry (terrain mesh, draping, fans, the axes) is in FieldKit and unit-tested.
+
+![The sample course in 3D: USGS 3DEP ground, hole 2's fans in play, test members and a test mesh (the blue box)](theater-3d.jpg)
+
 ## Safety
 
 v3's rules all stand. SafetyKit stays authoritative on each squad's commander iPad.
