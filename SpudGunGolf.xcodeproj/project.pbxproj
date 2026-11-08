@@ -23,6 +23,7 @@
 		724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AFC18B1FD4637E46C11CA7 /* CrosshairSpotView.swift */; };
 		77084244531EA1125D1C00E1 /* BallisticsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 957114E8D0EB2D87927F3B83 /* BallisticsKit */; };
 		833F06491C4DDFF9FDC23AC6 /* CoreGeo in Frameworks */ = {isa = PBXBuildFile; productRef = A767DE0DBD45719511064F3D /* CoreGeo */; };
+		85E9117B8A9E9C1E6A3E5DF9 /* CameraNeedsPortrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77E46D1FF69E6EBCE1E9BBE /* CameraNeedsPortrait.swift */; };
 		8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C414C5B4AC53422F7AABC2C /* LeanCheckView.swift */; };
 		9214CC0F333393CF432A7B65 /* CourseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 065ED1CBF727D2A9F1C17FFE /* CourseStore.swift */; };
 		969A1C83E524FD939C7D8B00 /* HoleMissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88FD57DAB3E4CCC46159899 /* HoleMissionView.swift */; };
@@ -70,6 +71,7 @@
 		B045324F460255AFAFCFE722 /* FieldLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldLog.swift; sourceTree = "<group>"; };
 		BD53A79A0D7E172F849F2839 /* RoundStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundStore.swift; sourceTree = "<group>"; };
 		C42B175AD5A532DDE2201A1D /* ToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolsView.swift; sourceTree = "<group>"; };
+		C77E46D1FF69E6EBCE1E9BBE /* CameraNeedsPortrait.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraNeedsPortrait.swift; sourceTree = "<group>"; };
 		D1E9E1B2EC8B568A9E479CDA /* PoleMarker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleMarker.swift; sourceTree = "<group>"; };
 		D29F67AAE33283A8171918D7 /* RangingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingView.swift; sourceTree = "<group>"; };
 		D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SpudGunGolf.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -228,6 +230,7 @@
 			isa = PBXGroup;
 			children = (
 				0E339C687D3B38CF183F162C /* CameraController.swift */,
+				C77E46D1FF69E6EBCE1E9BBE /* CameraNeedsPortrait.swift */,
 				1DA6EB5E25631668DAC5462C /* JSONStore.swift */,
 				E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */,
 				D1E9E1B2EC8B568A9E479CDA /* PoleMarker.swift */,
@@ -331,6 +334,7 @@
 				02A1B855EAFC04BFFF0A95E5 /* AppSettings.swift in Sources */,
 				1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */,
 				F5C088DF7343E3AE34A239F6 /* CameraHUD.swift in Sources */,
+				85E9117B8A9E9C1E6A3E5DF9 /* CameraNeedsPortrait.swift in Sources */,
 				9214CC0F333393CF432A7B65 /* CourseStore.swift in Sources */,
 				981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */,
 				724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */,

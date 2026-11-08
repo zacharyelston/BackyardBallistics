@@ -25,7 +25,9 @@ struct PoleHeightView: View {
     @AppStorage(Settings.poleHeightKey) private var poleHeight = Settings.defaultPoleHeight
     @State private var saved = false
 
-    var body: some View {
+    var body: some View { cameraContent.cameraNeedsPortrait() }
+
+    @ViewBuilder private var cameraContent: some View {
         ZStack(alignment: .bottom) {
             ARPoleView(model: model)
                 .ignoresSafeArea(edges: .bottom)

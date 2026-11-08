@@ -40,8 +40,9 @@ targets:
         UILaunchScreen: {}
         UIRequiredDeviceCapabilities: [arkit]
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        # The reticle maths assumes portrait; iPad holds one orientation only in full screen.
-        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait]
+        # iPad turns every way (it often sits in a landscape keyboard stand). The camera screens'
+        # reticle maths assumes portrait, so they ask for portrait until they handle landscape.
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         UIRequiresFullScreen: true
         NSCameraUsageDescription: SpudGunGolf uses the camera to measure flag poles and range the hole.
         NSLocationWhenInUseUsageDescription: SpudGunGolf uses your location to find the hole and check that a range lands on a course flag.

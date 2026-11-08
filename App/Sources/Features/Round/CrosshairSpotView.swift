@@ -23,7 +23,9 @@ struct CrosshairSpotView: View {
         return Spotting.lateralMiss(crosshairAngleDegrees: a, range: range)
     }
 
-    var body: some View {
+    var body: some View { cameraContent.cameraNeedsPortrait() }
+
+    @ViewBuilder private var cameraContent: some View {
         ZStack {
             Group {
                 if let ar = session.source as? ARKitRangingSource {

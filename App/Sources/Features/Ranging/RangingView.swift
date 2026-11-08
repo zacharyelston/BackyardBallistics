@@ -36,7 +36,9 @@ struct RangingView: View {
         return Safety.checkFlag(lie: lie, east: en.east, north: en.north, flag: flagPoint)
     }
 
-    var body: some View {
+    var body: some View { cameraContent.cameraNeedsPortrait() }
+
+    @ViewBuilder private var cameraContent: some View {
         VStack(spacing: 0) {
             ZStack {
                 CaptureFeedView(session: session)
