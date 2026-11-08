@@ -103,7 +103,7 @@ public struct TheaterHost {
     // MARK: Fields and notes
 
     private mutating func register(_ f: FieldSubmission) -> Receipt {
-        let errors = CourseValidator.problems(for: f.course).filter { $0.severity == .error }
+        let errors = CourseValidator.blockingProblems(for: f.course)
         guard errors.isEmpty else {
             return Receipt(id: f.id, status: .refused, detail: errors.prefix(3).map(\.description).joined(separator: " "))
         }

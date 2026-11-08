@@ -39,7 +39,7 @@ struct PlayView: View {
                             Label {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("\(course.name) is practice only")
-                                    Text("Its safety fan leaves the boundary, so real rounds are off. Practice and demos fire nothing.")
+                                    Text("A safety fan leaves the boundary, or a firing point is past 100 yd, so real rounds are off. Practice and demos fire nothing.")
                                         .font(.footnote).foregroundStyle(.secondary)
                                 }
                             } icon: {

@@ -204,7 +204,7 @@ public struct SquadHost {
             return [Outgoing(to: peer, .receipt(Receipt(id: n.id, status: .stored, detail: "Sent to \(player)'s leader.")))] + toObservers
         case var .fieldSubmission(f):
             f.author = round.squad.members.first { $0.id == member }?.name ?? f.author
-            let errors = CourseValidator.problems(for: f.course).filter { $0.severity == .error }
+            let errors = CourseValidator.blockingProblems(for: f.course)
             guard errors.isEmpty else {
                 return [Outgoing(to: peer, .receipt(Receipt(id: f.id, status: .refused,
                                                             detail: errors.prefix(3).map(\.description).joined(separator: " "))))]
@@ -213,7 +213,8 @@ public struct SquadHost {
             submissions.append(f)
             submitters[f.id] = member
             if submissions.count > 20 { submissions.removeFirst(submissions.count - 20) }
-            return [Outgoing(to: peer, .receipt(Receipt(id: f.id, status: .received, detail: "Waiting for the leader to adopt it.")))]
+            let practice = CourseValidator.isPracticeOnly(f.course) ? " It's practice only." : ""
+            return [Outgoing(to: peer, .receipt(Receipt(id: f.id, status: .received, detail: "Waiting for the leader to adopt it." + practice)))]
         case let .orderAck(a):
             // Only from someone the order was for.
             guard let o = orders.first(where: { $0.id == a.order }), o.isFor(member) else { return [] }
@@ -470,7 +471,10 @@ public struct SquadHost {
         if let h = round.hole, h.phase != .finished { return problem("Finish or end hole \(h.holeNumber) first.", now: now) }
         if round.walkingOut { return problem("People are walking out. Adopt the field once they're back.", now: now) }
         if match?.started == true { return problem("The match is under way on \(round.course.name).", now: now) }
-        var next = SquadRound(squad: round.squad, course: f.course, practice: round.practice)
+        // A field that's practice only (a fan leaving the boundary, a firing point out of range) puts
+        // the squad in practice: simulated rounds only.
+        let practiceOnly = CourseValidator.isPracticeOnly(f.course)
+        var next = SquadRound(squad: round.squad, course: f.course, practice: round.practice || practiceOnly)
         next.revision = round.revision
         round = next
         roundInFlight = nil
@@ -479,7 +483,7 @@ public struct SquadHost {
         submissions.removeAll { $0.id == submission }
         let author = submitters.removeValue(forKey: submission).flatMap { m in peers.first { $0.value == m }?.key }
         let receipt = author.map { [Outgoing(to: $0, .receipt(Receipt(id: f.id, status: .stored,
-                                                                        detail: "\(player) is playing \(f.course.name) now.")))] } ?? []
+                                                                        detail: "\(player) is playing \(f.course.name) now" + (practiceOnly ? ", in practice." : "."))))] } ?? []
         let toObservers = observers.sorted { $0.raw < $1.raw }.map { Outgoing(to: $0, .course(f.course)) }
         return receipt + toObservers + changed(now: now)
     }

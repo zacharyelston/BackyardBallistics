@@ -6,6 +6,23 @@ import SafetyKit
 /// to a course. Run on every load, including a course restored from the app's cache, so a change
 /// to the safety limits re-checks courses that passed before.
 public enum CourseValidator {
+    /// True when every error is one practice can live with (it fires nothing): the course can be
+    /// saved, shared and practised, but not used for real rounds.
+    public static func practiceAllows(_ problems: [CourseProblem]) -> Bool {
+        problems.filter { $0.severity == .error }.allSatisfy { $0.kind != nil }
+    }
+
+    /// The errors that stop a course being used at all, even for practice.
+    public static func blockingProblems(for course: Course) -> [CourseProblem] {
+        problems(for: course).filter { $0.severity == .error && $0.kind == nil }
+    }
+
+    /// Fine for practice, but not for real rounds.
+    public static func isPracticeOnly(_ course: Course) -> Bool {
+        let errors = problems(for: course).filter { $0.severity == .error }
+        return !errors.isEmpty && errors.allSatisfy { $0.kind != nil }
+    }
+
     public static func problems(for course: Course) -> [CourseProblem] {
         var out: [CourseProblem] = []
         let limits = Safety.limits
@@ -87,7 +104,7 @@ public enum CourseValidator {
             }
             if distance > limits.maxSolutionRange {
                 let reason = SafetyReason.beyondSolutionRange(distance: distance, limit: limits.maxSolutionRange)
-                out.append(CourseProblem(key: key, "\(where_): \(reason.description)"))
+                out.append(CourseProblem(key: key, kind: .range, "\(where_): \(reason.description)"))
             }
             // Without a boundary the course-level problem above already says so, once.
             guard let boundary else { continue }

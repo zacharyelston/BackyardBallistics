@@ -479,4 +479,25 @@ final class GroupKitTests: XCTestCase {
         f.send(p, .hello(Hello(name: "Ana", device: UUID(), joinCode: "RED", role: .contributor)))
         XCTAssertTrue(p.refusals.last?.contains("Send to Theater") == true)
     }
+
+    /// Adopting a practice-only field (here, its firing point is past the 100 yd limit) puts the squad
+    /// in practice, so no real round can be fired on it.
+    func testAdoptingAPracticeOnlyFieldPutsTheSquadInPractice() {
+        let f = Field()
+        let live = SquadHost(squad: Squad(name: "Red"), course: f.course, practice: false, joinCode: "RED")
+        f.hosts["Red"] = live
+        f.net.add(Field.ipad("Red")) { [unowned f] m, from in f.hosts["Red"]!.handle(m, from: from, now: f.now) }
+        let ana = f.addPhone("Ana", squad: "Red", at: .zero)
+        var far = testCourse()
+        far.id = "far"
+        far.holes[0].flag.position = geo(Ground(0, 100))
+        let sub = FieldSubmission(author: "Ana", time: f.now, course: far)
+        f.send(ana, .fieldSubmission(sub))
+        XCTAssertEqual(f.hosts["Red"]!.submissions.count, 1, "a practice-only field is accepted, not refused")
+        XCTAssertFalse(f.hosts["Red"]!.round.practice)
+        f.command("Red") { $0.adoptField(sub.id, now: $1) }
+        XCTAssertEqual(f.hosts["Red"]!.round.course.id, "far")
+        XCTAssertTrue(f.hosts["Red"]!.round.practice)
+        XCTAssertTrue(f.hosts["Red"]!.round.card.practice)
+    }
 }

@@ -44,7 +44,8 @@ final class CourseStore: ObservableObject {
 
     /// The course to play, only if it passed every check. Mission screens read this.
     var playableCourse: Course? { loaded?.result.playableCourse }
-    /// The course for practice: playable, or refused only because a safety fan leaves the boundary.
+    /// The course for practice: playable, or refused only for problems practice can live with (a fan
+    /// leaving the boundary, a firing point past the solution range).
     var practiceCourse: Course? { loaded?.result.practiceCourse }
 
     private let cacheURL: URL

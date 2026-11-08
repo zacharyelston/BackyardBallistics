@@ -283,7 +283,7 @@ struct CourseSurveyView: View {
     private var isValid: Bool { survey.text != nil && !problems.contains { $0.severity == .error } }
     /// Only the safety fan fails: fine for practice and demos, not for real rounds.
     private var isPracticeOnly: Bool {
-        survey.text != nil && !isValid && problems.filter { $0.severity == .error }.allSatisfy { $0.kind == .fan }
+        survey.text != nil && !isValid && CourseValidator.practiceAllows(problems)
     }
 
     @ViewBuilder private var checkSection: some View {
@@ -294,7 +294,7 @@ struct CourseSurveyView: View {
                 Label("Passes every check", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
             } else {
                 if isPracticeOnly {
-                    Label("Practice only: everything passes except the safety fan, so real rounds stay off. Practice and demos work.",
+                    Label("Practice only: everything passes except the safety fan or a firing point past 100 yd, so real rounds stay off. Practice and demos work. To play for real, record the firing point within 91 m of the pole.",
                           systemImage: "gamecontroller").foregroundStyle(.orange).font(.footnote)
                 }
                 ForEach(problems, id: \.self) { p in
