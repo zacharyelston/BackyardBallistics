@@ -19,6 +19,8 @@ targets:
     platform: iOS
     sources:
       - App/Sources
+      # Views shared with SpudTheater (macOS): the site map.
+      - App/Shared
       - path: courses/sample-course.yaml
         buildPhase: resources
       # Your own course, if courses/local/course.yaml exists (git ignores it): the default course.
@@ -73,6 +75,7 @@ targets:
     platform: macOS
     sources:
       - App/Theater
+      - App/Shared
     dependencies:
       - package: SpudCore
         product: CoreGeo

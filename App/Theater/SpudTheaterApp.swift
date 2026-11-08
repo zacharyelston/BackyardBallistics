@@ -131,7 +131,7 @@ struct TheaterView: View {
             .navigationSplitViewColumnWidth(min: 250, ideal: 280)
         } detail: {
             VSplitView {
-                SiteMap(watches: model.watches.values.sorted { $0.name < $1.name })
+                SiteMap(squads: model.watches.values.sorted { $0.name < $1.name }.map(\.siteMapSquad))
                     .frame(minHeight: 320)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
@@ -154,101 +154,12 @@ struct TheaterView: View {
     }
 }
 
-/// The site: satellite imagery with each watched squad's course and members on it.
-struct SiteMap: View {
-    let watches: [Watch]
-    @State private var camera: MapCameraPosition = .automatic
-    @State private var fittedTo: String?
-
-    private static let squadColors: [Color] = [.orange, .cyan, .pink, .yellow, .mint, .purple]
-
-    var body: some View {
-        Map(position: $camera) {
-            ForEach(Array(courses.enumerated()), id: \.element.id) { _, course in
-                MapPolygon(coordinates: course.boundary.vertices.map(\.coordinate))
-                    .foregroundStyle(.clear)
-                    .stroke(.white.opacity(0.9), lineWidth: 2)
-                ForEach(course.holes) { hole in
-                    let active = activeHoles.contains(HoleKey(course: course.id, hole: hole.number))
-                    ForEach(Array(hole.firingPoints.enumerated()), id: \.offset) { i, fp in
-                        MapPolygon(coordinates: Self.fan(from: fp, to: hole.flag.position))
-                            .foregroundStyle(.red.opacity(active ? 0.22 : 0.06))
-                            .stroke(.red.opacity(active ? 0.8 : 0.25), lineWidth: active ? 1.5 : 0.5)
-                        MapPolyline(coordinates: [fp.coordinate, hole.flag.position.coordinate])
-                            .stroke(.white.opacity(0.6), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                        Annotation("\(hole.number)·\(i + 1)", coordinate: fp.coordinate, anchor: .center) {
-                            Image(systemName: "triangle.fill").font(.caption2).foregroundStyle(.white)
-                        }
-                    }
-                    MapCircle(center: hole.flag.position.coordinate, radius: hole.flag.inRadiusM)
-                        .foregroundStyle(.green.opacity(0.35))
-                        .stroke(.green, lineWidth: 1)
-                    Annotation("Hole \(hole.number)", coordinate: hole.flag.position.coordinate, anchor: .bottom) {
-                        Image(systemName: "flag.fill").foregroundStyle(.red).shadow(radius: 2)
-                    }
-                }
-            }
-            ForEach(Array(watches.enumerated()), id: \.element.id) { i, w in
-                let color = Self.squadColors[i % Self.squadColors.count]
-                ForEach(w.squad?.members ?? []) { m in
-                    if let p = w.positions[m.id] {
-                        let stale = Date().timeIntervalSince(p.time) > 15
-                        MapCircle(center: p.at.coordinate, radius: max(1, p.accuracy))
-                            .foregroundStyle(color.opacity(0.15))
-                        Annotation(m.name, coordinate: p.at.coordinate) {
-                            Circle().fill(stale ? .gray : color)
-                                .frame(width: 12, height: 12)
-                                .overlay(Circle().stroke(.white, lineWidth: 2))
-                        }
-                    }
-                }
-            }
-        }
-        .mapStyle(.hybrid(elevation: .realistic))
-        .mapControls { MapCompass(); MapScaleView(); MapZoomStepper(); MapPitchToggle() }
-        .overlay(alignment: .topTrailing) {
-            Button("Fit course") { fit(force: true) }.padding(8)
-        }
-        .onChange(of: courses.map(\.id)) { _, _ in fit(force: false) }
+extension Watch {
+    /// What the shared site map (App/Shared/SiteMap.swift) draws for this squad.
+    var siteMapSquad: SiteMapSquad {
+        SiteMapSquad(id: name, course: course, members: squad?.members ?? [], positions: positions,
+                     activeHole: status?.hole, walkingOut: status?.walkingOut ?? true)
     }
-
-    private struct HoleKey: Hashable { var course: String; var hole: Int }
-
-    private var courses: [Course] {
-        var seen = Set<String>()
-        return watches.compactMap(\.course).filter { seen.insert($0.id).inserted }
-    }
-
-    private var activeHoles: Set<HoleKey> {
-        Set(watches.compactMap { w in
-            guard let c = w.course, let h = w.status?.hole, w.status?.walkingOut == false else { return nil }
-            return HoleKey(course: c.id, hole: h)
-        })
-    }
-
-    private func fit(force: Bool) {
-        guard let course = courses.first, force || fittedTo != course.id else { return }
-        fittedTo = course.id
-        var points = course.boundary.vertices
-        for w in watches { points += w.positions.values.map(\.at) }
-        let rect = points.map { MKMapPoint($0.coordinate) }
-            .reduce(MKMapRect.null) { $0.union(MKMapRect(origin: $1, size: MKMapSize(width: 1, height: 1))) }
-        camera = .rect(rect.insetBy(dx: -rect.width * 0.15, dy: -rect.height * 0.15))
-    }
-
-    /// The safety fan from a firing point toward its flag: ± the half-angle, out to the fan radius.
-    static func fan(from fp: GeoPoint, to flag: GeoPoint) -> [CLLocationCoordinate2D] {
-        let limits = Safety.limits
-        let centre = Geo.bearing(from: fp, to: flag)
-        let arc = stride(from: -limits.fanHalfAngle, through: limits.fanHalfAngle, by: 5).map {
-            Geo.destination(fp, bearing: centre + $0, distance: limits.fanRange).coordinate
-        }
-        return [fp.coordinate] + arc
-    }
-}
-
-extension GeoPoint {
-    var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: latitude, longitude: longitude) }
 }
 
 struct SquadCard: View {
