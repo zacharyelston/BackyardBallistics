@@ -15,7 +15,7 @@ import CourseKit
 
 public enum GroupProtocol {
     /// Bumped on any change to the messages. A device on another version is refused (fail closed).
-    public static let version = 3
+    public static let version = 4
 }
 
 public struct SquadID: Codable, Hashable, Sendable, CustomStringConvertible {
@@ -200,6 +200,72 @@ public struct LockReceipt: Codable, Equatable, Sendable {
     public var reasons: [String]
 }
 
+/// A squad leader's order to one member, several, or the whole squad: a tasking line, like calling
+/// across the yard. It carries no firing data.
+public struct Order: Codable, Equatable, Sendable, Identifiable {
+    public enum Kind: String, Codable, Sendable, CaseIterable {
+        /// Range the pole from where you are (or from `at`).
+        case rangeFrom
+        /// Spot the next round.
+        case spot
+        /// Go to `at`.
+        case moveTo
+        /// Take field-map captures (at `at`, if given).
+        case capture
+        case holdPosition
+        case returnToFiringPoint
+        /// Free text only.
+        case note
+
+        public var title: String {
+            switch self {
+            case .rangeFrom: return "Range the pole"
+            case .spot: return "Spot"
+            case .moveTo: return "Move to"
+            case .capture: return "Capture"
+            case .holdPosition: return "Hold position"
+            case .returnToFiringPoint: return "Back to the firing point"
+            case .note: return "Note"
+            }
+        }
+    }
+
+    public static let maxText = 140
+
+    public var id: UUID
+    public var kind: Kind
+    public var text: String
+    /// A place on the field, for move-to, range-from and capture orders.
+    public var at: GeoPoint?
+    /// The members it's for; nil means the whole squad.
+    public var to: [MemberID]?
+    public var time: Date
+
+    public init(id: UUID = UUID(), kind: Kind, text: String, at: GeoPoint? = nil, to: [MemberID]? = nil, time: Date) {
+        self.id = id
+        self.kind = kind
+        self.text = String(text.prefix(Self.maxText))
+        self.at = at
+        self.to = to
+        self.time = time
+    }
+
+    public func isFor(_ member: MemberID) -> Bool { to?.contains(member) ?? true }
+}
+
+/// A member's answer to an order.
+public struct OrderAck: Codable, Equatable, Sendable {
+    public enum Response: String, Codable, Sendable, CaseIterable {
+        case seen, done, cannot
+    }
+    public var order: UUID
+    public var response: Response
+    public init(order: UUID, response: Response) {
+        self.order = order
+        self.response = response
+    }
+}
+
 /// One round as members see it: the call and fire control's correction, in metres only.
 public struct RoundSummary: Codable, Equatable, Sendable {
     public var number: Int
@@ -340,6 +406,8 @@ public struct GroupMessage: Codable, Equatable, Sendable {
         case lock(LockReport)
         case spot(SpotReport)
         case fired(FiredReport)
+        /// A member's answer to an order.
+        case orderAck(OrderAck)
         /// Phone → commander, and commander → match host.
         case checkFire(CheckFire)
 
@@ -354,6 +422,8 @@ public struct GroupMessage: Codable, Equatable, Sendable {
         case squadStatus(SquadStatus)
         case spotRequest(SpotRequest)
         case lockReceipt(LockReceipt)
+        /// The squad leader's order, to the members it's for (and to observers, read-only).
+        case order(Order)
 
         // Commander → match host
         case joinMatch(JoinMatch)

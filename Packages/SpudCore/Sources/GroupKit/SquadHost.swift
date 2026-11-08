@@ -100,6 +100,10 @@ public struct SquadHost {
     public private(set) var matchHost: PeerID?
     /// The last thing that went wrong, for the commander's screen.
     public private(set) var lastProblem: String?
+    /// Orders sent this session, oldest first, and each recipient's latest answer.
+    public private(set) var orders: [Order] = []
+    public private(set) var acks: [UUID: [MemberID: OrderAck.Response]] = [:]
+    static let maxOrdersKept = 100
     /// Things that happened under a hold (a Fired while held), for the after-action log.
     public private(set) var incidents: [String] = []
 
@@ -182,6 +186,11 @@ public struct SquadHost {
             return receiveSpot(report, from: member, now: now)
         case let .fired(f):
             return fired(f, by: member, now: now)
+        case let .orderAck(a):
+            // Only from someone the order was for.
+            guard let o = orders.first(where: { $0.id == a.order }), o.isFor(member) else { return [] }
+            acks[a.order, default: [:]][member] = a.response
+            return []
         case let .checkFire(cf):
             return raiseCheckFire(cf, now: now)
         default:
@@ -212,7 +221,10 @@ public struct SquadHost {
         }
         peers = peers.filter { $0.value != id }   // a rejoin replaces the old link
         peers[peer] = id
-        return [Outgoing(to: peer, .welcome(Welcome(member: id, squad: round.squad)))] + changed(now: now)
+        // Orders for this member that it hasn't finished, so a rejoin (or a late joiner) has them.
+        let open = orders.filter { $0.isFor(id) && acks[$0.id]?[id] != .done && acks[$0.id]?[id] != .cannot }.suffix(10)
+        return [Outgoing(to: peer, .welcome(Welcome(member: id, squad: round.squad)))]
+            + open.map { Outgoing(to: peer, .order($0)) } + changed(now: now)
     }
 
     private mutating func applyMatch(_ state: MatchState, now: Date) -> [Outgoing] {
@@ -407,6 +419,24 @@ public struct SquadHost {
             return problem("Can't amend: \(error)", now: now)
         }
         return changed(now: now)
+    }
+
+    /// Sends an order to some members (`to`), or to the whole squad (nil). Observers see it too.
+    public mutating func sendOrder(_ kind: Order.Kind, text: String, at: GeoPoint? = nil, to: [MemberID]? = nil,
+                                   now: Date) -> [Outgoing] {
+        let roster = Set(round.squad.members.map(\.id))
+        let targets = to.map { $0.filter(roster.contains) }
+        if let targets, targets.isEmpty { return problem("Pick at least one member.", now: now) }
+        let order = Order(kind: kind, text: text, at: at, to: targets, time: now)
+        orders.append(order)
+        if orders.count > Self.maxOrdersKept { orders.removeFirst(orders.count - Self.maxOrdersKept) }
+        let members = peers.filter { order.isFor($0.value) }.map(\.key)
+        return (members + Array(observers)).sorted { $0.raw < $1.raw }.map { Outgoing(to: $0, .order(order)) }
+    }
+
+    /// Who an order is for, by member.
+    public func recipients(of order: Order) -> [Member] {
+        round.squad.members.filter { order.isFor($0.id) }
     }
 
     /// Check fire called on this iPad.
