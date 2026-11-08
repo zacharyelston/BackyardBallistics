@@ -14,7 +14,7 @@ import RoundKit
 
 public enum GroupProtocol {
     /// Bumped on any change to the messages. A device on another version is refused (fail closed).
-    public static let version = 1
+    public static let version = 2
 }
 
 public struct SquadID: Codable, Hashable, Sendable, CustomStringConvertible {
@@ -74,13 +74,23 @@ public struct Squad: Codable, Equatable, Sendable {
 // MARK: Payloads
 
 public struct Hello: Codable, Equatable, Sendable {
+    public enum Role: String, Codable, Sendable {
+        /// A squad member's phone.
+        case member
+        /// A Theater station (v4): watches the squad. It receives status and positions and can
+        /// send nothing that the squad acts on.
+        case observer
+    }
     public var name: String
     public var device: UUID
     public var joinCode: String
-    public init(name: String, device: UUID, joinCode: String) {
+    /// Nil means member.
+    public var role: Role?
+    public init(name: String, device: UUID, joinCode: String, role: Role? = nil) {
         self.name = name
         self.device = device
         self.joinCode = joinCode
+        self.role = role
     }
 }
 
@@ -332,8 +342,10 @@ public struct GroupMessage: Codable, Equatable, Sendable {
         /// Phone → commander, and commander → match host.
         case checkFire(CheckFire)
 
-        // Commander → member's phone
+        // Commander → member's phone (and to observers: status and positions only)
         case welcome(Welcome)
+        /// To a Theater station that joined as an observer.
+        case observing(Squad)
         case refused(String)
         case squadStatus(SquadStatus)
         case spotRequest(SpotRequest)

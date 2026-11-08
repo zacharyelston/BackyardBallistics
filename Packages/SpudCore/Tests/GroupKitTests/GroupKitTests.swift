@@ -321,4 +321,38 @@ final class GroupKitTests: XCTestCase {
         XCTAssertTrue(ana.receipts.last?.reasons.first?.contains("from the published flag") == true)
         XCTAssertEqual(f.hosts["Red"]!.round.hole?.phase, .setup)
     }
+
+    // MARK: Observers (v4 Theater)
+
+    func testAnObserverWatchesButCantAct() {
+        let f = Field()
+        f.addSquad("Red")
+        let ana = f.addPhone("Ana", squad: "Red", at: Ground(0, -2))
+        f.tick()
+        let theater = Phone("Theater", at: .zero)
+        theater.commander = Field.ipad("Red")
+        var watched: [GroupMessage.Body] = []
+        f.net.add(theater.peer) { m, _ in watched.append(m.body); return [] }
+        f.send(theater, .hello(Hello(name: "Theater", device: UUID(), joinCode: "RED", role: .observer)))
+        guard case let .observing(squad)? = watched.first else { return XCTFail("\(watched)") }
+        XCTAssertEqual(squad.members.map(\.name), ["Ana"], "an observer isn't added to the roster")
+        XCTAssertTrue(watched.contains { if case .positions = $0 { return true }; return false }, "known positions on joining")
+
+        // Live positions and status reach it.
+        watched = []
+        ana.at = Ground(3, -4)
+        f.tick()
+        XCTAssertTrue(watched.contains { if case .positions = $0 { return true }; return false })
+
+        // Nothing it sends acts on the squad.
+        f.command("Red") { $0.startNextHole(now: $1) }
+        let before = f.hosts["Red"]!.round
+        for body: GroupMessage.Body in [.checkFire(CheckFire(by: "Theater")), .fired(FiredReport(hole: 1, mission: 1, round: 1)),
+                                        .position(MemberPosition(at: origin, accuracy: 1, time: f.now))] {
+            f.send(theater, body)
+        }
+        XCTAssertEqual(f.hosts["Red"]!.round, before)
+        XCTAssertFalse(f.holds("Red").contains(.checkFire(by: "Theater")))
+        XCTAssertFalse(watched.contains { if case .spotRequest = $0 { return true }; return false })
+    }
 }
