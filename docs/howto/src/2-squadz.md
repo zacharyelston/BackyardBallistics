@@ -1,0 +1,37 @@
+# 2. Squadz (v3)
+
+[Back to How to play](README.md)
+
+In Squadz, **the squad is the player**. A squad has one scorecard, and squads play against squads. Each hole is still a v2 fire mission.
+
+## Who does what
+
+| Who | Device | Does |
+| --- | --- | --- |
+| **Commander** | The squad's iPad, usually in landscape | Hosts the squad: shows the join code and QR code, the field map with everyone on it, the roster, the hole, members' locks and spot calls, and the orders. It's the squad's only firing display, so the safety checks run there. |
+| **Member** | Each player's phone | Joins with the code, reports its position, ranges and sends locks, spots rounds, and answers orders. A phone never shows firing data. |
+| **Gunner** | A member, at the launcher | Calls **Fired** when a round is away. |
+
+## Joining
+
+1. On the iPad: **Play → v3 Squadz → Command a squad**, pick a squad name, and start it. The iPad shows a 6-character code and a QR code, and stays awake on this screen.
+2. On each phone: **Play → v3 Squadz → Join squad**, pick the squad, then **Scan code** or type it.
+3. Allow **Local Network** on both devices, and **Location** on the phone. Phones keep reporting their position in the background while in a squad.
+
+If the iPad sleeps or the Wi-Fi blinks, phones rejoin on their own as the same member.
+
+## The commander's screen
+
+- **The map:** satellite imagery with the course boundary, the flags and rings, the firing points, the safety fans (the hole in play is highlighted), and every member as a dot. A dot goes grey when its position is old. **Fit** frames the course and the squad. Used locks are drawn as lines, and orders with a place as pins with a dashed pointer from each member.
+- **Hole:** **Start hole** (choose a firing point), **Confirm downrange** (only the commander's own tap does this), **Fired**, then members' spot calls with **Use** or **Lost**, then **Cease fire** and **Finish hole**.
+- **Locks:** members' locks, newest first. **Use** checks a lock against the course on the iPad and begins, advances or verifies the mission.
+
+## Holds
+
+Holds pause firing data for the squad. They only ever add to the safety checks, never remove them:
+
+{{holds_list}}
+
+A squad playing on its own has no match host, so it always shows the first two holds. That's expected in practice.
+
+Protocol version {{squadz.protocolVersion}}: a device running a different version is refused, so update every device together.

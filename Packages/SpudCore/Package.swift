@@ -23,6 +23,8 @@ let package = Package(
         .library(name: "CourseKit", targets: ["CourseKit"]),
         .library(name: "RoundKit", targets: ["RoundKit"]),
         .library(name: "GroupKit", targets: ["GroupKit"]),
+        // Prints the facts docs/howto quotes, from the real modules (scripts/build-howto.sh).
+        .executable(name: "spud-docs", targets: ["SpudDocs"]),
         .library(name: "GroupLink", targets: ["GroupLink"])
     ],
     targets: [
@@ -33,6 +35,7 @@ let package = Package(
         .target(name: "CourseKit", dependencies: ["CoreGeo", "SafetyKit"]),
         .target(name: "RoundKit", dependencies: ["CoreGeo", "RangingKit", "BallisticsKit", "CourseKit"]),
         .target(name: "GroupKit", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit"]),
+        .executableTarget(name: "SpudDocs", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit", "GroupKit"]),
         .target(name: "GroupLink", dependencies: ["GroupKit"]),
         .testTarget(name: "CoreGeoTests", dependencies: ["CoreGeo"]),
         .testTarget(name: "SafetyKitTests", dependencies: ["SafetyKit", "CoreGeo"]),
