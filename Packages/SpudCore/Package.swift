@@ -13,6 +13,7 @@ import PackageDescription
 //   GroupKit   – v3 Squadz: the squad and match protocol, the commander's and match host's state, holds
 //   FieldKit   – the field in 3D: ENU frames, georeferencing reconstructions to GPS, elevation grids, mesh records
 //   GroupLink  – GroupKit over the local network: Bonjour, TLS keyed from the join code (Network.framework)
+//   FieldCapture – photos to a georeferenced field mesh, minus RealityKit: EXIF GPS, camera pairing, the fit
 let package = Package(
     name: "SpudCore",
     platforms: [.iOS(.v17), .macOS(.v14)],
@@ -27,7 +28,10 @@ let package = Package(
         // Prints the facts docs/howto quotes, from the real modules (scripts/build-howto.sh).
         .executable(name: "spud-docs", targets: ["SpudDocs"]),
         .library(name: "GroupLink", targets: ["GroupLink"]),
-        .library(name: "FieldKit", targets: ["FieldKit"])
+        .library(name: "FieldKit", targets: ["FieldKit"]),
+        .library(name: "FieldCapture", targets: ["FieldCapture"]),
+        // Photos of a course to a georeferenced mesh for the Theater host (macOS only; docs/MESHING.md).
+        .executable(name: "spud-mesh", targets: ["SpudMesh"])
     ],
     targets: [
         .target(name: "CoreGeo"),
@@ -40,6 +44,9 @@ let package = Package(
         .executableTarget(name: "SpudDocs", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit", "GroupKit"]),
         .target(name: "GroupLink", dependencies: ["GroupKit"]),
         .target(name: "FieldKit", dependencies: ["CoreGeo"]),
+        .target(name: "FieldCapture", dependencies: ["FieldKit", "CourseKit", "CoreGeo"]),
+        // RealityKit's PhotogrammetrySession; the sources are `#if os(macOS)`, an iOS build gets a stub.
+        .executableTarget(name: "SpudMesh", dependencies: ["FieldCapture", "FieldKit", "CourseKit", "CoreGeo"]),
         .testTarget(name: "CoreGeoTests", dependencies: ["CoreGeo"]),
         .testTarget(name: "SafetyKitTests", dependencies: ["SafetyKit", "CoreGeo"]),
         .testTarget(name: "RangingKitTests", dependencies: ["RangingKit", "CoreGeo"]),
@@ -49,6 +56,7 @@ let package = Package(
         .testTarget(name: "RoundKitTests", dependencies: ["RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "CoreGeo"]),
         .testTarget(name: "GroupKitTests", dependencies: ["GroupKit", "RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "SafetyKit", "CoreGeo"]),
         .testTarget(name: "FieldKitTests", dependencies: ["FieldKit", "CoreGeo"]),
+        .testTarget(name: "FieldCaptureTests", dependencies: ["FieldCapture", "FieldKit", "CourseKit", "CoreGeo"]),
         .testTarget(name: "GroupLinkTests", dependencies: ["GroupLink", "GroupKit", "CourseKit", "CoreGeo"])
     ]
 )

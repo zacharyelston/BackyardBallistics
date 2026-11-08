@@ -101,6 +101,8 @@ The v4 build steps are numbered T1–T6. They are separate from v3's G1–G8 and
 | **T5. GPU back end adapter** | An adapter from the Theater station to the course's external GPU mapping service; tiles shared to commanders | A captured course renders on the Theater station and on every commander's iPad; the back end going away falls back cleanly |
 | **T6. Coverage and replay** | Thin-mesh coverage view, capture requests to squads, replay of a day's matches | The owner can replay a match and see where captures are missing |
 
+For T4 and T5, `spud-mesh` already builds a georeferenced mesh from a folder of photos on the Mac host, with Object Capture; see [MESHING.md](MESHING.md) for shooting the photos and running it.
+
 ## Open questions
 
 1. **Station hardware.** Is the Theater station a Mac app, an iPad app, or a web view served by the back end's host? The interface allows any of them; T2 picks one.
