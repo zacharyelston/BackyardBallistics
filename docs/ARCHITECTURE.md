@@ -9,12 +9,13 @@ graph BT
   CoreGeo["CoreGeo<br/>GPS points, offsets, polygons"]
   SafetyKit["SafetyKit<br/>limits, checks, Cleared&lt;T&gt;"]
   RangingKit["RangingKit<br/>reticle range, spotting, rays, lean, pole solver"]
-  CourseKit["CourseKit (m3)<br/>course file, validator"]
+  CourseKit["CourseKit<br/>course file, validator"]
   FireControlKit["FireControlKit (m4–5)<br/>initial data, spotting, corrections, calibration"]
   RoundKit["RoundKit (m6)<br/>missions, turns, scoring"]
   App["SpudGunGolf app<br/>SwiftUI, ARKit, AVFoundation"]
   SafetyKit --> CoreGeo
   RangingKit --> CoreGeo
+  CourseKit --> CoreGeo
   CourseKit --> SafetyKit
   FireControlKit --> SafetyKit
   FireControlKit --> RangingKit
@@ -33,7 +34,7 @@ Modules marked with a milestone don't exist yet; they slot in at the place shown
 | CoreGeo | `GeoPoint`, east/north offsets, bearings, `GeoPolygon` | nothing | `swift test` |
 | SafetyKit | Every safety limit, the checks, `Cleared<T>`, `DownrangeLog`, launcher conformance, `safety-limits.json` | CoreGeo | `swift test`, including a check that the browser prototype uses the same numbers |
 | RangingKit | `ReticleRange` and `ReticleLock` (the main ranging method), the spotting model (`Spot`, `RangeCall`, `FireControl` bracketing and left/right), camera intrinsics and rays, lean, pole height, the multi-photo `PoleSolver` cross-check | CoreGeo | `swift test` on synthetic scenes and the spec's reticle table |
-| CourseKit (m3) | Course file format, loading, validator (calls `Safety.checkFan`) | SafetyKit | planned |
+| CourseKit | The course file parser (`CourseFile`), `Course`/`Hole`/`Flag`/`Hazard`, `CourseValidator` (calls `Safety.checkFan` and the 100 yd limit; flag kit rules in `CourseRules`) | CoreGeo, SafetyKit | `swift test` on the sample course, malformed files and fan or boundary violations |
 | FireControlKit (m4–5) | Trajectory and roll-out model, initial data, calibration fitting; takes over the spotting model from RangingKit when it lands | SafetyKit, RangingKit | planned |
 | RoundKit (m6) | Fire missions per hole, turns, cease fire and verify, the downrange-play switch, scoring (rounds + metres outside the ring) | SafetyKit | planned |
 
@@ -78,7 +79,7 @@ Three pieces, each running on its own:
 | Course server | Any plain static web server on the course's local Wi-Fi | Serves one file, `course.yaml`, with flat dotted keys ([COURSE_FORMAT.md](COURSE_FORMAT.md)). No logic, no accounts |
 | Course registry | Internet | Lists courses, where they are and their file address, so players can find one before they arrive |
 
-The app never needs internet during play: it joins the course Wi-Fi at the first firing point, fetches `http://spudgungolf.local/course.yaml`, and keeps it. Rounds stay on the players' phones. CourseKit (m3) owns parsing and validating the file; the course tool and registry are milestone 8.
+The app never needs internet during play: it joins the course Wi-Fi at the first firing point, fetches `http://spudgungolf.local/course.yaml`, and keeps it. Rounds stay on the players' phones. CourseKit owns parsing and validating the file, and the app's `CourseStore` caches the last good course as JSON; the course tool and registry are milestone 8.
 
 ## The safety gate
 
@@ -101,7 +102,7 @@ Three tabs, one per job:
 
 | Tab | For | Now | Later |
 | --- | --- | --- | --- |
-| Play | Playing a round as fire missions | The mission loop, with ranging live | Course loading (m3), fire control (m4), missions and scoring (m6) |
+| Play | Playing a round as fire missions | The mission loop, with ranging live; the Course screen (load, holes, distances, problems) | Fire control (m4), missions and scoring (m6) |
 | Launcher | Your launcher's profile and the limits | Fixed safety limits | Calibration shots and per-setting velocities (m5), sight mode (m7) |
 | Tools | Setting up flags and testing | Lean check, pole height, ranging, sighting test, logs | Course authoring and publishing (m3, m8) |
 

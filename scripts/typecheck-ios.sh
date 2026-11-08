@@ -22,6 +22,7 @@ module() { # name, extra files...
 module CoreGeo
 module SafetyKit "$OUT/BundleStub.swift"
 module RangingKit
+module CourseKit
 
 # shellcheck disable=SC2046
 xcrun --sdk iphoneos swiftc -typecheck -module-name SpudGunGolf "${T[@]}" -I "$OUT" -swift-version 5 \

@@ -12,6 +12,7 @@
 		0DB342C6E1811E08407493BD /* ReticleLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AB2145B8AC206B21693A78 /* ReticleLog.swift */; };
 		1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E339C687D3B38CF183F162C /* CameraController.swift */; };
 		1769E9EFAF55537C3DAF1649 /* RangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29F67AAE33283A8171918D7 /* RangingView.swift */; };
+		1B92E8CB9FDA3BE04558438E /* sample-course.yaml in Resources */ = {isa = PBXBuildFile; fileRef = 103D8AEC8FC2644FBAE493AA /* sample-course.yaml */; };
 		1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B045324F460255AFAFCFE722 /* FieldLog.swift */; };
 		2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */; };
 		42FCF884DB4D1292750E9C3A /* ARKitRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */; };
@@ -19,11 +20,14 @@
 		723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */; };
 		833F06491C4DDFF9FDC23AC6 /* CoreGeo in Frameworks */ = {isa = PBXBuildFile; productRef = A767DE0DBD45719511064F3D /* CoreGeo */; };
 		8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C414C5B4AC53422F7AABC2C /* LeanCheckView.swift */; };
+		9214CC0F333393CF432A7B65 /* CourseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 065ED1CBF727D2A9F1C17FFE /* CourseStore.swift */; };
+		981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7230BC9CD26B3C17565509AE /* CourseView.swift */; };
 		9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA6EB5E25631668DAC5462C /* JSONStore.swift */; };
 		AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058FD02EB37A4DD2D60E9425 /* LauncherView.swift */; };
 		ABC854639A4529209FB9DA2B /* RangingLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1956E8D95530FA7EA760FD87 /* RangingLog.swift */; };
 		ADCBF1C6E705A2F12C6A84FC /* ReticleRangingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E87C56614F017F0224D65F /* ReticleRangingView.swift */; };
 		B4139AA51DCD859C3D15F05A /* PoleMarker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E9E1B2EC8B568A9E479CDA /* PoleMarker.swift */; };
+		B520BDB5D743A27AC8F6807C /* CourseKit in Frameworks */ = {isa = PBXBuildFile; productRef = 4F593FFDD1BB38CAFE7BFC4C /* CourseKit */; };
 		BC5AFF250A5499A470335176 /* SafetyKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9650B624C198CEA48B5299D6 /* SafetyKit */; };
 		C17CD159F8E81ACE5278508D /* SimulatedRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B45B7403F091985D78297E /* SimulatedRangingSource.swift */; };
 		C670AE24783CEC45026EA822 /* RangingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311424D16BF397C1CD80DDFE /* RangingSession.swift */; };
@@ -37,7 +41,9 @@
 		0502B6763FEB460945C51624 /* SpudGunGolfApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpudGunGolfApp.swift; sourceTree = "<group>"; };
 		058FD02EB37A4DD2D60E9425 /* LauncherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherView.swift; sourceTree = "<group>"; };
 		05E120BD574CED262D43DC22 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		065ED1CBF727D2A9F1C17FFE /* CourseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseStore.swift; sourceTree = "<group>"; };
 		0E339C687D3B38CF183F162C /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
+		103D8AEC8FC2644FBAE493AA /* sample-course.yaml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = "sample-course.yaml"; sourceTree = "<group>"; };
 		1956E8D95530FA7EA760FD87 /* RangingLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingLog.swift; sourceTree = "<group>"; };
 		1DA6EB5E25631668DAC5462C /* JSONStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONStore.swift; sourceTree = "<group>"; };
 		2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayView.swift; sourceTree = "<group>"; };
@@ -48,6 +54,7 @@
 		54BDFBE220065C8E3F5A4FEF /* SpudCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SpudCore; path = Packages/SpudCore; sourceTree = SOURCE_ROOT; };
 		57E87C56614F017F0224D65F /* ReticleRangingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReticleRangingView.swift; sourceTree = "<group>"; };
 		5C49810F5CD5D313FB0CD103 /* RangingCaptureSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingCaptureSource.swift; sourceTree = "<group>"; };
+		7230BC9CD26B3C17565509AE /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
 		86B45B7403F091985D78297E /* SimulatedRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatedRangingSource.swift; sourceTree = "<group>"; };
 		AC575A2D9586FD6E557618AD /* PoleHeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleHeightView.swift; sourceTree = "<group>"; };
 		AE8331D4584229CE4D7A8756 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
@@ -68,12 +75,22 @@
 				833F06491C4DDFF9FDC23AC6 /* CoreGeo in Frameworks */,
 				BC5AFF250A5499A470335176 /* SafetyKit in Frameworks */,
 				0AF36FDEC5020706C479DECC /* RangingKit in Frameworks */,
+				B520BDB5D743A27AC8F6807C /* CourseKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		13088B18C0C99F75A97F241F /* Course */ = {
+			isa = PBXGroup;
+			children = (
+				065ED1CBF727D2A9F1C17FFE /* CourseStore.swift */,
+				7230BC9CD26B3C17565509AE /* CourseView.swift */,
+			);
+			path = Course;
+			sourceTree = "<group>";
+		};
 		1A10C7B5BD950D6A1806E8B8 /* FieldTest */ = {
 			isa = PBXGroup;
 			children = (
@@ -96,9 +113,18 @@
 			children = (
 				31471B55732A74AE3FC8058E /* App */,
 				67AB202C3040F1E2B9EE066C /* Config */,
+				674ED2BB1B365CBB6E56CD90 /* courses */,
 				7C7CE68EF33EEB883DB37F1A /* Packages */,
 				E38998785BBB083889B06138 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		674ED2BB1B365CBB6E56CD90 /* courses */ = {
+			isa = PBXGroup;
+			children = (
+				103D8AEC8FC2644FBAE493AA /* sample-course.yaml */,
+			);
+			path = courses;
 			sourceTree = "<group>";
 		};
 		67AB202C3040F1E2B9EE066C /* Config */ = {
@@ -155,6 +181,7 @@
 		D1C46FDCB8F60034702C9DD8 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				13088B18C0C99F75A97F241F /* Course */,
 				1A10C7B5BD950D6A1806E8B8 /* FieldTest */,
 				BB5F2F1E778CCEE3CE996E0B /* Ranging */,
 				C96E7A849AE0D39BA9BD04E6 /* Setup */,
@@ -200,6 +227,7 @@
 			buildConfigurationList = D345BB381149A45422359E11 /* Build configuration list for PBXNativeTarget "SpudGunGolf" */;
 			buildPhases = (
 				9207B5E4235D41F5E1FD65B2 /* Sources */,
+				1BFB8AA1194EBD79AD354D10 /* Resources */,
 				AC02E49F1C645A886C0AC92D /* Frameworks */,
 			);
 			buildRules = (
@@ -211,6 +239,7 @@
 				A767DE0DBD45719511064F3D /* CoreGeo */,
 				9650B624C198CEA48B5299D6 /* SafetyKit */,
 				5E31597492CC0E5465EB5069 /* RangingKit */,
+				4F593FFDD1BB38CAFE7BFC4C /* CourseKit */,
 			);
 			productName = SpudGunGolf;
 			productReference = D2EADEDE4FB1A3F4E5D9993D /* SpudGunGolf.app */;
@@ -253,6 +282,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		1BFB8AA1194EBD79AD354D10 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1B92E8CB9FDA3BE04558438E /* sample-course.yaml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		9207B5E4235D41F5E1FD65B2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -261,6 +301,8 @@
 				42FCF884DB4D1292750E9C3A /* ARKitRangingSource.swift in Sources */,
 				02A1B855EAFC04BFFF0A95E5 /* AppSettings.swift in Sources */,
 				1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */,
+				9214CC0F333393CF432A7B65 /* CourseStore.swift in Sources */,
+				981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */,
 				1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */,
 				9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */,
 				AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */,
@@ -473,6 +515,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		4F593FFDD1BB38CAFE7BFC4C /* CourseKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CourseKit;
+		};
 		5E31597492CC0E5465EB5069 /* RangingKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = RangingKit;

@@ -20,8 +20,15 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>SpudGunGolf uses the camera to measure flag poles and range the hole.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>SpudGunGolf downloads the course file from the course server on the local Wi-Fi.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SpudGunGolf uses your location to find the hole and check that a range lands on a course flag.</string>
 	<key>UILaunchScreen</key>
