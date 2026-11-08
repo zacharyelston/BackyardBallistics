@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		02A1B855EAFC04BFFF0A95E5 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE8331D4584229CE4D7A8756 /* AppSettings.swift */; };
+		04F969E47D5C69C8FD9311E5 /* CommandSquadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3297A98DDACEAB482EF66B /* CommandSquadView.swift */; };
 		0AF36FDEC5020706C479DECC /* RangingKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5E31597492CC0E5465EB5069 /* RangingKit */; };
 		0DB342C6E1811E08407493BD /* ReticleLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AB2145B8AC206B21693A78 /* ReticleLog.swift */; };
 		101471AC6F8D8479978D0772 /* GroupKit in Frameworks */ = {isa = PBXBuildFile; productRef = ED48412377178EFF51799932 /* GroupKit */; };
@@ -22,11 +23,13 @@
 		42FCF884DB4D1292750E9C3A /* ARKitRangingSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */; };
 		4C17D03F0FA06FE37704E92C /* PoleHeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC575A2D9586FD6E557618AD /* PoleHeightView.swift */; };
 		4F2B51B4E6257E189C5A7746 /* RoundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FFE521AEBEB67F465CAA9E6 /* RoundView.swift */; };
+		50761EB52A9A37C9E24D8403 /* JoinSquadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDE461F8C92C1AE4841587B3 /* JoinSquadView.swift */; };
 		661D2D673DB0316E8869D598 /* GroupKit in Frameworks */ = {isa = PBXBuildFile; productRef = 42F3226CD1FFA1EDFE808E86 /* GroupKit */; };
 		723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */; };
 		724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AFC18B1FD4637E46C11CA7 /* CrosshairSpotView.swift */; };
 		77084244531EA1125D1C00E1 /* BallisticsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 957114E8D0EB2D87927F3B83 /* BallisticsKit */; };
 		833F06491C4DDFF9FDC23AC6 /* CoreGeo in Frameworks */ = {isa = PBXBuildFile; productRef = A767DE0DBD45719511064F3D /* CoreGeo */; };
+		850826D3141B26E48925FB53 /* SquadMembership.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD109C93883530F2F1D8C14B /* SquadMembership.swift */; };
 		85E9117B8A9E9C1E6A3E5DF9 /* CameraNeedsPortrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77E46D1FF69E6EBCE1E9BBE /* CameraNeedsPortrait.swift */; };
 		87F94927E6C765892683FE20 /* CoreGeo in Frameworks */ = {isa = PBXBuildFile; productRef = 6D7643BBB300C31D6097E331 /* CoreGeo */; };
 		8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C414C5B4AC53422F7AABC2C /* LeanCheckView.swift */; };
@@ -35,6 +38,7 @@
 		969A1C83E524FD939C7D8B00 /* HoleMissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88FD57DAB3E4CCC46159899 /* HoleMissionView.swift */; };
 		981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7230BC9CD26B3C17565509AE /* CourseView.swift */; };
 		9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA6EB5E25631668DAC5462C /* JSONStore.swift */; };
+		A3A842FBA87CAC888247D14E /* SquadCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */; };
 		A5E0A234EC6642A523EE480F /* GroupLink in Frameworks */ = {isa = PBXBuildFile; productRef = 205C0B8F75E83E48DA0B80BF /* GroupLink */; };
 		AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058FD02EB37A4DD2D60E9425 /* LauncherView.swift */; };
 		ABC854639A4529209FB9DA2B /* RangingLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1956E8D95530FA7EA760FD87 /* RangingLog.swift */; };
@@ -50,6 +54,7 @@
 		DE1452806D6020CB0741687C /* ToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42B175AD5A532DDE2201A1D /* ToolsView.swift */; };
 		EA0FB4BBE754C7D64CD92FB1 /* SpudGunGolfApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0502B6763FEB460945C51624 /* SpudGunGolfApp.swift */; };
 		ED15A3B0669DB05DBE20DD3D /* SightingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52C51A940D33C796DF2A866B /* SightingView.swift */; };
+		F3A3289C04D85630458C4104 /* QRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53AF3C47E42C2CD18B24317F /* QRCodeView.swift */; };
 		F5C088DF7343E3AE34A239F6 /* CameraHUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */; };
 		F663DF385477783B5FE4CBDD /* SpudTheaterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F14AA5B7F89FEA9E804DA95 /* SpudTheaterApp.swift */; };
 /* End PBXBuildFile section */
@@ -69,13 +74,16 @@
 		2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARKitRangingSource.swift; sourceTree = "<group>"; };
 		311424D16BF397C1CD80DDFE /* RangingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingSession.swift; sourceTree = "<group>"; };
 		52C51A940D33C796DF2A866B /* SightingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SightingView.swift; sourceTree = "<group>"; };
+		53AF3C47E42C2CD18B24317F /* QRCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeView.swift; sourceTree = "<group>"; };
 		54BDFBE220065C8E3F5A4FEF /* SpudCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SpudCore; path = Packages/SpudCore; sourceTree = SOURCE_ROOT; };
 		57E87C56614F017F0224D65F /* ReticleRangingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReticleRangingView.swift; sourceTree = "<group>"; };
 		5C49810F5CD5D313FB0CD103 /* RangingCaptureSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingCaptureSource.swift; sourceTree = "<group>"; };
 		5E021E898D313DF96AEA9B39 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6FFE521AEBEB67F465CAA9E6 /* RoundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundView.swift; sourceTree = "<group>"; };
 		7230BC9CD26B3C17565509AE /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
+		7E3297A98DDACEAB482EF66B /* CommandSquadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandSquadView.swift; sourceTree = "<group>"; };
 		86B45B7403F091985D78297E /* SimulatedRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatedRangingSource.swift; sourceTree = "<group>"; };
+		8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadCommand.swift; sourceTree = "<group>"; };
 		8F14AA5B7F89FEA9E804DA95 /* SpudTheaterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpudTheaterApp.swift; sourceTree = "<group>"; };
 		9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraHUD.swift; sourceTree = "<group>"; };
 		A44E34B89E1526A64BADF1B3 /* local */ = {isa = PBXFileReference; lastKnownFileType = folder; name = local; path = courses/local; sourceTree = SOURCE_ROOT; };
@@ -93,6 +101,8 @@
 		E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionReader.swift; sourceTree = "<group>"; };
 		F7AB2145B8AC206B21693A78 /* ReticleLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReticleLog.swift; sourceTree = "<group>"; };
 		F7AFC18B1FD4637E46C11CA7 /* CrosshairSpotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrosshairSpotView.swift; sourceTree = "<group>"; };
+		FD109C93883530F2F1D8C14B /* SquadMembership.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquadMembership.swift; sourceTree = "<group>"; };
+		FDE461F8C92C1AE4841587B3 /* JoinSquadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinSquadView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -175,6 +185,18 @@
 			);
 			sourceTree = "<group>";
 		};
+		54445E216B87FD26C093406B /* Squadz */ = {
+			isa = PBXGroup;
+			children = (
+				7E3297A98DDACEAB482EF66B /* CommandSquadView.swift */,
+				FDE461F8C92C1AE4841587B3 /* JoinSquadView.swift */,
+				53AF3C47E42C2CD18B24317F /* QRCodeView.swift */,
+				8A2F41202DD2139526B4B5A1 /* SquadCommand.swift */,
+				FD109C93883530F2F1D8C14B /* SquadMembership.swift */,
+			);
+			path = Squadz;
+			sourceTree = "<group>";
+		};
 		674ED2BB1B365CBB6E56CD90 /* courses */ = {
 			isa = PBXGroup;
 			children = (
@@ -253,6 +275,7 @@
 				BB5F2F1E778CCEE3CE996E0B /* Ranging */,
 				14F90EB83472F48C8A862D85 /* Round */,
 				C96E7A849AE0D39BA9BD04E6 /* Setup */,
+				54445E216B87FD26C093406B /* Squadz */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -412,6 +435,7 @@
 				1587A3EF3D734193DB1BA0B5 /* CameraController.swift in Sources */,
 				F5C088DF7343E3AE34A239F6 /* CameraHUD.swift in Sources */,
 				85E9117B8A9E9C1E6A3E5DF9 /* CameraNeedsPortrait.swift in Sources */,
+				04F969E47D5C69C8FD9311E5 /* CommandSquadView.swift in Sources */,
 				9214CC0F333393CF432A7B65 /* CourseStore.swift in Sources */,
 				213FAEF9984EE5CF8F8711E5 /* CourseSurveyView.swift in Sources */,
 				981F2CA11CC8EFA5C1EB16C9 /* CourseView.swift in Sources */,
@@ -419,12 +443,14 @@
 				1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */,
 				969A1C83E524FD939C7D8B00 /* HoleMissionView.swift in Sources */,
 				9DFBD1F9F4263FAC94BA4DAE /* JSONStore.swift in Sources */,
+				50761EB52A9A37C9E24D8403 /* JoinSquadView.swift in Sources */,
 				AAF79579396E9BC06A04935A /* LauncherView.swift in Sources */,
 				8F710403C99B6804ACC28D75 /* LeanCheckView.swift in Sources */,
 				2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */,
 				723380CE9CA31EFF2F5E9D9B /* PlayView.swift in Sources */,
 				4C17D03F0FA06FE37704E92C /* PoleHeightView.swift in Sources */,
 				B4139AA51DCD859C3D15F05A /* PoleMarker.swift in Sources */,
+				F3A3289C04D85630458C4104 /* QRCodeView.swift in Sources */,
 				DD2A092952F63A5FAFDCE4A7 /* RangingCaptureSource.swift in Sources */,
 				ABC854639A4529209FB9DA2B /* RangingLog.swift in Sources */,
 				C670AE24783CEC45026EA822 /* RangingSession.swift in Sources */,
@@ -436,6 +462,8 @@
 				ED15A3B0669DB05DBE20DD3D /* SightingView.swift in Sources */,
 				C17CD159F8E81ACE5278508D /* SimulatedRangingSource.swift in Sources */,
 				EA0FB4BBE754C7D64CD92FB1 /* SpudGunGolfApp.swift in Sources */,
+				A3A842FBA87CAC888247D14E /* SquadCommand.swift in Sources */,
+				850826D3141B26E48925FB53 /* SquadMembership.swift in Sources */,
 				DE1452806D6020CB0741687C /* ToolsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

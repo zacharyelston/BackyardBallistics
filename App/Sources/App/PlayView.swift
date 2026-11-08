@@ -7,6 +7,8 @@ import CourseKit
 struct PlayView: View {
     @EnvironmentObject private var courses: CourseStore
     @EnvironmentObject private var rounds: RoundStore
+    @EnvironmentObject private var squadCommand: SquadCommand
+    @EnvironmentObject private var squadMembership: SquadMembership
     @AppStorage(Settings.playerNameKey) private var player = Settings.defaultPlayerName
     @State private var openRound = false
     @State private var confirmReplace: Bool?
@@ -59,6 +61,19 @@ struct PlayView: View {
                     Text("Round")
                 } footer: {
                     Text("Each hole is a fire mission: confirm downrange, range the pole, fire and spot, let fire control correct, cease fire and verify. Score is rounds plus metres outside the ring. Practice plays the same flow with simulated rounds and no launcher.")
+                }
+                Section {
+                    NavigationLink { CommandSquadView() } label: {
+                        Label(squadCommand.host.map { "Command \($0.player)" } ?? "Command a squad", systemImage: "ipad.landscape")
+                    }
+                    NavigationLink { JoinSquadView() } label: {
+                        Label(squadMembership.squadName.map { squadMembership.state == .joined ? "In squad \($0)" : "Join squad" } ?? "Join squad",
+                              systemImage: "person.3.fill")
+                    }
+                } header: {
+                    Text("v3 Squadz")
+                } footer: {
+                    Text("Squads play squads. The commander's iPad hosts the squad; members join from their phones with its code.")
                 }
                 Section {
                     NavigationLink { CourseView() } label: { Label("Course", systemImage: "map") }
