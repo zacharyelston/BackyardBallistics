@@ -34,8 +34,10 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSCameraUsageDescription: SpudGunGolf uses the camera to measure flag poles and range the hole.
         NSLocationWhenInUseUsageDescription: SpudGunGolf uses your location to find the hole and check that a range lands on a course flag.
+    configFiles:
+      Debug: Config/Signing.xcconfig
+      Release: Config/Signing.xcconfig
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.backyardballistics.spudgungolf
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
