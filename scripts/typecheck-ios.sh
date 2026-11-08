@@ -30,6 +30,6 @@ module GroupLink
 
 # shellcheck disable=SC2046
 xcrun --sdk iphoneos swiftc -typecheck -module-name SpudGunGolf "${T[@]}" -I "$OUT" -swift-version 5 \
-  $(find App/Sources -name '*.swift')
+  $(find App/Sources App/Shared -name '*.swift')
 
 echo "iOS typecheck passed"

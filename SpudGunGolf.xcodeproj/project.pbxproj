@@ -52,6 +52,8 @@
 		C50B4878967B32CF63176FDD /* JoinCodeScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C65BD036734D6BD5C19725B /* JoinCodeScanner.swift */; };
 		C670AE24783CEC45026EA822 /* RangingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311424D16BF397C1CD80DDFE /* RangingSession.swift */; };
 		C9D4F65053E9F8705B55B8AA /* GroupLink in Frameworks */ = {isa = PBXBuildFile; productRef = 305D2A30F81FFD8DBD356D47 /* GroupLink */; };
+		D0A4DFE5B2FF3CA0E1D4EDD8 /* SiteMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21DE58B1664E8C5DF8BD7EEB /* SiteMap.swift */; };
+		D2FDA7DD300BC49CE78F6088 /* SiteMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21DE58B1664E8C5DF8BD7EEB /* SiteMap.swift */; };
 		DD2A092952F63A5FAFDCE4A7 /* RangingCaptureSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C49810F5CD5D313FB0CD103 /* RangingCaptureSource.swift */; };
 		DE1452806D6020CB0741687C /* ToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42B175AD5A532DDE2201A1D /* ToolsView.swift */; };
 		EA0FB4BBE754C7D64CD92FB1 /* SpudGunGolfApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0502B6763FEB460945C51624 /* SpudGunGolfApp.swift */; };
@@ -72,6 +74,7 @@
 		1956E8D95530FA7EA760FD87 /* RangingLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangingLog.swift; sourceTree = "<group>"; };
 		1DA6EB5E25631668DAC5462C /* JSONStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONStore.swift; sourceTree = "<group>"; };
 		1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseSurveyView.swift; sourceTree = "<group>"; };
+		21DE58B1664E8C5DF8BD7EEB /* SiteMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteMap.swift; sourceTree = "<group>"; };
 		2BA0A8EF6E15A91AA33F69EB /* PlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayView.swift; sourceTree = "<group>"; };
 		2C414C5B4AC53422F7AABC2C /* LeanCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeanCheckView.swift; sourceTree = "<group>"; };
 		2C6E7FF32D82957A10242707 /* ARKitRangingSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARKitRangingSource.swift; sourceTree = "<group>"; };
@@ -172,6 +175,7 @@
 		31471B55732A74AE3FC8058E /* App */ = {
 			isa = PBXGroup;
 			children = (
+				62762C2AFE1686D12B1115FF /* Shared */,
 				EE34B935C2BCB7EEE43C21E4 /* Sources */,
 				9DB93DF1251CA30247971933 /* Theater */,
 			);
@@ -200,6 +204,14 @@
 				FD109C93883530F2F1D8C14B /* SquadMembership.swift */,
 			);
 			path = Squadz;
+			sourceTree = "<group>";
+		};
+		62762C2AFE1686D12B1115FF /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				21DE58B1664E8C5DF8BD7EEB /* SiteMap.swift */,
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 		674ED2BB1B365CBB6E56CD90 /* courses */ = {
@@ -428,6 +440,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D2FDA7DD300BC49CE78F6088 /* SiteMap.swift in Sources */,
 				F663DF385477783B5FE4CBDD /* SpudTheaterApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -468,6 +481,7 @@
 				4F2B51B4E6257E189C5A7746 /* RoundView.swift in Sources */,
 				ED15A3B0669DB05DBE20DD3D /* SightingView.swift in Sources */,
 				C17CD159F8E81ACE5278508D /* SimulatedRangingSource.swift in Sources */,
+				D0A4DFE5B2FF3CA0E1D4EDD8 /* SiteMap.swift in Sources */,
 				EA0FB4BBE754C7D64CD92FB1 /* SpudGunGolfApp.swift in Sources */,
 				A3A842FBA87CAC888247D14E /* SquadCommand.swift in Sources */,
 				850826D3141B26E48925FB53 /* SquadMembership.swift in Sources */,

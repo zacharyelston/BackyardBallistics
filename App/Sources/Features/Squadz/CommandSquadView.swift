@@ -77,27 +77,35 @@ struct CommandSquadView: View {
     }
 }
 
-/// The lobby: the code, the QR code and the roster, side by side when there's room.
+/// The squad screen: the field map, with the code, QR code, roster and status beside it in
+/// landscape (map in the main area) and below it in portrait.
 struct SquadLobbyView: View {
     @EnvironmentObject private var command: SquadCommand
     @State private var confirmEnd = false
 
     var body: some View {
         GeometryReader { geo in
-            let wide = geo.size.width > 700
-            ScrollView {
-                if wide {
-                    HStack(alignment: .top, spacing: 24) {
-                        codePanel.frame(width: min(360, geo.size.width * 0.38))
-                        VStack(spacing: 20) { rosterPanel; statusPanel }
+            if geo.size.width > geo.size.height && geo.size.width > 700 {
+                HStack(spacing: 0) {
+                    map
+                    ScrollView {
+                        VStack(spacing: 16) { codePanel(compact: true); rosterPanel; statusPanel }.padding(16)
                     }
-                    .padding(24)
-                } else {
-                    VStack(spacing: 20) { codePanel; rosterPanel; statusPanel }.padding()
+                    .frame(width: min(400, geo.size.width * 0.36))
+                    .background(Color(.systemGroupedBackground))
                 }
+            } else {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        map.frame(height: max(320, geo.size.height * 0.45))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                        codePanel(compact: false); rosterPanel; statusPanel
+                    }
+                    .padding()
+                }
+                .background(Color(.systemGroupedBackground))
             }
         }
-        .background(Color(.systemGroupedBackground))
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
@@ -117,17 +125,26 @@ struct SquadLobbyView: View {
 
     // MARK: Panels
 
-    private var codePanel: some View {
-        VStack(spacing: 16) {
+    /// The field: the squad's course, its members' positions and the hole in play.
+    @ViewBuilder private var map: some View {
+        if let host = command.host {
+            SiteMap(squads: [SiteMapSquad(id: host.player, course: host.round.course,
+                                          members: host.round.squad.members, positions: host.positions,
+                                          activeHole: host.round.hole?.holeNumber, walkingOut: host.round.walkingOut)])
+        }
+    }
+
+    private func codePanel(compact: Bool) -> some View {
+        VStack(spacing: compact ? 10 : 16) {
             if let host = command.host {
-                Text(host.player).font(.title.weight(.bold))
+                Text(host.player).font(compact ? .title2.weight(.bold) : .title.weight(.bold))
                 Text("Join code").font(.subheadline).foregroundStyle(.secondary)
                 Text(Self.spaced(host.joinCode))
-                    .font(.system(size: 44, weight: .heavy, design: .monospaced))
+                    .font(.system(size: compact ? 34 : 44, weight: .heavy, design: .monospaced))
                     .minimumScaleFactor(0.5).lineLimit(1)
                     .textSelection(.enabled)
                 QRCodeView(text: host.joinCode)
-                    .frame(maxWidth: 220, maxHeight: 220)
+                    .frame(maxWidth: compact ? 150 : 220, maxHeight: compact ? 150 : 220)
                     .padding(12)
                     .background(.white, in: RoundedRectangle(cornerRadius: 12))
                 linkLabel
