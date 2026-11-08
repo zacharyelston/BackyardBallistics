@@ -10,8 +10,10 @@
 | --- | --- | --- |
 | [`prototype/spudgungolf.html`](prototype/spudgungolf.html) | v1 Classic | Walk to every round; shots to rest within 1 m of the pole; pick up for par + 3 |
 | [`prototype/spudgungolf-v2.html`](prototype/spudgungolf-v2.html) | v2 Fire Missions | Range the pole with a reticle, fire from a firing point, call each round short, over or range correct (left/right is measured), let fire control bracket, cease fire and verify; rounds plus metres outside the ring. Four fixed-firing-point holes and five downrange-play holes |
+| [`docs/GROUP_PLAY.md`](docs/GROUP_PLAY.md) (design, not built; no browser version) | v3 Squadz | v2 fire missions played by squads against squads: a commander's iPad shows the field map and the squad's mission, and members' phones range, spot and report positions |
+| [`docs/THEATER_MODE.md`](docs/THEATER_MODE.md) (design, not built; no browser version) | v4 Theater Mode | v3 Squadz plus a course owner's station that observes every match and builds the field map with a GPU mapping back end; it can add course-wide holds and check fire, and never shows firing data |
 
-v2 drives the app's requirements; v1 stays as an optional ruleset on the same engine.
+v2 drives the app's requirements; v1 stays as an optional ruleset on the same engine. v3 Squadz builds on v2 for group play, and v4 Theater Mode adds a course owner's view on top of v3; both are designs so far, and solo play stays v2.
 
 ![SpudGunGolf v2 Fire Missions: two spotted rounds on the map, the mission log with fire-control corrections, and the cease-fire result](docs/image-v2.png)
 
@@ -30,6 +32,8 @@ Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 | `docs/ARCHITECTURE.md` | Modules, dependency rules, the safety gate and the app design |
 | `docs/FLAG_KIT.md` | How to build and set up a flag |
 | `docs/FIELD_TEST.md` | Field-test protocols for milestones 1 and 2 |
+| `docs/GROUP_PLAY.md` | Design for v3 Squadz (not built): squads play squads on v2 fire missions; a commander iPad maps the field from members' phones |
+| `docs/THEATER_MODE.md` | Design for v4 Theater Mode (not built): the course owner's observer station and GPU-built field map |
 | `docs/COURSE_FORMAT.md` | The flat-key YAML course file a course's web server serves |
 | `courses/sample-course.yaml` | Example course file |
 | `prototype/` | Browser prototypes: v1 Classic and v2 Fire Missions |
