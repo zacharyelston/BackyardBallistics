@@ -79,4 +79,61 @@ final class GroupLinkTests: XCTestCase {
         XCTAssertTrue(c.allSatisfy { JoinCode.alphabet.contains($0) })
         XCTAssertEqual(JoinCode.normalized("abc-23 4"), "ABC234")
     }
+
+    /// The iPad sleeping: its side of every link drops and its listener restarts. The phone's
+    /// GroupClient finds it again and rejoins as the same member.
+    func testClientRejoinsAfterTheHostDrops() throws {
+        let code = JoinCode.make()
+        var squad = SquadHost(squad: Squad(name: "Red"), course: course(), practice: true, joinCode: code)
+        let host = try GroupHost(name: "Red", joinCode: code, advertise: false, queue: queue)
+        host.onMessage = { [unowned host] m, peer in host.send(squad.handle(m, from: peer, now: Date())) }
+        let ready = expectation(description: "listening")
+        host.onReady = { _ in ready.fulfill() }
+        host.start()
+        wait(for: [ready], timeout: 5)
+        host.onReady = nil   // it reports ready again after the restart
+        defer { host.stop() }
+        let port = host.port!
+
+        let device = UUID()
+        let client = GroupClient(squadName: "Red", joinCode: code, hello: Hello(name: "Ana", device: device, joinCode: code), queue: queue)
+        client.fixedEndpoint = local(port)
+        client.baseDelay = 0.2
+        var welcomes: [MemberID] = []
+        let first = expectation(description: "first welcome")
+        let second = expectation(description: "welcome after the drop")
+        var statuses: [GroupClient.Status] = []
+        client.onStatus = { statuses.append($0) }
+        client.onMessage = { m in
+            guard case let .welcome(w) = m.body else { return }
+            welcomes.append(w.member)
+            if welcomes.count == 1 { first.fulfill() } else if welcomes.count == 2 { second.fulfill() }
+        }
+        client.start()
+        wait(for: [first], timeout: 5)
+
+        // The iPad sleeps: every connection drops, and the listener starts again on the same port.
+        queue.sync {
+            for c in host.connections.values { c.cancel() }
+            host.restart()
+        }
+        wait(for: [second], timeout: 10)
+        XCTAssertEqual(welcomes.count, 2)
+        XCTAssertEqual(welcomes[0], welcomes[1], "rejoined as the same member")
+        XCTAssertTrue(statuses.contains { if case .reconnecting = $0 { return true }; return false }, "\(statuses)")
+        XCTAssertEqual(host.port, port, "the restarted listener keeps its port")
+        queue.sync { client.stop() }
+    }
+
+    func testClientStopsOnAWrongCode() throws {
+        let (host, port) = try startCommander(code: "ABC234")
+        defer { host.stop() }
+        let client = GroupClient(squadName: "Red", joinCode: "XYZ789",
+                                 hello: Hello(name: "Eve", device: UUID(), joinCode: "XYZ789"), queue: queue)
+        client.fixedEndpoint = local(port)
+        let stopped = expectation(description: "gave up")
+        client.onStatus = { s in if case .stopped = s { stopped.fulfill() } }
+        client.start()
+        wait(for: [stopped], timeout: 10)
+    }
 }
