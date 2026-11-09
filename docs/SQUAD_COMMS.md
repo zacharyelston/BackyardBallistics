@@ -311,6 +311,9 @@ the app shows how old each position is and which link it came on.
 
 ### What goes over LoRa
 
+The exact byte layouts, the instruction codebook and the retry rules are in
+[LORA_MESSAGES.md](LORA_MESSAGES.md).
+
 | Fits | Doesn't fit |
 | --- | --- |
 | Compact positions (integer degrees × 10⁷, altitude, accuracy, heading, age) | Photos, capture bundles, meshes |
