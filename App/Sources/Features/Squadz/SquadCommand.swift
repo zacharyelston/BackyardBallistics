@@ -164,10 +164,15 @@ final class SquadCommand: ObservableObject {
     }
 
     /// Uses a member's lock for its purpose, after the flag check on this iPad's course.
-    /// Switches the squad to a field a member sent in (refused mid-hole, while walking out, or in a
-    /// started match; `host.lastProblem` says why).
-    func adoptField(_ id: UUID) {
+    /// Switches the squad to a field a member sent in (refused mid-hole or while walking out;
+    /// `host.lastProblem` says why). Returns the field when the squad took it, so the iPad can make it
+    /// its own course too.
+    @discardableResult
+    func adoptField(_ id: UUID) -> FieldSubmission? {
+        guard let f = host?.submissions.first(where: { $0.id == id }) else { return nil }
         act { $0.adoptField(id, now: Date()) }
+        guard let host, host.round.course == f.course, !host.submissions.contains(where: { $0.id == id }) else { return nil }
+        return f
     }
 
     func declineField(_ id: UUID) {

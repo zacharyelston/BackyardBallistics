@@ -1,11 +1,13 @@
 import SwiftUI
 import CourseKit
+import UniformTypeIdentifiers
 
 /// The loaded course: its holes and pars, the distance from each firing point to its flag, and
 /// anything the validator found. Also where a course is downloaded from the course Wi-Fi.
 struct CourseView: View {
     @EnvironmentObject private var store: CourseStore
     @State private var typedURL = ""
+    @State private var openingFile = false
 
     var body: some View {
         List {
@@ -128,6 +130,16 @@ struct CourseView: View {
             } label: {
                 Label("Use the bundled sample course", systemImage: "doc.text")
             }
+            Button {
+                openingFile = true
+            } label: {
+                Label("Open a course file", systemImage: "folder")
+            }
+            .fileImporter(isPresented: $openingFile,
+                          allowedContentTypes: [UTType(filenameExtension: "yaml") ?? .plainText,
+                                                UTType(filenameExtension: "yml") ?? .plainText, .plainText]) { result in
+                if case let .success(url) = result { store.loadFile(at: url) }
+            }
             NavigationLink { CourseSurveyView() } label: {
                 Label("Survey a course here", systemImage: "mappin.and.ellipse")
             }
@@ -140,7 +152,7 @@ struct CourseView: View {
         } header: {
             Text("Load a course")
         } footer: {
-            Text("The course server is \(CourseStore.courseServerURL.absoluteString). The last course that passed every check is kept for offline play.")
+            Text("The course server is \(CourseStore.courseServerURL.absoluteString). To use a field surveyed on a phone, share its course file to this device (AirDrop saves it to Files) and open it here, or send it to the squad leader and adopt it. The last course that passed every check is kept for offline play.")
         }
     }
 
