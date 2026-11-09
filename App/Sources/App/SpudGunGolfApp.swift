@@ -9,6 +9,7 @@ struct SpudGunGolfApp: App {
     @StateObject private var roundStore = RoundStore()
     @StateObject private var squadCommand = SquadCommand()
     @StateObject private var squadMembership = SquadMembership()
+    @StateObject private var theaterLink = TheaterLink()
 
     var body: some Scene {
         WindowGroup {
@@ -26,6 +27,7 @@ struct SpudGunGolfApp: App {
                 .environmentObject(roundStore)
                 .environmentObject(squadCommand)
                 .environmentObject(squadMembership)
+                .environmentObject(theaterLink)
         }
     }
 }

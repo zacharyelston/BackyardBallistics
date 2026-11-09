@@ -164,6 +164,16 @@ final class SquadCommand: ObservableObject {
     }
 
     /// Uses a member's lock for its purpose, after the flag check on this iPad's course.
+    /// Switches the squad to a field a member sent in (refused mid-hole, while walking out, or in a
+    /// started match; `host.lastProblem` says why).
+    func adoptField(_ id: UUID) {
+        act { $0.adoptField(id, now: Date()) }
+    }
+
+    func declineField(_ id: UUID) {
+        act { $0.declineField(id, now: Date()) }
+    }
+
     func useLock(_ id: UUID) {
         act { $0.useLock(id, now: Date()) }
     }

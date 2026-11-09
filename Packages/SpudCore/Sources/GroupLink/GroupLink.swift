@@ -20,18 +20,6 @@ public enum GroupService {
     }
 }
 
-/// Six characters, without the ones people misread (0/O, 1/I/L).
-public enum JoinCode {
-    static let alphabet = Array("ABCDEFGHJKMNPQRSTUVWXYZ23456789")
-    public static func make() -> String {
-        var g = SystemRandomNumberGenerator()
-        return String((0..<6).map { _ in alphabet.randomElement(using: &g)! })
-    }
-    public static func normalized(_ code: String) -> String {
-        code.uppercased().filter { !$0.isWhitespace && $0 != "-" }
-    }
-}
-
 public extension NWParameters {
     /// TCP with TLS keyed from the join code (a pre-shared key), so only people who have the code
     /// can connect, and nothing travels in the clear. Peer-to-peer Wi-Fi is allowed.
@@ -93,7 +81,17 @@ public final class GroupConnection {
                   peer: PeerID("host"), queue: queue)
     }
 
+    /// Seconds to reach `.ready`. A wrong join code can leave the handshake hanging (the other
+    /// side just drops it), so a connection that hasn't come up by then fails.
+    public var connectTimeout: TimeInterval = 8
+    public static let timedOut = "No answer from the other device."
+
     public func start() {
+        queue.asyncAfter(deadline: .now() + connectTimeout) { [weak self] in
+            guard let self, self.state == .connecting else { return }
+            self.set(.failed(Self.timedOut))
+            self.connection.cancel()
+        }
         connection.stateUpdateHandler = { [weak self] s in
             guard let self else { return }
             switch s {
@@ -304,6 +302,8 @@ public final class GroupClient {
     private var connection: GroupConnection?
     private var running = false
     private var attempt = 0
+    /// Linked at least once since `start`: then a failure is a drop to recover from, not a bad code.
+    private var everConnected = false
     /// Seconds between attempts, growing to `maxDelay`.
     public var baseDelay: TimeInterval = 1
     public var maxDelay: TimeInterval = 8
@@ -321,6 +321,7 @@ public final class GroupClient {
         guard !running else { return }
         running = true
         attempt = 0
+        everConnected = false
         find()
     }
 
@@ -375,10 +376,15 @@ public final class GroupClient {
             switch s {
             case .ready:
                 self.attempt = 0
+                self.everConnected = true
                 c.send(.hello(self.hello))
                 self.set(.connected)
             case let .failed(why):
-                if why.contains("join code") { return self.giveUp(why) }
+                // Never linked yet, and the handshake was refused or never answered: almost always a
+                // wrong code. Once linked, the same failure is a drop (the iPad slept), so retry.
+                if !self.everConnected && (why.contains("join code") || why == GroupConnection.timedOut) {
+                    return self.giveUp("Couldn't connect. Check the code.")
+                }
                 self.dropped(why)
             case .closed:
                 self.dropped("Connection closed")

@@ -327,4 +327,20 @@ final class PracticeOnlyCourseTests: XCTestCase {
         XCTAssertEqual(r.practiceCourse, big)
         XCTAssertFalse(r.isPracticeOnly)
     }
+
+    /// A firing point past the 100 yd solution limit, like the survey that set off this change: the
+    /// field is practice only. Real rounds stay refused (Safety.clearSolution refuses past the limit).
+    func testAnOutOfRangeFiringPointAllowsPracticeButNotPlay() {
+        var c = course(boundaryHalfWidth: 200, flagNorth: 40)
+        c.boundary = GeoPolygon([Geo.offset(origin, east: -300, north: -300), Geo.offset(origin, east: 300, north: -300),
+                                 Geo.offset(origin, east: 300, north: 300), Geo.offset(origin, east: -300, north: 300)])
+        c.holes[0].flag.position = Geo.offset(origin, east: 0, north: 100)
+        let r = CourseLoadResult(course: c, problems: CourseValidator.problems(for: c))
+        XCTAssertTrue(r.errors.contains { $0.kind == .range && $0.message.contains("100 yd") })
+        XCTAssertNil(r.playableCourse, "no real rounds")
+        XCTAssertEqual(r.practiceCourse, c)
+        XCTAssertTrue(r.isPracticeOnly)
+        XCTAssertTrue(CourseValidator.isPracticeOnly(c))
+        XCTAssertTrue(CourseValidator.blockingProblems(for: c).isEmpty)
+    }
 }

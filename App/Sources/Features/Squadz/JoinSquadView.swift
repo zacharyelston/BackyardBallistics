@@ -164,6 +164,18 @@ struct JoinSquadView: View {
                 Text("From the squad leader. Each order opens the tool it needs; Done or Can't takes it off your list.")
             }
         }
+        Section {
+            NavigationLink { FieldNoteView() } label: {
+                Label("Send a field note", systemImage: "note.text.badge.plus")
+            }
+            ForEach(membership.sentToLeader.prefix(3)) { s in
+                SentItemRow(title: s.title, receipt: s.receipt)
+            }
+        } header: {
+            Text("Field notes")
+        } footer: {
+            Text("A note (and a photo) pinned where you stand, to your squad leader, who passes it on to the Theater.")
+        }
         if let s = membership.status {
             Section {
                 LabeledContent("Hole", value: s.hole.map { "\($0)" } ?? "Not started")

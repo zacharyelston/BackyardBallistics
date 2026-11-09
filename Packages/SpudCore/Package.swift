@@ -12,6 +12,7 @@ import PackageDescription
 //   RoundKit   – fire missions per hole, cease fire and verify, downrange play, scoring, practice
 //   GroupKit   – v3 Squadz: the squad and match protocol, the commander's and match host's state, holds
 //   FieldKit   – the field in 3D: ENU frames, georeferencing reconstructions to GPS, elevation grids, mesh records
+//   TheaterKit – the Theater host's door for phones: fields, notes and files, saved per field
 //   GroupLink  – GroupKit over the local network: Bonjour, TLS keyed from the join code (Network.framework)
 //   FieldCapture – photos to a georeferenced field mesh, minus RealityKit: EXIF GPS, camera pairing, the fit
 let package = Package(
@@ -29,6 +30,7 @@ let package = Package(
         .executable(name: "spud-docs", targets: ["SpudDocs"]),
         .library(name: "GroupLink", targets: ["GroupLink"]),
         .library(name: "FieldKit", targets: ["FieldKit"]),
+        .library(name: "TheaterKit", targets: ["TheaterKit"]),
         .library(name: "FieldCapture", targets: ["FieldCapture"]),
         // Photos of a course to a georeferenced mesh for the Theater host (macOS only; docs/MESHING.md).
         .executable(name: "spud-mesh", targets: ["SpudMesh"])
@@ -44,6 +46,7 @@ let package = Package(
         .executableTarget(name: "SpudDocs", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit", "GroupKit"]),
         .target(name: "GroupLink", dependencies: ["GroupKit"]),
         .target(name: "FieldKit", dependencies: ["CoreGeo", "CourseKit"]),
+        .target(name: "TheaterKit", dependencies: ["GroupKit", "FieldKit", "CourseKit", "CoreGeo"]),
         .target(name: "FieldCapture", dependencies: ["FieldKit", "CourseKit", "CoreGeo"]),
         // RealityKit's PhotogrammetrySession; the sources are `#if os(macOS)`, an iOS build gets a stub.
         .executableTarget(name: "SpudMesh", dependencies: ["FieldCapture", "FieldKit", "CourseKit", "CoreGeo"]),
@@ -55,8 +58,9 @@ let package = Package(
         .testTarget(name: "CourseKitTests", dependencies: ["CourseKit", "CoreGeo", "SafetyKit", "RangingKit"]),
         .testTarget(name: "RoundKitTests", dependencies: ["RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "CoreGeo"]),
         .testTarget(name: "GroupKitTests", dependencies: ["GroupKit", "RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "SafetyKit", "CoreGeo"]),
+        .testTarget(name: "TheaterKitTests", dependencies: ["TheaterKit", "GroupKit", "FieldKit", "CourseKit", "CoreGeo"]),
         .testTarget(name: "FieldKitTests", dependencies: ["FieldKit", "CoreGeo", "CourseKit"]),
         .testTarget(name: "FieldCaptureTests", dependencies: ["FieldCapture", "FieldKit", "CourseKit", "CoreGeo"]),
-        .testTarget(name: "GroupLinkTests", dependencies: ["GroupLink", "GroupKit", "CourseKit", "CoreGeo"])
+        .testTarget(name: "GroupLinkTests", dependencies: ["GroupLink", "GroupKit", "CourseKit", "CoreGeo", "TheaterKit", "FieldKit"])
     ]
 )

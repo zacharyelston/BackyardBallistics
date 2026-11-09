@@ -89,7 +89,7 @@ struct SquadLobbyView: View {
                 HStack(spacing: 0) {
                     map
                     ScrollView {
-                        VStack(spacing: 16) { codePanel(compact: true); SquadOrdersPanel(); rosterPanel; SquadHolePanel(); SquadLocksPanel(); statusPanel }.padding(16)
+                        VStack(spacing: 16) { codePanel(compact: true); SquadOrdersPanel(); rosterPanel; SquadHolePanel(); SquadLocksPanel(); SquadInboxPanel(); statusPanel }.padding(16)
                     }
                     .frame(width: min(400, geo.size.width * 0.36))
                     .background(Color(.systemGroupedBackground))
@@ -99,7 +99,7 @@ struct SquadLobbyView: View {
                     VStack(spacing: 20) {
                         map.frame(height: max(320, geo.size.height * 0.45))
                             .clipShape(RoundedRectangle(cornerRadius: 16))
-                        codePanel(compact: false); SquadOrdersPanel(); rosterPanel; SquadHolePanel(); SquadLocksPanel(); statusPanel
+                        codePanel(compact: false); SquadOrdersPanel(); rosterPanel; SquadHolePanel(); SquadLocksPanel(); SquadInboxPanel(); statusPanel
                     }
                     .padding()
                 }
@@ -138,7 +138,8 @@ struct SquadLobbyView: View {
                                               SiteMapRay(from: $0.report.lock.location, to: $0.report.lock.polePosition)
                                           },
                                           orders: Array(host.orders.suffix(20)),
-                                          pointers: command.orderPointers)],
+                                          pointers: command.orderPointers,
+                                          notes: Array(host.notes.suffix(30)))],
                     selected: command.orderTargets,
                     draftPlace: command.orderPlace,
                     onTapPlace: command.placingOrder ? { command.setPlace($0) } : nil,

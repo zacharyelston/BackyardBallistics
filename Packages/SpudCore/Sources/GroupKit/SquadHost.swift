@@ -100,6 +100,11 @@ public struct SquadHost {
     public private(set) var matchHost: PeerID?
     /// The last thing that went wrong, for the commander's screen.
     public private(set) var lastProblem: String?
+    /// Field notes from members, oldest first (passed on to observers as they arrive).
+    public private(set) var notes: [FieldNote] = []
+    /// Fields members surveyed or loaded and sent in, waiting for the leader to adopt one.
+    public private(set) var submissions: [FieldSubmission] = []
+    private var submitters: [UUID: MemberID] = [:]
     /// Orders sent this session, oldest first, and each recipient's latest answer.
     public private(set) var orders: [Order] = []
     public private(set) var acks: [UUID: [MemberID: OrderAck.Response]] = [:]
@@ -162,7 +167,12 @@ public struct SquadHost {
             if case let .matchState(state) = message.body { return applyMatch(state, now: now) }
             return []
         }
-        if case let .hello(hello) = message.body { return join(hello, peer: peer, now: now) }
+        if case let .hello(hello) = message.body {
+            if hello.role == .contributor {
+                return [Outgoing(to: peer, .refused("This is a squad's iPad. To send to the Theater host, use Send to Theater."))]
+            }
+            return join(hello, peer: peer, now: now)
+        }
         if observers.contains(peer) {
             if case .bye = message.body { observers.remove(peer) }
             return []   // an observer can't act on the squad
@@ -186,6 +196,25 @@ public struct SquadHost {
             return receiveSpot(report, from: member, now: now)
         case let .fired(f):
             return fired(f, by: member, now: now)
+        case var .fieldNote(n):
+            n.author = round.squad.members.first { $0.id == member }?.name ?? n.author
+            notes.append(n)
+            if notes.count > 100 { notes.removeFirst(notes.count - 100) }
+            let toObservers = observers.sorted { $0.raw < $1.raw }.map { Outgoing(to: $0, .fieldNote(n)) }
+            return [Outgoing(to: peer, .receipt(Receipt(id: n.id, status: .stored, detail: "Sent to \(player)'s leader.")))] + toObservers
+        case var .fieldSubmission(f):
+            f.author = round.squad.members.first { $0.id == member }?.name ?? f.author
+            let errors = CourseValidator.blockingProblems(for: f.course)
+            guard errors.isEmpty else {
+                return [Outgoing(to: peer, .receipt(Receipt(id: f.id, status: .refused,
+                                                            detail: errors.prefix(3).map(\.description).joined(separator: " "))))]
+            }
+            submissions.removeAll { $0.id == f.id }
+            submissions.append(f)
+            submitters[f.id] = member
+            if submissions.count > 20 { submissions.removeFirst(submissions.count - 20) }
+            let practice = CourseValidator.isPracticeOnly(f.course) ? " It's practice only." : ""
+            return [Outgoing(to: peer, .receipt(Receipt(id: f.id, status: .received, detail: "Waiting for the leader to adopt it." + practice)))]
         case let .orderAck(a):
             // Only from someone the order was for.
             guard let o = orders.first(where: { $0.id == a.order }), o.isFor(member) else { return [] }
@@ -432,6 +461,39 @@ public struct SquadHost {
         if orders.count > Self.maxOrdersKept { orders.removeFirst(orders.count - Self.maxOrdersKept) }
         let members = peers.filter { order.isFor($0.value) }.map(\.key)
         return (members + Array(observers)).sorted { $0.raw < $1.raw }.map { Outgoing(to: $0, .order(order)) }
+    }
+
+    /// Switches the squad to a field a member sent in. Only between holes and outside a started
+    /// match: the squad keeps its members and starts a fresh card on the new field. Observers (the
+    /// Theater) get the new course, so it's registered there too.
+    public mutating func adoptField(_ submission: UUID, now: Date) -> [Outgoing] {
+        guard let f = submissions.first(where: { $0.id == submission }) else { return problem("No such field.", now: now) }
+        if let h = round.hole, h.phase != .finished { return problem("Finish or end hole \(h.holeNumber) first.", now: now) }
+        if round.walkingOut { return problem("People are walking out. Adopt the field once they're back.", now: now) }
+        if match?.started == true { return problem("The match is under way on \(round.course.name).", now: now) }
+        // A field that's practice only (a fan leaving the boundary, a firing point out of range) puts
+        // the squad in practice: simulated rounds only.
+        let practiceOnly = CourseValidator.isPracticeOnly(f.course)
+        var next = SquadRound(squad: round.squad, course: f.course, practice: round.practice || practiceOnly)
+        next.revision = round.revision
+        round = next
+        roundInFlight = nil
+        spotReports = []
+        locks = []
+        submissions.removeAll { $0.id == submission }
+        let author = submitters.removeValue(forKey: submission).flatMap { m in peers.first { $0.value == m }?.key }
+        let receipt = author.map { [Outgoing(to: $0, .receipt(Receipt(id: f.id, status: .stored,
+                                                                        detail: "\(player) is playing \(f.course.name) now" + (practiceOnly ? ", in practice." : "."))))] } ?? []
+        let toObservers = observers.sorted { $0.raw < $1.raw }.map { Outgoing(to: $0, .course(f.course)) }
+        return receipt + toObservers + changed(now: now)
+    }
+
+    /// Drops a field a member sent in.
+    public mutating func declineField(_ submission: UUID, now: Date) -> [Outgoing] {
+        submissions.removeAll { $0.id == submission }
+        let author = submitters.removeValue(forKey: submission).flatMap { m in peers.first { $0.value == m }?.key }
+        return author.map { [Outgoing(to: $0, .receipt(Receipt(id: submission, status: .refused,
+                                                                  detail: "The leader passed on this field.")))] } ?? []
     }
 
     /// Who an order is for, by member.

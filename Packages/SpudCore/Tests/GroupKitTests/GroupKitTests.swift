@@ -407,4 +407,97 @@ final class GroupKitTests: XCTestCase {
         XCTAssertEqual(Order(kind: .note, text: String(repeating: "a", count: 500), time: Date()).text.count, Order.maxText)
         _ = cy
     }
+
+    // MARK: Field notes and new fields through the squad
+
+    func testNotesGoToTheLeaderAndOnToObservers() {
+        let f = Field()
+        f.addSquad("Red")
+        let ana = f.addPhone("Ana", squad: "Red", at: .zero)
+        var watched: [GroupMessage.Body] = []
+        let theater = Phone("Theater", at: .zero)
+        theater.commander = Field.ipad("Red")
+        f.net.add(theater.peer) { m, _ in watched.append(m.body); return [] }
+        f.send(theater, .hello(Hello(name: "Theater", device: UUID(), joinCode: "RED", role: .observer)))
+
+        f.send(ana, .fieldNote(FieldNote(author: "someone else", time: f.now, courseID: "squad-test", text: "Mole hill by hole 2")))
+        XCTAssertEqual(f.hosts["Red"]!.notes.map(\.author), ["Ana"], "the author is the member, not what the note says")
+        XCTAssertTrue(watched.contains { if case let .fieldNote(n) = $0 { return n.text == "Mole hill by hole 2" }; return false })
+    }
+
+    func testAMembersFieldIsAdoptedBetweenHolesOnly() {
+        let f = Field()
+        f.addSquad("Red", joinMatch: false)
+        let ana = f.addPhone("Ana", squad: "Red", at: .zero)
+        var watched: [GroupMessage.Body] = []
+        let theater = Phone("Theater", at: .zero)
+        theater.commander = Field.ipad("Red")
+        f.net.add(theater.peer) { m, _ in watched.append(m.body); return [] }
+        f.send(theater, .hello(Hello(name: "Theater", device: UUID(), joinCode: "RED", role: .observer)))
+        var receipts: [Receipt] = []
+        f.net.add(ana.peer) { m, from in if case let .receipt(r) = m.body { receipts.append(r) }; return ana.receive(m, from: from) }
+
+        var newCourse = testCourse(version: 1)
+        newCourse.id = "orchard"
+        newCourse.name = "The Orchard"
+        let sub = FieldSubmission(author: "Ana", time: f.now, course: newCourse)
+        f.send(ana, .fieldSubmission(sub))
+        XCTAssertEqual(receipts.last?.status, .received)
+        XCTAssertEqual(f.hosts["Red"]!.submissions.map(\.course.id), ["orchard"])
+
+        // Mid-hole: refused.
+        f.command("Red") { $0.startNextHole(now: $1) }
+        var range = PracticeRange(pole: ground(f.course.holes[0].flag.position), poleHeight: 2.438, wind: .calm, seed: 1)
+        let lock = LockReport(purpose: .initial, lock: reticleLock(range.lock(from: .zero), from: .zero, poleHeight: 2.438))
+        f.send(ana, .lock(lock))
+        f.command("Red") { $0.useLock(lock.id, now: $1) }
+        f.command("Red") { $0.adoptField(sub.id, now: $1) }
+        XCTAssertEqual(f.hosts["Red"]!.round.course.id, "squad-test")
+        XCTAssertEqual(f.hosts["Red"]!.lastProblem, "Finish or end hole 1 first.")
+
+        // A fresh squad between holes: adopted; observers get the course; Ana hears it's in play.
+        f.hosts["Red"] = SquadHost(round: SquadRound(squad: f.hosts["Red"]!.round.squad, course: f.course, practice: true), joinCode: "RED")
+        f.send(ana, .hello(Hello(name: "Ana", device: ana.device, joinCode: "RED")))
+        f.send(theater, .hello(Hello(name: "Theater", device: UUID(), joinCode: "RED", role: .observer)))
+        f.send(ana, .fieldSubmission(sub))
+        watched = []
+        f.command("Red") { $0.adoptField(sub.id, now: $1) }
+        XCTAssertEqual(f.hosts["Red"]!.round.course.id, "orchard")
+        XCTAssertEqual(f.hosts["Red"]!.round.card.courseID, "orchard")
+        XCTAssertEqual(f.hosts["Red"]!.round.squad.members.map(\.name), ["Ana"], "the squad keeps its members")
+        XCTAssertTrue(watched.contains(.course(newCourse)), "the Theater hears of the new field")
+        XCTAssertEqual(receipts.last?.status, .stored)
+        XCTAssertTrue(f.hosts["Red"]!.submissions.isEmpty)
+    }
+
+    func testAContributorIsPointedAtTheTheater() {
+        let f = Field()
+        f.addSquad("Red")
+        let p = f.addPhone("Ana", squad: "Red", at: .zero)
+        p.member = nil
+        p.refusals = []
+        f.send(p, .hello(Hello(name: "Ana", device: UUID(), joinCode: "RED", role: .contributor)))
+        XCTAssertTrue(p.refusals.last?.contains("Send to Theater") == true)
+    }
+
+    /// Adopting a practice-only field (here, its firing point is past the 100 yd limit) puts the squad
+    /// in practice, so no real round can be fired on it.
+    func testAdoptingAPracticeOnlyFieldPutsTheSquadInPractice() {
+        let f = Field()
+        let live = SquadHost(squad: Squad(name: "Red"), course: f.course, practice: false, joinCode: "RED")
+        f.hosts["Red"] = live
+        f.net.add(Field.ipad("Red")) { [unowned f] m, from in f.hosts["Red"]!.handle(m, from: from, now: f.now) }
+        let ana = f.addPhone("Ana", squad: "Red", at: .zero)
+        var far = testCourse()
+        far.id = "far"
+        far.holes[0].flag.position = geo(Ground(0, 100))
+        let sub = FieldSubmission(author: "Ana", time: f.now, course: far)
+        f.send(ana, .fieldSubmission(sub))
+        XCTAssertEqual(f.hosts["Red"]!.submissions.count, 1, "a practice-only field is accepted, not refused")
+        XCTAssertFalse(f.hosts["Red"]!.round.practice)
+        f.command("Red") { $0.adoptField(sub.id, now: $1) }
+        XCTAssertEqual(f.hosts["Red"]!.round.course.id, "far")
+        XCTAssertTrue(f.hosts["Red"]!.round.practice)
+        XCTAssertTrue(f.hosts["Red"]!.round.card.practice)
+    }
 }

@@ -6,12 +6,16 @@ import CourseKit
 import GroupKit
 import GroupLink
 import FieldKit
+import TheaterKit
 import UniformTypeIdentifiers
 
 /// v4 Theater Mode: find the squads' iPads on the network and watch them as an observer. Each
 /// squad sends its course, and its members' GPS positions as they come in. The site map shows the
 /// course on satellite imagery with every member on it; the 3D view (Field3DView.swift) shows it on
 /// the ground's real shape. Watching only: no firing data reaches it.
+///
+/// It is also a door for phones (TheaterDoor.swift): any phone with the Theater's code can send it
+/// fields, notes and capture files, which are saved under the field's folder.
 @main
 struct SpudTheaterApp: App {
     @StateObject private var model = TheaterModel()
@@ -49,6 +53,26 @@ final class TheaterModel: ObservableObject {
     @Published private(set) var fields: [(field: RegisteredField, course: Course)] = []
     @Published var notice: String?
     let store = FieldStore(root: FieldStore.defaultRoot)
+
+    // The door for phones (TheaterDoor.swift).
+    @Published var doorCode: String
+    @Published var doorStatus: String = "Opening…"
+    @Published var contributors: [String] = []
+    @Published var activity: [String] = []
+    /// The field whose notes and captures are listed, set by the view.
+    @Published private(set) var contentCourseID: String?
+    @Published private(set) var shownNotes: [ShownNote] = []
+    @Published private(set) var shownCaptures: [CaptureGroup] = []
+    var theater: TheaterHost
+    var door: GroupHost?
+    var refreshTimer: Timer?
+
+    init() {
+        let code = Self.savedDoorCode()
+        doorCode = code
+        theater = TheaterHost(name: Self.hostName, joinCode: code, store: FieldStore(root: FieldStore.defaultRoot))
+    }
+
     private let browser = GroupBrowser(queue: .main)
     private let device: UUID = {
         let key = "theaterDevice"
@@ -60,7 +84,14 @@ final class TheaterModel: ObservableObject {
 
     func start() {
         reloadFields()
-        browser.onChange = { [weak self] f in MainActor.assumeIsolated { self?.found = f } }
+        openDoor()
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refreshFieldContent() }
+        }
+        // Squads only: the Theater's own door (and any other Theater) advertises the same service.
+        browser.onChange = { [weak self] f in
+            MainActor.assumeIsolated { self?.found = f.filter { $0.txt[GroupService.Key.role] != TheaterModel.doorRole } }
+        }
         browser.onFailed = { [weak self] e in MainActor.assumeIsolated { self?.browserProblem = e } }
         browser.start()
     }
@@ -69,7 +100,7 @@ final class TheaterModel: ObservableObject {
     func watch(_ name: String, code: String) {
         stop(name)
         let code = JoinCode.normalized(code)
-        let hello = Hello(name: Host.current().localizedName ?? "Theater", device: device, joinCode: code, role: .observer)
+        let hello = Hello(name: Self.hostName, device: device, joinCode: code, role: .observer)
         let client = GroupClient(squadName: name, joinCode: code, hello: hello, queue: .main)
         watches[name] = Watch(name: name, client: client)
         client.onStatus = { [weak self] s in MainActor.assumeIsolated { self?.watches[name]?.link = s } }
@@ -89,6 +120,21 @@ final class TheaterModel: ObservableObject {
     // MARK: Fields
 
     func reloadFields() { fields = store.fields() }
+
+    /// The field whose notes and captures to list.
+    func showContent(of courseID: String?) {
+        guard courseID != contentCourseID else { return }
+        contentCourseID = courseID
+        refreshFieldContent()
+    }
+
+    /// Re-reads the shown field's notes and captures from disk; publishes only what changed.
+    func refreshFieldContent() {
+        let notes = contentCourseID.map { TheaterHost.notes(in: store, courseID: $0).map { ShownNote(note: $0.note, photo: $0.photo, fullPhoto: Self.fullPhoto(for: $0.note, courseID: contentCourseID, in: store)) } } ?? []
+        let captures = contentCourseID.map { CaptureGroup.all(in: store, courseID: $0) } ?? []
+        if notes != shownNotes { shownNotes = notes }
+        if captures != shownCaptures { shownCaptures = captures }
+    }
 
     /// Squads being watched on a field.
     func watches(on courseID: String) -> [Watch] {
@@ -144,6 +190,11 @@ final class TheaterModel: ObservableObject {
             register(course, source: "From squad \(name)")
             store.markSeen(course.id)
         case let .squadStatus(s): watches[name]?.status = s; watches[name]?.squad = s.squad
+        case let .fieldNote(n):
+            // A member's note, passed on by the squad leader: saved under its field like a phone's.
+            theater.recordNote(n, fromSquad: name)
+            publishDoor()
+            refreshFieldContent()
         case let .positions(_, list):
             for p in list { if let id = p.member { watches[name]?.positions[id] = p } }
         case let .order(o):
@@ -180,7 +231,7 @@ struct TheaterView: View {
             return model.watches.values.sorted { $0.name < $1.name }.map(\.siteMapSquad)
         }
         let fieldItself = SiteMapSquad(id: "field:" + f.field.id, course: f.course, members: [], positions: [:],
-                                       activeHole: nil, walkingOut: true)
+                                       activeHole: nil, walkingOut: true, notes: model.mapNotes)
         return [fieldItself] + model.watches(on: f.field.id).map(\.siteMapSquad)
     }
 
@@ -192,6 +243,8 @@ struct TheaterView: View {
     var body: some View {
         NavigationSplitView {
             List(selection: Binding(get: { shownField?.field.id }, set: { selectedField = $0 ?? "" })) {
+                DoorSection()
+
                 Section {
                     if model.fields.isEmpty {
                         Text("No fields yet. Import a course file with +, or watch a squad: the course it plays is saved here.")
@@ -288,7 +341,10 @@ struct TheaterView: View {
                 .frame(minHeight: 320)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        if let f = shownField { FieldHeader(field: f.field, course: f.course) }
+                        if let f = shownField {
+                            FieldHeader(field: f.field, course: f.course)
+                            FieldContentView(courseID: f.field.id)
+                        }
                         if let n = model.notice {
                             HStack {
                                 Text(n).font(.callout)
@@ -313,6 +369,8 @@ struct TheaterView: View {
                 }
                 .frame(minHeight: 160)
             }
+            .onAppear { model.showContent(of: shownField?.field.id) }
+            .onChange(of: shownField?.field.id) { _, id in model.showContent(of: id) }
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Picker("View", selection: $mapMode) {

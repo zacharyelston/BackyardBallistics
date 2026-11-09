@@ -13,6 +13,9 @@ public struct CourseProblem: Codable, Equatable, Hashable, Sendable, CustomStrin
     public enum Kind: String, Codable, Sendable {
         /// A firing point's safety fan leaves the boundary. Practice, which fires nothing, may still use the course.
         case fan
+        /// A firing point is farther from its flag than the firing computer will solve (100 yd). Practice
+        /// may still use the course; a real round from there is refused when it's solved anyway.
+        case range
     }
 
     public var severity: Severity
@@ -63,9 +66,10 @@ public struct CourseLoadResult: Codable, Equatable, Sendable {
     /// The course, only if it passed every check. A course with any error is refused.
     public var playableCourse: Course? { errors.isEmpty ? course : nil }
 
-    /// The course for practice: playable, or refused only because a safety fan leaves the boundary.
-    /// Practice fires nothing, so the fan doesn't apply; real rounds still need `playableCourse`.
-    public var practiceCourse: Course? { errors.allSatisfy { $0.kind == .fan } ? course : nil }
+    /// The course for practice: playable, or refused only for problems practice can live with (a
+    /// safety fan leaving the boundary, a firing point past the solution range). Practice fires
+    /// nothing; real rounds still need `playableCourse`.
+    public var practiceCourse: Course? { CourseValidator.practiceAllows(problems) ? course : nil }
 
     /// Usable for practice and demos, but not for real rounds.
     public var isPracticeOnly: Bool { playableCourse == nil && practiceCourse != nil }

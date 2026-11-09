@@ -92,12 +92,15 @@ targets:
       # The 3D view: ENU frames, elevation grids, field meshes, and the scene geometry.
       - package: SpudCore
         product: FieldKit
+      # The door for phones: fields, notes and files saved per field.
+      - package: SpudCore
+        product: TheaterKit
     info:
       path: App/Theater/Info.plist
       properties:
         CFBundleDisplayName: SpudGunGolf Theater
         LSApplicationCategoryType: public.app-category.sports-games
-        NSLocalNetworkUsageDescription: SpudGunGolf Theater finds the squads' iPads on the local network to watch the course.
+        NSLocalNetworkUsageDescription: SpudGunGolf Theater finds the squads' iPads on the local network to watch the course, and lets phones send it fields, notes and photos.
         NSBonjourServices: [_spudgolf._tcp]
     settings:
       base:

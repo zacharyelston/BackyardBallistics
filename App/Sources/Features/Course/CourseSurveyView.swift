@@ -2,6 +2,7 @@ import SwiftUI
 import CoreLocation
 import CoreGeo
 import CourseKit
+import GroupKit
 
 /// A survey in progress: one hole's pole, its firing point and the boundary corners, kept between
 /// launches so the walk around the property can be paused.
@@ -119,6 +120,9 @@ final class SurveySampler: NSObject, ObservableObject, CLLocationManagerDelegate
 /// loaded as this device's course, and can be shared as a course file for `courses/local/course.yaml`.
 struct CourseSurveyView: View {
     @EnvironmentObject private var store: CourseStore
+    @EnvironmentObject private var membership: SquadMembership
+    @AppStorage(Settings.playerNameKey) private var player = Settings.defaultPlayerName
+    @State private var sentToLeader: UUID?
     @StateObject private var sampler = SurveySampler()
     @AppStorage(CourseSurvey.key) private var draftData = Data()
     @State private var survey = CourseSurvey()
@@ -215,6 +219,30 @@ struct CourseSurveyView: View {
                     ShareLink(item: text, preview: SharePreview("\(survey.name) course file")) {
                         Label("Share course file", systemImage: "square.and.arrow.up")
                     }
+                    if let course = survey.course {
+                        NavigationLink {
+                            TheaterSendView(title: "Send to Theater",
+                                            summary: ["\(course.name) · \(course.holes.count) hole\(course.holes.count == 1 ? "" : "s")"],
+                                            payloads: { [.field(FieldSubmission(author: player, time: Date(), course: course, yaml: text))] })
+                        } label: {
+                            Label("Send to Theater", systemImage: "theatermasks")
+                        }
+                        if membership.isInSquad {
+                            Button {
+                                sentToLeader = membership.sendField(FieldSubmission(author: player, time: Date(), course: course, yaml: text))
+                                if sentToLeader == nil { message = "Not linked to the squad's iPad right now. Try again in a moment." }
+                            } label: {
+                                Label("Send to my squad leader", systemImage: "person.badge.shield.checkmark")
+                            }
+                            .disabled(!membership.canSendToLeader || (!isValid && !isPracticeOnly))
+                            if let why = leaderBlocker {
+                                Text(why).font(.footnote).foregroundStyle(.orange)
+                            }
+                            if let id = sentToLeader, let s = membership.sentToLeader.first(where: { $0.id == id }) {
+                                SentItemRow(title: s.title, receipt: s.receipt)
+                            }
+                        }
+                    }
                 }
                 if let message { Text(message).font(.footnote).foregroundStyle(.secondary) }
             } footer: {
@@ -241,10 +269,21 @@ struct CourseSurveyView: View {
         return CourseFile.load(text).problems
     }
 
+    /// Why Send to my squad leader is greyed out, said under it rather than left silent.
+    private var leaderBlocker: String? {
+        if !isValid && !isPracticeOnly { return "Fix the course's problems above first." }
+        guard !membership.canSendToLeader else { return nil }
+        switch membership.state {
+        case .reconnecting: return "Reconnecting to \(membership.squadName ?? "the squad")'s iPad… Tap again once it's back."
+        case .connecting: return "Joining \(membership.squadName ?? "the squad")…"
+        default: return "Not linked to the squad's iPad. Open Play → Join squad to rejoin."
+        }
+    }
+
     private var isValid: Bool { survey.text != nil && !problems.contains { $0.severity == .error } }
     /// Only the safety fan fails: fine for practice and demos, not for real rounds.
     private var isPracticeOnly: Bool {
-        survey.text != nil && !isValid && problems.filter { $0.severity == .error }.allSatisfy { $0.kind == .fan }
+        survey.text != nil && !isValid && CourseValidator.practiceAllows(problems)
     }
 
     @ViewBuilder private var checkSection: some View {
@@ -255,7 +294,7 @@ struct CourseSurveyView: View {
                 Label("Passes every check", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
             } else {
                 if isPracticeOnly {
-                    Label("Practice only: everything passes except the safety fan, so real rounds stay off. Practice and demos work.",
+                    Label("Practice only: everything passes except the safety fan or a firing point past 100 yd, so real rounds stay off. Practice and demos work. To play for real, record the firing point within 91 m of the pole.",
                           systemImage: "gamecontroller").foregroundStyle(.orange).font(.footnote)
                 }
                 ForEach(problems, id: \.self) { p in
