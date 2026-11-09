@@ -23,15 +23,24 @@ struct SquadHolePanel: View {
                     LabeledContent("Hole \(hole.number)", value: "\(hole.name) · par \(hole.par)")
                     LabeledContent("Firing point", value: "\(round.firingPoint + 1) of \(hole.firingPoints.count)")
                     LabeledContent("Phase", value: Self.phase(play.phase, walkingOut: round.walkingOut))
+                    if play.legs > 1 {
+                        legRow(hole: hole, play: play)
+                    }
                     if let m = play.mission {
                         LabeledContent("Mission \(m.number)", value: String(format: "%.1f m at %03.0f°", m.lockedRange, m.bearing))
                         LabeledContent("Rounds", value: "\(play.roundsFired) of \(HoleRules.maxRoundsPerHole)")
                     } else {
-                        Text("Waiting for a lock from the firing point: a member ranges the pole and the lock appears below.")
+                        Text(hole.layups.isEmpty
+                             ? "Waiting for a lock from the firing point: a member ranges the pole and the lock appears below."
+                             : "Waiting for a lock from the firing point: a member ranges layup 1's marker pole and the lock appears below.")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                     if let v = play.verdict {
-                        LabeledContent("Verified", value: String(format: "%.1f m · score %.1f", v.closest, v.score))
+                        if play.onFlagLeg {
+                            LabeledContent("Verified", value: String(format: "%.1f m · score %.1f", v.closest, v.score))
+                        } else {
+                            layupVerdict(v, hole: hole, play: play)
+                        }
                     }
                     downrangeRow
                     if play.phase == .firing && !round.walkingOut {
@@ -42,7 +51,13 @@ struct SquadHolePanel: View {
                             Button("Cease fire") { command.ceaseFire() }.buttonStyle(.bordered)
                         }
                         if play.phase == .ceased && play.verdict != nil {
-                            Button("Finish hole") { command.finishHole() }.buttonStyle(.borderedProminent)
+                            if play.onFlagLeg {
+                                Button("Finish hole") { command.finishHole() }.buttonStyle(.borderedProminent)
+                            } else {
+                                // Mid-hole on a layup leg: the next lock carries play on; ending here
+                                // scores the distance still to go.
+                                Button("End the hole here") { command.finishHole() }.buttonStyle(.bordered)
+                            }
                         }
                     }
                 } else if let next = round.currentHole {
@@ -55,6 +70,10 @@ struct SquadHolePanel: View {
                         }
                     } else if let d = next.firingDistances.first {
                         LabeledContent("Firing point", value: String(format: "1 · %.0f m to the flag", d))
+                    }
+                    if !next.layups.isEmpty {
+                        Label("\(next.layups.count + 1) legs: \(Self.legNames(next))", systemImage: "mappin.and.ellipse")
+                            .font(.footnote).foregroundStyle(.secondary)
                     }
                     Button {
                         command.startNextHole(firingPoint: firingPoint)
@@ -108,6 +127,48 @@ struct SquadHolePanel: View {
             Text("Or the gunner calls Fired from their phone. Members then get the spotter card.")
                 .font(.caption).foregroundStyle(.secondary)
         }
+    }
+
+    /// Which leg is in play on a hole with layups, and what it aims at.
+    private func legRow(hole: Hole, play: HolePlay) -> some View {
+        let t = hole.targets
+        let target = t[min(play.targetIndex, t.count - 1)]
+        return Label {
+            Text("Leg \(min(play.targetIndex, t.count - 1) + 1) of \(play.legs): aiming at \(target.name)")
+                .font(.subheadline.weight(.semibold))
+        } icon: {
+            Image(systemName: target.isFlag ? "flag.fill" : "mappin.and.ellipse")
+        }
+        .foregroundStyle(target.isFlag ? Color.primary : .orange)
+    }
+
+    /// Cease fire on a layup leg: no ring, no score yet. Play goes on from the closest round.
+    @ViewBuilder private func layupVerdict(_ v: HoleVerdict, hole: Hole, play: HolePlay) -> some View {
+        let t = hole.targets
+        let i = min(play.targetIndex, t.count - 1)
+        let here = t[i]
+        let next = t[min(i + 1, t.count - 1)]
+        let onward = play.onToFlag?[i] ?? 0
+        LabeledContent("Closest to \(here.name)", value: String(format: "%.1f m", max(0, v.closest - onward)))
+        if v.canAdvance {
+            VStack(alignment: .leading, spacing: 4) {
+                Label("Next leg: from the closest round toward \(next.name)", systemImage: "arrow.forward.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                Text("A member stands at the closest round, ranges \(next.name)'s pole and sends it as Next mission. Use that lock and leg \(i + 2) starts from there.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+        } else {
+            Text(String(format: "No round found to go on from. Ending the hole here scores %.1f m still to go (score %.1f).", v.closest, v.score))
+                .font(.footnote).foregroundStyle(.orange)
+        }
+    }
+
+    /// "layup 1 → layup 2 → the flag".
+    static func legNames(_ hole: Hole) -> String {
+        hole.targets.map(\.name).joined(separator: " → ")
     }
 
     @ViewBuilder private var downrangeRow: some View {

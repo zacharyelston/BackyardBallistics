@@ -199,7 +199,7 @@ struct FieldSceneView: NSViewRepresentable {
     func updateNSView(_ view: OrbitSceneView, context: Context) {
         let c = context.coordinator
         let grid = content.grid, k = content.exaggeration
-        let key = "\(content.course.id)/\(content.course.version)/\(grid.source)/\(grid.columns)x\(grid.rows)/\(grid.frame.originAltitude)/\(k)/\(content.activeHoles.sorted())/\(hasData)"
+        let key = "\(content.course.id)/\(content.course.version)/\(grid.source)/\(grid.columns)x\(grid.rows)/\(grid.frame.originAltitude)/\(k)/\(content.activeHoles.sorted())/\(content.activeLegs.sorted { $0.key < $1.key }.map { "\($0.key):\($0.value)" })/\(hasData)"
         if key != c.staticKey {
             // Back to the home view for a new course, or when its heights arrive.
             let homeKey = "\(content.course.id)/\(grid.source)"
