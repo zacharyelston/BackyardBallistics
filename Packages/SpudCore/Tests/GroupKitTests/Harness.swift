@@ -76,29 +76,24 @@ final class Phone {
     }
 }
 
-/// A backyard with a match host, squads and phones on the loopback network.
+/// A backyard with a squad's iPad and phones on the loopback network.
 final class Field {
     let net = LoopbackNetwork()
     let course: Course
     var now = Date(timeIntervalSince1970: 1_800_000_000)
-    var match: MatchHost
-    let matchPeer = PeerID("match")
     var hosts: [String: SquadHost] = [:]
     var phones: [String: Phone] = [:]
 
     init(course: Course = testCourse()) {
         self.course = course
-        match = MatchHost(course: course, joinCode: "MATCH1")
-        net.add(matchPeer) { [unowned self] m, from in self.match.handle(m, from: from, now: self.now) }
     }
 
     static func ipad(_ squad: String) -> PeerID { PeerID("ipad-" + squad) }
 
     @discardableResult
-    func addSquad(_ name: String, course: Course? = nil, joinMatch: Bool = true) -> SquadHost {
+    func addSquad(_ name: String, course: Course? = nil) -> SquadHost {
         hosts[name] = SquadHost(squad: Squad(name: name), course: course ?? self.course, practice: true, joinCode: name.uppercased())
         net.add(Self.ipad(name)) { [unowned self] m, from in self.hosts[name]!.handle(m, from: from, now: self.now) }
-        if joinMatch { command(name) { $0.connectMatch(self.matchPeer, joinCode: "MATCH1", now: $1) } }
         return hosts[name]!
     }
 
@@ -124,19 +119,12 @@ final class Field {
         net.run()
     }
 
-    func matchAction(_ action: (inout MatchHost, Date) -> [Outgoing]) {
-        let out = action(&match, now)
-        net.send(from: matchPeer, out)
-        net.run()
-    }
-
-    /// One second passes: phones report positions, the match host sends its heartbeat.
+    /// One second passes: phones report positions.
     func tick(_ seconds: TimeInterval = 1) {
         now += seconds
         for p in phones.values.sorted(by: { $0.name < $1.name }) where p.reportsPosition {
             send(p, .position(MemberPosition(at: geo(p.at), accuracy: p.accuracy, time: now)))
         }
-        matchAction { m, now in m.tick(now: now) }
     }
 
     func holds(_ squad: String) -> Set<Hold> { hosts[squad]!.holds(now: now) }

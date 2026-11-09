@@ -15,7 +15,7 @@ import CourseKit
 
 public enum GroupProtocol {
     /// Bumped on any change to the messages. A device on another version is refused (fail closed).
-    public static let version = 5
+    public static let version = 6
 }
 
 /// Six characters, without the ones people misread (0/O, 1/I/L).
@@ -303,7 +303,6 @@ public struct SquadStatus: Codable, Equatable, Sendable {
     public var roundInFlight: Int?
     public var total: Double
     public var toPar: Double
-    public var yourTurn: Bool
     public var holds: [Hold]
 }
 
@@ -317,83 +316,20 @@ public struct Fan: Codable, Equatable, Sendable {
     }
 }
 
-public struct JoinMatch: Codable, Equatable, Sendable {
-    public var squad: SquadID
-    public var name: String
-    public var joinCode: String
-    public var courseID: String
-    public var courseVersion: Int
-    public var courseHash: String
-}
-
-/// A commander's report to the match host: enough for turns, holds and the scoreboard.
-public struct SquadReport: Codable, Equatable, Sendable {
-    public var squad: SquadID
-    public var revision: Int
-    public var members: [Member]
-    public var hole: Int?
-    public var phase: HolePlay.Phase?
-    /// People are (or may be) downrange: cease fire was called and the hole isn't finished.
-    public var walkingOut: Bool
-    /// The active fan while the squad could fire.
-    public var fan: Fan?
-    /// Finished holes: number → score.
-    public var scores: [Int: Double]
-}
-
-public struct SquadEntry: Codable, Equatable, Sendable {
-    public var id: SquadID
-    public var name: String
-}
-
-public struct Turn: Codable, Equatable, Sendable {
-    public var hole: Int
-    public var squad: SquadID
-}
-
-/// The match as the match host holds it, sent to every commander as a heartbeat.
-public struct MatchState: Codable, Equatable, Sendable {
-    public var revision: Int
-    public var courseID: String
-    public var courseVersion: Int
-    public var courseHash: String
-    public var squads: [SquadEntry]
-    public var started: Bool
-    /// Whose turn, on which hole. Nil before the start and after the last hole.
-    public var turn: Turn?
-    public var scores: [SquadID: [Int: Double]]
-    /// Holds that apply to every squad.
-    public var holds: [Hold]
-    /// Every check fire the match host has seen, so a commander knows its own report arrived.
-    public var knownCheckFires: [UUID]
-
-    public var finished: Bool { started && turn == nil }
-
-    public func total(_ squad: SquadID) -> Double {
-        ((scores[squad] ?? [:]).values.reduce(0, +) * 10).rounded() / 10
-    }
-}
-
-/// Why no squad, or this squad, may see firing data right now. Holds only ever add to SafetyKit's
+/// Why the squad may not see firing data right now. Holds only ever add to SafetyKit's
 /// verdict (see `GroupGate`).
 public enum Hold: Codable, Hashable, Sendable, CustomStringConvertible {
-    case noMatch
-    case notYourTurn
-    case walkingOut(SquadID)
+    case walkingOut
     case checkFire(by: String)
     case memberInFan(MemberID, name: String)
     case positionUnknown(MemberID, name: String)
-    case matchHostLost
 
     public var description: String {
         switch self {
-        case .noMatch: return "Not in a match yet."
-        case .notYourTurn: return "Another squad's turn."
         case .walkingOut: return "Cease fire: people are walking out."
         case let .checkFire(by): return "Check fire, called by \(by)."
         case let .memberInFan(_, name): return "\(name) is inside the firing fan."
         case let .positionUnknown(_, name): return "No recent position from \(name)."
-        case .matchHostLost: return "Lost the match host."
         }
     }
 }
@@ -430,7 +366,7 @@ public struct GroupMessage: Codable, Equatable, Sendable {
         case fileOffer(FileOffer)
         case fileChunk(FileChunk)
         case fileDone(UUID)
-        /// Phone → commander, and commander → match host.
+        /// Phone → commander.
         case checkFire(CheckFire)
 
         // Commander → member's phone (and to observers: status and positions only)
@@ -449,13 +385,8 @@ public struct GroupMessage: Codable, Equatable, Sendable {
         /// What the leader or the Theater did with a note, field or file.
         case receipt(Receipt)
 
-        // Commander → match host
-        case joinMatch(JoinMatch)
-        case squadReport(SquadReport)
+        /// Commander → observers: members' positions.
         case positions(squad: SquadID, [MemberPosition])
-
-        // Match host → commander
-        case matchState(MatchState)
     }
 }
 

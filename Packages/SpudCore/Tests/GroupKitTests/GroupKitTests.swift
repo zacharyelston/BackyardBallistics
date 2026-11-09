@@ -10,62 +10,40 @@ import RoundKit
 
 final class GroupKitTests: XCTestCase {
 
-    // MARK: A whole match
+    // MARK: A whole round
 
-    /// Two squads play a two-hole practice match over the loopback: phones range, call Fired and
-    /// spot; each commander gates and commits; the match host runs turns and the walking-out hold.
-    func testTwoSquadPracticeMatch() throws {
+    /// A squad plays a two-hole practice round over the loopback: phones range, call Fired and
+    /// spot; the commander gates and commits; cease fire holds the squad while people walk out.
+    func testSquadPlaysARound() throws {
         let f = Field()
         f.addSquad("Red")
-        f.addSquad("Blue")
         // Members stand behind the firing point (the fan points north).
-        let ana = f.addPhone("Ana", squad: "Red", at: Ground(1, -1))      // Red's gunner (first to join)
+        let ana = f.addPhone("Ana", squad: "Red", at: Ground(1, -1))      // the gunner (first to join)
         let ben = f.addPhone("Ben", squad: "Red", at: Ground(-4, -6))
-        let cy = f.addPhone("Cy", squad: "Blue", at: Ground(2, -2))       // Blue's gunner
-        let dee = f.addPhone("Dee", squad: "Blue", at: Ground(6, -8))
         XCTAssertNotNil(ana.member)
         XCTAssertEqual(f.hosts["Red"]!.round.squad.members.map(\.role), [.gunner, .member])
         f.hosts["Red"]!.designatedSpotter = ana.member
-        f.hosts["Blue"]!.designatedSpotter = cy.member
 
         f.tick()
-        f.matchAction { m, now in m.start(now: now) }
-        f.tick()
-        XCTAssertEqual(f.match.state.turn, Turn(hole: 1, squad: f.hosts["Red"]!.squadID))
-        XCTAssertEqual(f.holds("Red"), [], "Red is on turn with no holds")
-        XCTAssertEqual(f.holds("Blue"), [.notYourTurn])
-
-        var order: [String] = []
-        var seed: UInt64 = 1
-        while let turn = f.match.state.turn {
-            let name = f.hosts.first { $0.value.squadID == turn.squad }!.key
-            let gunner = name == "Red" ? ana : cy
-            let spotter = name == "Red" ? ben : dee
-            order.append("\(name)\(turn.hole)")
-            try playHole(f, squad: name, gunner: gunner, spotter: spotter, seed: seed)
-            seed += 1
+        XCTAssertEqual(f.holds("Red"), [], "between holes, nothing holds the squad")
+        for seed in UInt64(1)...2 {
+            try playHole(f, squad: "Red", gunner: ana, spotter: ben, seed: seed)
             f.tick()
         }
 
-        XCTAssertEqual(order, ["Red1", "Blue1", "Red2", "Blue2"])
-        XCTAssertTrue(f.match.state.finished)
-        for name in ["Red", "Blue"] {
-            let card = f.hosts[name]!.round.card
-            XCTAssertTrue(card.isComplete)
-            XCTAssertEqual(card.player, name)
-            XCTAssertEqual(card.playerID, f.hosts[name]!.squadID.raw)
-            XCTAssertEqual(f.match.state.total(f.hosts[name]!.squadID), card.total, accuracy: 1e-9)
-            XCTAssertLessThan(card.total, 30, "fire control should bring rounds in")
-        }
+        let card = f.hosts["Red"]!.round.card
+        XCTAssertTrue(card.isComplete)
+        XCTAssertEqual(card.player, "Red")
+        XCTAssertEqual(card.playerID, f.hosts["Red"]!.squadID.raw)
+        XCTAssertLessThan(card.total, 30, "fire control should bring rounds in")
         // Members saw the squad's summary, with no firing data in it.
         XCTAssertEqual(ben.status?.squad.name, "Red")
-        XCTAssertEqual(ben.status?.total, f.hosts["Red"]!.round.card.total)
+        XCTAssertEqual(ben.status?.total, card.total)
         XCTAssertTrue(f.hosts["Red"]!.incidents.isEmpty, "\(f.hosts["Red"]!.incidents)")
     }
 
-    /// One squad's turn at a hole, the way the commander's iPad and the phones would play it.
+    /// One hole, the way the commander's iPad and the phones would play it.
     private func playHole(_ f: Field, squad: String, gunner: Phone, spotter: Phone, seed: UInt64) throws {
-        let other = squad == "Red" ? "Blue" : "Red"
         f.command(squad) { $0.startNextHole(now: $1) }
         let hole = f.hosts[squad]!.round.currentHole!
         var range = PracticeRange(pole: ground(hole.flag.position), poleHeight: hole.flag.poleHeightM,
@@ -90,7 +68,6 @@ final class GroupKitTests: XCTestCase {
             guard !h.atRoundLimit else { break }
             let shown = display(f, squad)
             guard case let .show(cleared) = shown else { return XCTFail("blocked: \(shown.safetyReasons) \(shown.holds)") }
-            XCTAssertFalse(display(f, other).isShown, "the other squad must never see firing data on our turn")
 
             let shot = range.fire(cleared.value, from: .zero)
             f.send(gunner, .fired(FiredReport(hole: h.holeNumber, mission: h.mission!.number, round: h.roundsFired + 1)))
@@ -110,10 +87,10 @@ final class GroupKitTests: XCTestCase {
             if closest.d <= hole.flag.inRadiusM { break }
         }
 
-        // Cease fire: everyone walks out, and every squad is held.
+        // Cease fire: everyone walks out, and the squad is held.
         f.command(squad) { $0.ceaseFire(now: $1) }
         f.tick()
-        XCTAssertTrue(f.holds(other).contains(.walkingOut(f.hosts[squad]!.squadID)))
+        XCTAssertTrue(f.holds(squad).contains(.walkingOut))
         XCTAssertFalse(display(f, squad).isShown)
 
         // Verify: the gunner ranges the pole from the closest round.
@@ -124,7 +101,7 @@ final class GroupKitTests: XCTestCase {
         XCTAssertEqual(f.hosts[squad]!.round.hole?.phase, .ceased, f.hosts[squad]!.lastProblem ?? "")
         f.command(squad) { $0.finish(now: $1) }
         f.tick()
-        XCTAssertFalse(f.holds(other).contains(.walkingOut(f.hosts[squad]!.squadID)))
+        XCTAssertFalse(f.holds(squad).contains(.walkingOut))
     }
 
     /// The commander's solution for the current mission, through SafetyKit and the squad's holds.
@@ -144,25 +121,22 @@ final class GroupKitTests: XCTestCase {
 
     // MARK: Holds
 
-    func testMemberInTheFanHoldsEveryone() {
+    func testMemberInTheFanHoldsTheSquad() {
         let f = Field()
         f.addSquad("Red")
-        f.addSquad("Blue")
         f.addPhone("Ana", squad: "Red", at: Ground(0, -2))
-        let dee = f.addPhone("Dee", squad: "Blue", at: Ground(5, -5))
+        let ben = f.addPhone("Ben", squad: "Red", at: Ground(5, -5))
         f.tick()
-        f.matchAction { m, now in m.start(now: now) }
-        f.command("Red") { $0.startNextHole(now: $1) }   // Red's fan now points at hole 1's flag
+        f.command("Red") { $0.startNextHole(now: $1) }   // the fan now points at hole 1's flag
         f.tick()
         XCTAssertEqual(f.holds("Red"), [])
 
-        dee.at = Ground(6, 25)          // Blue's member wanders out toward Red's flag
+        ben.at = Ground(6, 25)          // Ben wanders out toward the flag
         f.tick()
-        let hold = Hold.memberInFan(dee.member!, name: "Dee")
+        let hold = Hold.memberInFan(ben.member!, name: "Ben")
         XCTAssertTrue(f.holds("Red").contains(hold))
-        XCTAssertTrue(f.holds("Blue").contains(hold))
 
-        dee.at = Ground(40, -10)        // off to the side, behind the line
+        ben.at = Ground(40, -10)        // off to the side, behind the line
         f.tick()
         XCTAssertFalse(f.holds("Red").contains(hold))
     }
@@ -170,7 +144,7 @@ final class GroupKitTests: XCTestCase {
     func testFanGeometry() {
         let fan = Fan(origin: origin, bearing: 0)
         func at(_ e: Double, _ n: Double, acc: Double = 1) -> Bool {
-            MatchHost.inFan(MemberPosition(at: geo(Ground(e, n)), accuracy: acc, time: Date()), fan)
+            SquadHost.inFan(MemberPosition(at: geo(Ground(e, n)), accuracy: acc, time: Date()), fan)
         }
         XCTAssertTrue(at(0, 30))
         XCTAssertTrue(at(15, 30))           // 26.6°, inside ±30°
@@ -181,54 +155,40 @@ final class GroupKitTests: XCTestCase {
         XCTAssertFalse(at(0, 120))          // past the fan's radius
     }
 
-    func testCheckFireHoldsAllAndNeedsAFreshLookDownrange() {
+    func testCheckFireHoldsAndNeedsAFreshLookDownrange() {
         let f = Field()
         f.addSquad("Red")
-        f.addSquad("Blue")
         f.addPhone("Ana", squad: "Red", at: Ground(0, -2))
-        let dee = f.addPhone("Dee", squad: "Blue", at: Ground(5, -5))
+        let ben = f.addPhone("Ben", squad: "Red", at: Ground(5, -5))
         f.tick()
-        f.matchAction { m, now in m.start(now: now) }
         f.command("Red") { $0.startNextHole(now: $1) }
         f.command("Red") { $0.confirmDownrange(now: $1) }
         XCTAssertTrue(f.hosts["Red"]!.isDownrangeConfirmed())
 
-        f.send(dee, .checkFire(CheckFire(by: "Dee")))
-        XCTAssertTrue(f.holds("Blue").contains(.checkFire(by: "Dee")))
-        XCTAssertTrue(f.holds("Red").contains(.checkFire(by: "Dee")), "Blue's commander forwarded it to the match")
-        XCTAssertFalse(f.hosts["Red"]!.isDownrangeConfirmed(), "check fire withdraws every downrange confirmation")
+        f.send(ben, .checkFire(CheckFire(by: "Ben")))
+        XCTAssertTrue(f.holds("Red").contains(.checkFire(by: "Ben")))
+        XCTAssertFalse(f.hosts["Red"]!.isDownrangeConfirmed(), "check fire withdraws the downrange confirmation")
 
-        f.matchAction { m, now in m.withdrawCheckFire(now: now) }
+        f.command("Red") { $0.withdrawCheckFire(now: $1) }
         f.tick()
-        XCTAssertFalse(f.holds("Red").contains(.checkFire(by: "Dee")))
+        XCTAssertFalse(f.holds("Red").contains(.checkFire(by: "Ben")))
         XCTAssertFalse(f.hosts["Red"]!.isDownrangeConfirmed(), "only the commander's own tap confirms again")
     }
 
-    func testLostMatchHostAndSilentPhonesHold() {
+    func testSilentPhoneHoldsWhileAHoleIsLive() {
         let f = Field()
         f.addSquad("Red")
         let ana = f.addPhone("Ana", squad: "Red", at: Ground(0, -2))
         f.tick()
-        f.matchAction { m, now in m.start(now: now) }
-        f.tick()
-        XCTAssertEqual(f.holds("Red"), [])
-
         ana.reportsPosition = false
-        f.tick(MatchHost.positionTimeout + 1)
-        XCTAssertTrue(f.holds("Red").contains(.positionUnknown(ana.member!, name: "Ana")))
+        f.tick(SquadHost.positionTimeout + 1)
+        XCTAssertEqual(f.holds("Red"), [], "between holes nobody is held for a quiet phone")
+
+        f.command("Red") { $0.startNextHole(now: $1) }
+        XCTAssertTrue(f.holds("Red").contains(.positionUnknown(ana.member!, name: "Ana")), "silence is not clear")
         ana.reportsPosition = true
         f.tick()
         XCTAssertEqual(f.holds("Red"), [])
-
-        f.net.down.insert(f.matchPeer)
-        f.tick(SquadHost.matchHostTimeout + 1)
-        XCTAssertTrue(f.holds("Red").contains(.matchHostLost))
-    }
-
-    func testNoMatchMeansNoFiringData() {
-        let f = Field()
-        f.addSquad("Solo", joinMatch: false)
-        XCTAssertEqual(f.holds("Solo"), [.noMatch, .notYourTurn])
     }
 
     // MARK: Joining
@@ -249,9 +209,6 @@ final class GroupKitTests: XCTestCase {
         XCTAssertEqual(ana.member, first, "same phone, same member")
         XCTAssertEqual(f.hosts["Red"]!.round.squad.members.map(\.name), ["Ana"], "Eve never joined; Ana is listed once")
 
-        // A squad on another version of the course is kept out.
-        f.addSquad("Blue", course: testCourse(version: 2))
-        XCTAssertEqual(f.match.state.squads.map(\.name), ["Red"])
     }
 
     // MARK: Spots
@@ -261,7 +218,6 @@ final class GroupKitTests: XCTestCase {
         f.addSquad("Red")
         let ana = f.addPhone("Ana", squad: "Red", at: Ground(0, -2))
         f.tick()
-        f.matchAction { m, now in m.start(now: now) }
         f.command("Red") { $0.startNextHole(now: $1) }
         let hole = f.hosts["Red"]!.round.currentHole!
         var range = PracticeRange(pole: ground(hole.flag.position), poleHeight: hole.flag.poleHeightM, wind: .calm, seed: 3)
@@ -301,7 +257,7 @@ final class GroupKitTests: XCTestCase {
         XCTAssertEqual(f.hosts["Red"]!.round.hole!.roundsFired, 0, "a spot for another round is ignored")
         f.send(ana, .spot(SpotReport(hole: 1, mission: 1, round: 1, call: .over, lateral: 0.4)))
         XCTAssertEqual(f.hosts["Red"]!.round.hole!.roundsFired, 1)
-        // The round was fired with no match: logged.
+        // The round was fired while held (no position from Ana yet): logged.
         XCTAssertEqual(f.hosts["Red"]!.incidents.count, 1)
     }
 
@@ -427,7 +383,7 @@ final class GroupKitTests: XCTestCase {
 
     func testAMembersFieldIsAdoptedBetweenHolesOnly() {
         let f = Field()
-        f.addSquad("Red", joinMatch: false)
+        f.addSquad("Red")
         let ana = f.addPhone("Ana", squad: "Red", at: .zero)
         var watched: [GroupMessage.Body] = []
         let theater = Phone("Theater", at: .zero)

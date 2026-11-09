@@ -60,7 +60,7 @@ public enum GroupWire {
     }()
 }
 
-/// Every device in a match checks that it loaded the same course.
+/// Devices check that they loaded the same course.
 public enum CourseFingerprint {
     public static func hash(_ course: Course) -> String {
         let e = JSONEncoder()
