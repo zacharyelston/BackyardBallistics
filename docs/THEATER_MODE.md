@@ -1,8 +1,22 @@
 # v4 Theater Mode: the course owner's view
 
-Status: design, not built. **v4 Theater Mode** is the fourth SpudGunGolf version, after v1 Classic, v2 Fire Missions and [v3 Squadz](GROUP_PLAY.md). It builds on v3. Squads still play v2 fire missions, run from each squad's commander iPad. v4 adds a station for the **course owner**: it observes every input on the course and uses a GPU mapping back end to build the field map and a live picture of everything happening on the course.
+Status: partly built (see [What's built](#whats-built)): the SpudTheater Mac app watches squads, keeps a fields registry, takes fields, notes and files from phones, and shows the course in 3D. Course-wide holds, the mapping interface and the GPU back end are not built. **v4 Theater Mode** is the fourth SpudGunGolf version, after v1 Classic, v2 Fire Missions and [v3 Squadz](GROUP_PLAY.md). It builds on v3. Squads still play v2 fire missions, run from each squad's commander iPad. v4 adds a station for the **course owner**: it observes every input on the course and uses a GPU mapping back end to build the field map and a live picture of everything happening on the course.
 
 Read [GROUP_PLAY.md](GROUP_PLAY.md) first. v4 adds no new game rules; it adds an observer, plus a better map for everyone.
+
+## What's built
+
+The rest of this doc is the design. This section says what of it is in the code today.
+
+- **SpudTheater.** A macOS 14 app target (`App/Theater`), built from SpudCore's CoreGeo, SafetyKit, CourseKit, GroupKit, GroupLink, FieldKit and TheaterKit. It runs on the local network with no internet, except to fetch ground heights for the 3D view.
+- **Watching squads.** It lists the squads' iPads it finds over Bonjour. **Watch** joins one with that squad's join code, as an observer (`Hello.Role.observer`). The squad sends it the course, members' positions, the squad's status (phase and holds), the leader's orders and members' field notes. An observer can send nothing the squad acts on. No firing data reaches it.
+- **Site map.** The watched squads' courses on satellite imagery, with every member, the safety fans, orders with a place, and notes with a place as pins. A card per squad shows its phase, holds, latest orders and each member's GPS and age.
+- **Fields registry** (FieldKit's `FieldRegistry`). Every course the host is given is kept as a field, whether or not anyone plays it: imported from a course file with **+**, from a squad it watches, or sent by a phone. `register` adds a field, or replaces it with a newer version and keeps the old one under `versions/`; an older version is ignored. **Forget field** (`forget`) moves the field's folder to `.forgotten/`, never deletes it. Watching a squad marks its field as last seen.
+- **The contributor door** (TheaterKit's `TheaterHost`). Phones pick **Send to Theater** and send fields, notes and files with no squad running; see [The door for phones](#how-it-connects) below. A field sent in is refused if it has blocking problems, and registered otherwise.
+- **The 3D view.** See [The 3D view](#the-3d-view-built).
+- **Field meshes.** `spud-mesh` builds a georeferenced mesh from photos on the Mac ([MESHING.md](MESHING.md)), and the 3D view shows the meshes saved for a field.
+
+Not built yet: the observer feed from match hosts (there is no network match yet), locks and spot reports in the feed, course-wide holds and check fire, the `FieldMappingService` interface, the GPU back end adapter, sharing tiles back to commanders, coverage and replay.
 
 ## What it is
 
@@ -101,14 +115,14 @@ v3's rules all stand. SafetyKit stays authoritative on each squad's commander iP
 
 The v4 build steps are numbered T1–T6. They are separate from v3's G1–G8 and from the app's milestones 1–8, and they need v3 through G6 (the match).
 
-| Step | Builds | Done when |
-| --- | --- | --- |
-| **T1. Observer feed** | The `theater` role in GroupKit; commanders and match hosts stream positions, locks, spots, observations, phases, holds and scores; a test that no firing data can enter the feed | `swift test` runs two simulated matches into a simulated Theater station, and the feed carries no solution |
-| **T2. Theater station, 2D** | A Mac (or iPad) app target: the whole-course map from the course file, every member, every fan, holds and scoreboards | The owner watches two practice matches live on one screen |
-| **T3. Course holds** | `courseCheckFire`, `courseClosed`, `personInFan`, `fanConflict`, `theaterLost` in `GroupGate`; the lifting rules; the course file's Theater setting and privacy notice | A course check fire stops both matches; two overlapping fans hold the later match; holds never unlock (property test) |
-| **T4. Mapping interface** | `FieldMappingService` with the v3 Mac render host as its first implementation; the georeferencing check against flag residuals | v3's render host runs behind the interface with no change in behaviour |
-| **T5. GPU back end adapter** | An adapter from the Theater station to the course's external GPU mapping service; tiles shared to commanders | A captured course renders on the Theater station and on every commander's iPad; the back end going away falls back cleanly |
-| **T6. Coverage and replay** | Thin-mesh coverage view, capture requests to squads, replay of a day's matches | The owner can replay a match and see where captures are missing |
+| Step | Builds | Done when | Status |
+| --- | --- | --- | --- |
+| **T1. Observer feed** | The `theater` role in GroupKit; commanders and match hosts stream positions, locks, spots, observations, phases, holds and scores; a test that no firing data can enter the feed | `swift test` runs two simulated matches into a simulated Theater station, and the feed carries no solution | Partly built: an observer role on a squad (`Hello.Role.observer`) gets the course, positions, status, orders and notes, and can't act (`testAnObserverWatchesButCantAct`). No match host feed, and no locks or spots in it |
+| **T2. Theater station, 2D** | A Mac (or iPad) app target: the whole-course map from the course file, every member, every fan, holds and scoreboards | The owner watches two practice matches live on one screen | Partly built: SpudTheater on the Mac, with a satellite site map of every watched squad, members, fans, holds and orders. No match scoreboards |
+| **T3. Course holds** | `courseCheckFire`, `courseClosed`, `personInFan`, `fanConflict`, `theaterLost` in `GroupGate`; the lifting rules; the course file's Theater setting and privacy notice | A course check fire stops both matches; two overlapping fans hold the later match; holds never unlock (property test) | Not built |
+| **T4. Mapping interface** | `FieldMappingService` with the v3 Mac render host as its first implementation; the georeferencing check against flag residuals | v3's render host runs behind the interface with no change in behaviour | Not built. `spud-mesh` and FieldKit's georeferencing (with an RMS residual) are the start |
+| **T5. GPU back end adapter** | An adapter from the Theater station to the course's external GPU mapping service; tiles shared to commanders | A captured course renders on the Theater station and on every commander's iPad; the back end going away falls back cleanly | Not built |
+| **T6. Coverage and replay** | Thin-mesh coverage view, capture requests to squads, replay of a day's matches | The owner can replay a match and see where captures are missing | Not built |
 
 For T4 and T5, `spud-mesh` already builds a georeferenced mesh from a folder of photos on the Mac host, with Object Capture; see [MESHING.md](MESHING.md) for shooting the photos and running it.
 

@@ -13,8 +13,14 @@ graph BT
   BallisticsKit["BallisticsKit<br/>flight, roll-out, solver, dispersion"]
   FireControlKit["FireControlKit (m5)<br/>calibration fitting"]
   RoundKit["RoundKit<br/>missions, scoring, scorecard, practice"]
-  GroupKit["GroupKit (v3)<br/>squad and match protocol, holds"]
+  GroupKit["GroupKit (v3)<br/>squad and match protocol, holds, field notes"]
+  GroupLink["GroupLink (v3)<br/>Bonjour, TLS from the join code"]
+  FieldKit["FieldKit (v4)<br/>ENU frames, georeferencing, elevation, fields registry"]
+  TheaterKit["TheaterKit (v4)<br/>the Theater's door for phones"]
+  FieldCapture["FieldCapture (v4)<br/>photo GPS, camera pairing, mesh fit"]
+  SpudMesh["spud-mesh (macOS tool)<br/>photos to a georeferenced mesh"]
   App["SpudGunGolf app<br/>SwiftUI, ARKit, AVFoundation"]
+  Theater["SpudTheater (macOS app)<br/>SwiftUI, MapKit, SceneKit"]
   SafetyKit --> CoreGeo
   RangingKit --> CoreGeo
   CourseKit --> CoreGeo
@@ -26,25 +32,40 @@ graph BT
   RoundKit --> CourseKit
   GroupKit --> RoundKit
   GroupKit --> SafetyKit
+  GroupLink --> GroupKit
+  FieldKit --> CourseKit
+  TheaterKit --> GroupKit
+  TheaterKit --> FieldKit
+  FieldCapture --> FieldKit
+  SpudMesh --> FieldCapture
   App --> RangingKit
   App --> SafetyKit
   App --> CourseKit
   App --> BallisticsKit
   App --> RoundKit
   App --> FireControlKit
+  App --> GroupLink
+  Theater --> GroupLink
+  Theater --> TheaterKit
 ```
 
-Modules marked with a milestone don't exist yet; they slot in at the place shown.
+FireControlKit (m5) doesn't exist yet; it slots in at the place shown. Modules marked (v3) and (v4) are for Squadz and Theater.
 
 | Module | Owns | Depends on | Tested by |
 | --- | --- | --- | --- |
 | CoreGeo | `GeoPoint`, east/north offsets, bearings, `GeoPolygon` | nothing | `swift test` |
 | SafetyKit | Every safety limit, the checks, `Cleared<T>`, `DownrangeLog`, launcher conformance, `safety-limits.json` | CoreGeo | `swift test`, including a check that the browser prototype uses the same numbers |
 | RangingKit | `ReticleRange` and `ReticleLock` (the main ranging method), the spotting model (`Spot`, `RangeCall`, `FireControl` bracketing and left/right), camera intrinsics and rays, lean, pole height, the multi-photo `PoleSolver` cross-check | CoreGeo | `swift test` on synthetic scenes and the spec's reticle table |
-| CourseKit | The course file parser (`CourseFile`), `Course`/`Hole`/`Flag`/`Hazard`, `CourseValidator` (calls `Safety.checkFan` and the 100 yd limit; flag kit rules in `CourseRules`) | CoreGeo, SafetyKit | `swift test` on the sample course, malformed files and fan or boundary violations |
+| CourseKit | The course file parser (`CourseFile`), `Course`/`Hole`/`Layup`/`Flag`/`Hazard`, `CourseValidator` (calls `Safety.checkFan` and the 100 yd limit on every leg, firing point to layups to flag; a course whose only errors are fan or range errors is practice only; flag kit rules in `CourseRules`), `CourseWriter` | CoreGeo, SafetyKit | `swift test` on the sample course, malformed files and fan or boundary violations |
 | BallisticsKit | Point-mass flight with drag and wind shear, roll-out per surface, the low/lob `Solver` with roll allowance, `Charge` (uncalibrated until m5, capped by SafetyKit), `Dispersion` and `SeededGenerator` | SafetyKit | `swift test`, including parity with the browser prototype's own numbers |
 | RoundKit | `HolePlay` (one hole as fire missions: begin, record spots or lost rounds, cease fire, resume, advance downrange, finish), `Mission` (a lock and its `FireControl`, aim point), `HoleRules` scoring, `Scorecard`, and `PracticeRange` (simulated locks, rounds and spots on a course's geometry) | CoreGeo, RangingKit, BallisticsKit, CourseKit | `swift test`, including 40 simulated practice holes that must converge |
 | GroupKit (v3 Squadz, [GROUP_PLAY.md](GROUP_PLAY.md)) | The squad and match protocol (`GroupMessage`, length-prefixed JSON via `GroupWire`), `SquadHost` (the commander's iPad: joins, locks gated by `Safety.clearRange` on its own course, Fired, spots, cease fire and verify, amending by replay), `MatchHost` (turns between squads, scoreboard, field-wide holds: walking out, check fire, members in the fan, silent phones), `GroupGate` (holds only add to SafetyKit's verdict), and `LoopbackNetwork` | CoreGeo, SafetyKit, RangingKit, CourseKit, RoundKit | `swift test`: a two-squad practice match over the loopback, and safety properties (nothing that clears or fires crosses the wire, a message fuzz can't unlock) |
+| GroupLink (v3) | GroupKit over the local network with Network.framework: `GroupHost` (the iPad's listener, restarted on the same port after sleep), `GroupClient` (the phone's link, which reconnects and rejoins as the same member), `GroupBrowser`, Bonjour `_spudgolf._tcp`, TLS with a pre-shared key from the join code, an 8 s connect timeout | GroupKit | `swift test` over real local connections, including the Theater's door |
+| FieldKit (v4, [THEATER_MODE.md](THEATER_MODE.md)) | The field in 3D: ENU frames, `Similarity3` georeferencing of a reconstruction to GPS, `FieldMeshInfo`, `ElevationGrid` and the USGS 3DEP requests and parsing (the Theater app does the networking), the 3D scene geometry (`SceneAxes`, terrain, fans), `FieldStore` and the fields registry (`register`, kept versions, `forget`) | CoreGeo, CourseKit | `swift test` |
+| TheaterKit (v4) | `TheaterHost`: the Theater's door for phones. Contributors join with the Theater's code and send fields (registered), notes and files (saved under the field's folder, checked by SHA-256) | GroupKit, FieldKit, CourseKit, CoreGeo | `swift test` |
+| FieldCapture (v4, [MESHING.md](MESHING.md)) | Photos to a georeferenced field mesh, minus RealityKit: EXIF GPS, pairing reconstructed cameras with photos, the fit to the course frame | FieldKit, CourseKit, CoreGeo | `swift test` |
+| `spud-mesh` (tool) | Runs RealityKit's photogrammetry on a Mac and writes the mesh and its georeference for the Theater. macOS only; an iOS build gets a stub | FieldCapture, FieldKit, CourseKit, CoreGeo | By hand, on a Mac ([MESHING.md](MESHING.md)) |
+| `spud-docs` (tool) | Prints the facts the How to play pages quote, from the real modules (`scripts/build-howto.sh`) | CoreGeo, SafetyKit, RangingKit, CourseKit, RoundKit, GroupKit | `scripts/build-howto.sh --check` |
 | FireControlKit (m5) | Calibration fitting: per-setting velocities from calibration shots | BallisticsKit | planned |
 
 ### Dependency rules
@@ -111,9 +132,9 @@ Three tabs, one per job:
 
 | Tab | For | Now | Later |
 | --- | --- | --- | --- |
-| Play | Playing a round as fire missions | Play or practice a round on the loaded course, hole by hole, with the scorecard saved at the end; the Course screen; saved scorecards | Multi-player turns; real initial data once a launcher is calibrated (m5) |
+| Play | Playing a round as fire missions | Play or practice a round on the loaded course, hole by hole, with the scorecard saved at the end; v3 Squadz (Command a squad, Join squad); the Course screen; saved scorecards | Matches between squads (G6); real initial data once a launcher is calibrated (m5) |
 | Launcher | Your launcher's profile and the limits | Fixed safety limits | Calibration shots and per-setting velocities (m5), sight mode (m7) |
-| Tools | Setting up flags and testing | Lean check, pole height, ranging, sighting test, logs | Course authoring and publishing (m3, m8) |
+| Tools | Setting up flags and testing | Lean check, pole height, ranging, survey a course (with layup points), field notes, target capture (each can be sent to the Theater), sighting test, logs | Course publishing (m8) |
 
 ### One fire mission, end to end
 
@@ -149,6 +170,8 @@ sequenceDiagram
 | `App/Sources/App` | Entry point, tabs, settings and units |
 | `App/Sources/Shared` | Camera capture, the capture-source seam, CoreMotion gravity (`MotionReader`), the tip/base marker with loupe, `JSONStore` |
 | `App/Sources/Features/<Feature>` | One folder per feature: its views, its session object, its log |
+| `App/Shared` | Views both apps use: the satellite site map |
+| `App/Theater` | SpudTheater, the macOS app: watching squads, the fields list, the door for phones, the 3D view |
 
 Features talk to SpudCore, not to each other. Shared UI that two features need moves to `Shared`.
 
