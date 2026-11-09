@@ -10,7 +10,7 @@ import PackageDescription
 //   BallisticsKit – flight, roll-out and the firing solver; limits come from SafetyKit
 //   CourseKit  – course files: parsing, the Course/Hole model, validation through SafetyKit
 //   RoundKit   – fire missions per hole, cease fire and verify, downrange play, scoring, practice
-//   GroupKit   – v3 Squadz: the squad and match protocol, the commander's and match host's state, holds
+//   GroupKit   – v3 Squadz: the squad protocol, the commander's state, holds
 //   FieldKit   – the field in 3D: ENU frames, georeferencing reconstructions to GPS, elevation grids, mesh records
 //   TheaterKit – the Theater host's door for phones: fields, notes and files, saved per field
 //   GroupLink  – GroupKit over the local network: Bonjour, TLS keyed from the join code (Network.framework)
