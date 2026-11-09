@@ -312,7 +312,7 @@ the app shows how old each position is and which link it came on.
 ### What goes over LoRa
 
 The exact byte layouts, the instruction codebook and the retry rules are in
-[LORA_MESSAGES.md](LORA_MESSAGES.md).
+[LORA_MESSAGES.md](LORA_MESSAGES.md). Tasking a recon drone over these links, and corrections to the numbers above, are in [RECON.md](RECON.md).
 
 | Fits | Doesn't fit |
 | --- | --- |
