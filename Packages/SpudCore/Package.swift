@@ -43,7 +43,7 @@ let package = Package(
         .target(name: "GroupKit", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit"]),
         .executableTarget(name: "SpudDocs", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit", "GroupKit"]),
         .target(name: "GroupLink", dependencies: ["GroupKit"]),
-        .target(name: "FieldKit", dependencies: ["CoreGeo"]),
+        .target(name: "FieldKit", dependencies: ["CoreGeo", "CourseKit"]),
         .target(name: "FieldCapture", dependencies: ["FieldKit", "CourseKit", "CoreGeo"]),
         // RealityKit's PhotogrammetrySession; the sources are `#if os(macOS)`, an iOS build gets a stub.
         .executableTarget(name: "SpudMesh", dependencies: ["FieldCapture", "FieldKit", "CourseKit", "CoreGeo"]),
@@ -55,7 +55,7 @@ let package = Package(
         .testTarget(name: "CourseKitTests", dependencies: ["CourseKit", "CoreGeo", "SafetyKit", "RangingKit"]),
         .testTarget(name: "RoundKitTests", dependencies: ["RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "CoreGeo"]),
         .testTarget(name: "GroupKitTests", dependencies: ["GroupKit", "RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "SafetyKit", "CoreGeo"]),
-        .testTarget(name: "FieldKitTests", dependencies: ["FieldKit", "CoreGeo"]),
+        .testTarget(name: "FieldKitTests", dependencies: ["FieldKit", "CoreGeo", "CourseKit"]),
         .testTarget(name: "FieldCaptureTests", dependencies: ["FieldCapture", "FieldKit", "CourseKit", "CoreGeo"]),
         .testTarget(name: "GroupLinkTests", dependencies: ["GroupLink", "GroupKit", "CourseKit", "CoreGeo"])
     ]

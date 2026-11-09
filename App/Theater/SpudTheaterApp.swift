@@ -5,6 +5,8 @@ import SafetyKit
 import CourseKit
 import GroupKit
 import GroupLink
+import FieldKit
+import UniformTypeIdentifiers
 
 /// v4 Theater Mode: find the squads' iPads on the network and watch them as an observer. Each
 /// squad sends its course, and its members' GPS positions as they come in. The site map shows the
@@ -43,6 +45,10 @@ final class TheaterModel: ObservableObject {
     @Published var found: [GroupBrowser.Found] = []
     @Published var watches: [String: Watch] = [:]
     @Published var browserProblem: String?
+    /// Every field this host knows (FieldKit's registry), whether or not anyone is playing it.
+    @Published private(set) var fields: [(field: RegisteredField, course: Course)] = []
+    @Published var notice: String?
+    let store = FieldStore(root: FieldStore.defaultRoot)
     private let browser = GroupBrowser(queue: .main)
     private let device: UUID = {
         let key = "theaterDevice"
@@ -53,6 +59,7 @@ final class TheaterModel: ObservableObject {
     }()
 
     func start() {
+        reloadFields()
         browser.onChange = { [weak self] f in MainActor.assumeIsolated { self?.found = f } }
         browser.onFailed = { [weak self] e in MainActor.assumeIsolated { self?.browserProblem = e } }
         browser.start()
@@ -79,10 +86,63 @@ final class TheaterModel: ObservableObject {
         for w in watches.values { w.client.retryNow() }
     }
 
+    // MARK: Fields
+
+    func reloadFields() { fields = store.fields() }
+
+    /// Squads being watched on a field.
+    func watches(on courseID: String) -> [Watch] {
+        watches.values.filter { $0.course?.id == courseID }.sorted { $0.name < $1.name }
+    }
+
+    /// Imports a course file (course.yaml) as a field, after CourseKit's checks.
+    func importCourse(from url: URL) {
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        guard let text = try? String(contentsOf: url, encoding: .utf8) else {
+            notice = "Couldn't read \(url.lastPathComponent)."
+            return
+        }
+        let result = CourseFile.load(text)
+        guard let course = result.course else {
+            notice = "\(url.lastPathComponent) isn't a usable course: " + result.problems.map(\.description).prefix(3).joined(separator: " ")
+            return
+        }
+        register(course, source: "Imported from \(url.lastPathComponent)", yaml: text)
+    }
+
+    func forget(_ courseID: String) {
+        do {
+            let dest = try store.forget(courseID)
+            notice = "Forgot the field. Its folder was moved to \(dest.path)."
+        } catch {
+            notice = "Couldn't forget it: \(error.localizedDescription)"
+        }
+        reloadFields()
+    }
+
+    private func register(_ course: Course, source: String, yaml: String? = nil) {
+        do {
+            switch try store.register(course, source: source, yaml: yaml) {
+            case .added: notice = "Added \(course.name) to the fields."
+            case let .updated(from): notice = "Updated \(course.name) from v\(from) to v\(course.version)."
+            case .unchanged: break
+            case let .olderIgnored(v): notice = "\(course.name) v\(course.version) is older than the v\(v) already saved; kept v\(v)."
+            }
+        } catch {
+            notice = "Couldn't save \(course.name): \(error.localizedDescription)"
+        }
+        reloadFields()
+    }
+
     private func receive(_ m: GroupMessage, from name: String) {
         switch m.body {
         case let .observing(squad): watches[name]?.squad = squad
-        case let .course(course): watches[name]?.course = course
+        case let .course(course):
+            watches[name]?.course = course
+            // Every course a squad plays becomes a field on this host.
+            register(course, source: "From squad \(name)")
+            store.markSeen(course.id)
         case let .squadStatus(s): watches[name]?.status = s; watches[name]?.squad = s.squad
         case let .positions(_, list):
             for p in list { if let id = p.member { watches[name]?.positions[id] = p } }
@@ -102,14 +162,62 @@ struct TheaterView: View {
     @EnvironmentObject private var model: TheaterModel
     @State private var codes: [String: String] = [:]
     @AppStorage("mapMode") private var mapMode: MapMode = .map
+    @AppStorage("selectedField") private var selectedField: String = ""
+    @State private var importing = false
+    @State private var forgetting: RegisteredField?
 
     enum MapMode: String { case map, threeD }
 
-    private var siteMapSquads: [SiteMapSquad] { model.watches.values.sorted { $0.name < $1.name }.map(\.siteMapSquad) }
+    /// The field shown: the one picked, or the first registered.
+    private var shownField: (field: RegisteredField, course: Course)? {
+        model.fields.first { $0.field.id == selectedField } ?? model.fields.first
+    }
+
+    /// What the map and 3D view draw: the shown field (with no members of its own) and the
+    /// squads playing on it. With no fields yet, every watched squad.
+    private var siteMapSquads: [SiteMapSquad] {
+        guard let f = shownField else {
+            return model.watches.values.sorted { $0.name < $1.name }.map(\.siteMapSquad)
+        }
+        let fieldItself = SiteMapSquad(id: "field:" + f.field.id, course: f.course, members: [], positions: [:],
+                                       activeHole: nil, walkingOut: true)
+        return [fieldItself] + model.watches(on: f.field.id).map(\.siteMapSquad)
+    }
+
+    private var shownWatches: [Watch] {
+        guard let f = shownField else { return model.watches.values.sorted { $0.name < $1.name } }
+        return model.watches(on: f.field.id)
+    }
 
     var body: some View {
         NavigationSplitView {
-            List {
+            List(selection: Binding(get: { shownField?.field.id }, set: { selectedField = $0 ?? "" })) {
+                Section {
+                    if model.fields.isEmpty {
+                        Text("No fields yet. Import a course file with +, or watch a squad: the course it plays is saved here.")
+                            .foregroundStyle(.secondary)
+                    }
+                    ForEach(model.fields, id: \.field.id) { entry in
+                        FieldRow(field: entry.field, live: model.watches(on: entry.field.id).count)
+                            .tag(entry.field.id)
+                            .contextMenu {
+                                Button("Show in Finder") {
+                                    NSWorkspace.shared.activateFileViewerSelecting([model.store.courseDirectory(entry.field.id)])
+                                }
+                                Divider()
+                                Button("Forget field…", role: .destructive) { forgetting = entry.field }
+                            }
+                    }
+                } header: {
+                    HStack {
+                        Text("Fields")
+                        Spacer()
+                        Button { importing = true } label: { Image(systemName: "plus") }
+                            .buttonStyle(.borderless)
+                            .help("Import a course file (course.yaml)")
+                    }
+                }
+
                 Section("Squads on this network") {
                     if model.found.isEmpty {
                         Text("Looking for squads… A commander's iPad shows up here once it opens a squad.")
@@ -121,6 +229,12 @@ struct TheaterView: View {
                                 Text(f.name).font(.headline)
                                 if !f.isCompatible {
                                     Text("v\(f.protocolVersion.map(String.init) ?? "?"), update").foregroundStyle(.orange).font(.caption)
+                                }
+                                if let c = model.watches[f.name]?.course {
+                                    Spacer()
+                                    Button(c.name) { selectedField = c.id }
+                                        .buttonStyle(.link).font(.caption)
+                                        .help("Show the field this squad is playing")
                                 }
                             }
                             HStack {
@@ -137,27 +251,63 @@ struct TheaterView: View {
                             }
                         }
                         .padding(.vertical, 2)
+                        .selectionDisabled()
                     }
                 }
-                if let p = model.browserProblem { Text(p).foregroundStyle(.red) }
+                if let p = model.browserProblem { Text(p).foregroundStyle(.red).selectionDisabled() }
             }
-            .navigationSplitViewColumnWidth(min: 250, ideal: 280)
+            .navigationSplitViewColumnWidth(min: 260, ideal: 290)
+            .fileImporter(isPresented: $importing,
+                          allowedContentTypes: [UTType(filenameExtension: "yaml") ?? .plainText,
+                                                UTType(filenameExtension: "yml") ?? .plainText, .plainText],
+                          allowsMultipleSelection: true) { result in
+                if case let .success(urls) = result { for u in urls { model.importCourse(from: u) } }
+            }
+            .confirmationDialog("Forget \(forgetting?.name ?? "this field")?", isPresented: Binding(
+                get: { forgetting != nil }, set: { if !$0 { forgetting = nil } }), titleVisibility: .visible) {
+                Button("Forget field", role: .destructive) {
+                    if let f = forgetting { model.forget(f.id) }
+                    forgetting = nil
+                }
+            } message: {
+                Text("It leaves the list. Its folder (course, elevation, meshes, captures) is moved aside, not deleted. Watching a squad on it adds it again.")
+            }
         } detail: {
             VSplitView {
                 Group {
-                    switch mapMode {
-                    case .map: SiteMap(squads: siteMapSquads)
-                    case .threeD: Field3DView(squads: siteMapSquads)
+                    if siteMapSquads.isEmpty {
+                        ContentUnavailableView("No field to show", systemImage: "map",
+                                               description: Text("Import a course file with + under Fields, or watch a squad."))
+                    } else {
+                        switch mapMode {
+                        case .map: SiteMap(squads: siteMapSquads)
+                        case .threeD: Field3DView(squads: siteMapSquads)
+                        }
                     }
                 }
                 .frame(minHeight: 320)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        if model.watches.isEmpty {
-                            ContentUnavailableView("Not watching a squad", systemImage: "binoculars",
-                                                   description: Text("Enter a squad's join code and press Watch."))
+                        if let f = shownField { FieldHeader(field: f.field, course: f.course) }
+                        if let n = model.notice {
+                            HStack {
+                                Text(n).font(.callout)
+                                Spacer()
+                                Button("OK") { model.notice = nil }.buttonStyle(.borderless)
+                            }
+                            .padding(8).background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
                         }
-                        ForEach(model.watches.values.sorted { $0.name < $1.name }) { SquadCard(watch: $0) }
+                        if shownWatches.isEmpty {
+                            Text(shownField == nil ? "Not watching a squad. Enter a squad's join code and press Watch."
+                                                   : "No squad is playing this field right now.")
+                                .foregroundStyle(.secondary)
+                        }
+                        ForEach(shownWatches) { SquadCard(watch: $0) }
+                        let elsewhere = model.watches.count - shownWatches.count
+                        if shownField != nil, elsewhere > 0 {
+                            Text("\(elsewhere) more squad\(elsewhere == 1 ? "" : "s") watched on other fields.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
                     }
                     .padding()
                 }
@@ -179,6 +329,47 @@ struct TheaterView: View {
     private func startWatching(_ f: GroupBrowser.Found) {
         guard JoinCode.normalized(codes[f.name, default: ""]).count == 6, f.isCompatible else { return }
         model.watch(f.name, code: codes[f.name, default: ""])
+    }
+}
+
+/// A field in the sidebar.
+struct FieldRow: View {
+    let field: RegisteredField
+    let live: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text(field.name).font(.headline)
+                if live > 0 {
+                    Text("\(live) live").font(.caption2.weight(.semibold))
+                        .padding(.horizontal, 6).padding(.vertical, 1)
+                        .background(.green.opacity(0.25), in: Capsule())
+                }
+            }
+            Text("\(field.holes) hole\(field.holes == 1 ? "" : "s") · par \(field.totalPar) · v\(field.version)")
+                .font(.caption).foregroundStyle(.secondary)
+            Text(field.lastSeen.map { "Played " + $0.formatted(.relative(presentation: .named)) } ?? field.source)
+                .font(.caption2).foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+/// The selected field's details over the squads list.
+struct FieldHeader: View {
+    let field: RegisteredField
+    let course: Course
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(field.name).font(.title2.weight(.semibold))
+            Text("\(course.id) · v\(field.version) · \(field.holes) holes, par \(field.totalPar) · \(field.source)")
+                .font(.caption).foregroundStyle(.secondary)
+            Text("Added \(field.registeredAt.formatted(date: .abbreviated, time: .shortened))"
+                 + (field.lastSeen.map { " · last played \($0.formatted(date: .abbreviated, time: .shortened))" } ?? ""))
+                .font(.caption).foregroundStyle(.secondary)
+        }
     }
 }
 
