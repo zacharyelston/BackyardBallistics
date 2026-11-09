@@ -34,6 +34,7 @@ Spec: [SpudGunGolf App Spec](https://claude.ai/artifact/82Lpac7tqq2UcA4rAKZhCX)
 | `docs/FLAG_KIT.md` | How to build and set up a flag |
 | `docs/FIELD_TEST.md` | Field-test protocols for milestones 1 and 2 |
 | `docs/GROUP_PLAY.md` | Design for v3 Squadz, and what of it is built: a squad plays v2 fire missions as one player; a commander iPad maps the field from members' phones |
+| `docs/SQUAD_CORE.md` | Design, not built: a squad core with missions as add-ons (golf first, the recon drone second), and an internet relay recycled from the earlier `squadz` server |
 | `docs/THEATER_MODE.md` | Design for v4 Theater Mode, and what of it is built: the course owner's observer station, fields registry, 3D view and GPU-built field map |
 | `docs/MESHING.md` | Turning photos of a course into a georeferenced mesh with `spud-mesh` |
 | `docs/COURSE_FORMAT.md` | The flat-key YAML course file a course's web server serves |
