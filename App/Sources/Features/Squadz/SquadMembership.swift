@@ -89,6 +89,25 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         location.distanceFilter = kCLDistanceFilterNone
         location.pausesLocationUpdatesAutomatically = false
         location.activityType = .fitness
+        // The app was closed or crashed while in a squad: get back in with the same code.
+        if let saved = Self.savedTarget {
+            Task { @MainActor [weak self] in self?.join(squadName: saved.squad, code: saved.code, name: saved.name) }
+        }
+    }
+
+    // MARK: Remembered squad
+
+    /// The squad this phone is in, kept until it leaves, so a relaunch (or a crash) rejoins without
+    /// asking for the code again. Cleared on Leave, a refusal, or when the link gives up.
+    private struct SavedTarget: Codable { var squad: String; var code: String; var name: String }
+    private static let savedKey = "squadMembership.current"
+
+    private static var savedTarget: SavedTarget? {
+        get { UserDefaults.standard.data(forKey: savedKey).flatMap { try? JSONDecoder().decode(SavedTarget.self, from: $0) } }
+        set {
+            if let newValue, let d = try? JSONEncoder().encode(newValue) { UserDefaults.standard.set(d, forKey: savedKey) }
+            else { UserDefaults.standard.removeObject(forKey: savedKey) }
+        }
     }
 
     var me: Member? {
@@ -132,9 +151,10 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
     }
 
     private func join(squadName name: String, code: String, name player: String) {
-        leave()
+        disconnect()
         let code = JoinCode.normalized(code)
         lastTarget = (name, code, player)
+        Self.savedTarget = SavedTarget(squad: name, code: code, name: player)
         squadName = name
         state = .connecting(name)
         let c = GroupClient(squadName: name, joinCode: code, hello: Hello(name: player, device: Self.deviceID, joinCode: code))
@@ -163,8 +183,13 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         c.retryNow()
     }
 
-    /// Leaves the squad: says bye (if linked) and stops rejoining.
+    /// Leaves the squad: says bye (if linked), stops rejoining and forgets the code.
     func leave() {
+        Self.savedTarget = nil
+        disconnect()
+    }
+
+    private func disconnect() {
         let c = client
         client = nil
         c?.onStatus = nil
@@ -194,6 +219,8 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         case let .reconnecting(why):
             state = welcome == nil ? .connecting(name) : .reconnecting(why)
         case let .stopped(why):
+            // A wrong code, a refusal, or the squad ended: nothing to rejoin at the next launch.
+            Self.savedTarget = nil
             stopReporting()
             if case .refused = state { return }
             state = why == "Left" ? .idle : .failed(why)
@@ -222,6 +249,7 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
             spotRequest = r
         case let .refused(reason):
             state = .refused(reason)   // GroupClient stops on a refusal
+            Self.savedTarget = nil
         case let .lockReceipt(r):
             if let i = sentLocks.firstIndex(where: { $0.id == r.lock }) { sentLocks[i].receipt = r }
         case let .order(o):
