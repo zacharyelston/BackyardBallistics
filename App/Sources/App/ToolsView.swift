@@ -43,6 +43,16 @@ struct ToolsView: View {
                 }
 
                 Section {
+                    NavigationLink { TargetCaptureView() } label: {
+                        Label("Target capture", systemImage: "viewfinder.rectangular")
+                    }
+                } header: {
+                    Text("3D field")
+                } footer: {
+                    Text("Stand a scale stick next to the target. Take two or more shots from spots a few metres apart, tapping the target and the stick's bottom and top bands on each. Saved captures go to the Theater host.")
+                }
+
+                Section {
                     NavigationLink { RangingView() } label: {
                         Label("Multi-photo cross-check", systemImage: "camera.metering.multispot")
                     }
