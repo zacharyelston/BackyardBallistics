@@ -65,7 +65,10 @@ public enum CourseFingerprint {
     public static func hash(_ course: Course) -> String {
         let e = JSONEncoder()
         e.outputFormatting = .sortedKeys
-        let data = (try? e.encode(course)) ?? Data()
-        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        return sha256Hex((try? e.encode(course)) ?? Data())
+    }
+
+    public static func sha256Hex(_ data: Data) -> String {
+        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
 }
