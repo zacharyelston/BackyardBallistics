@@ -61,6 +61,6 @@ let package = Package(
         .testTarget(name: "TheaterKitTests", dependencies: ["TheaterKit", "GroupKit", "FieldKit", "CourseKit", "CoreGeo"]),
         .testTarget(name: "FieldKitTests", dependencies: ["FieldKit", "CoreGeo", "CourseKit"]),
         .testTarget(name: "FieldCaptureTests", dependencies: ["FieldCapture", "FieldKit", "CourseKit", "CoreGeo"]),
-        .testTarget(name: "GroupLinkTests", dependencies: ["GroupLink", "GroupKit", "CourseKit", "CoreGeo"])
+        .testTarget(name: "GroupLinkTests", dependencies: ["GroupLink", "GroupKit", "CourseKit", "CoreGeo", "TheaterKit", "FieldKit"])
     ]
 )

@@ -19,6 +19,7 @@
 		1B92E8CB9FDA3BE04558438E /* sample-course.yaml in Resources */ = {isa = PBXBuildFile; fileRef = 103D8AEC8FC2644FBAE493AA /* sample-course.yaml */; };
 		1BED83145446EFFD6DDFAE8C /* FieldLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B045324F460255AFAFCFE722 /* FieldLog.swift */; };
 		213FAEF9984EE5CF8F8711E5 /* CourseSurveyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3816CF5FEF49C0098D0646 /* CourseSurveyView.swift */; };
+		2BF894FFF3215C250DE6844D /* TheaterDoor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DDF03400D66308C1F6EF79 /* TheaterDoor.swift */; };
 		2DC085DE0BF944C6B5833078 /* MotionReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B878CA73FBAD5EB2862D46 /* MotionReader.swift */; };
 		33EE82BA78FAE6BB5F789431 /* FieldKit in Frameworks */ = {isa = PBXBuildFile; productRef = B412D2A686B1959C5E6A8C5D /* FieldKit */; };
 		3EFC1974454B6AB94800DE8B /* SafetyKit in Frameworks */ = {isa = PBXBuildFile; productRef = 624B5971BCEFE3276F13D796 /* SafetyKit */; };
@@ -32,6 +33,7 @@
 		724DF9394DF3A0687DCBE68E /* CrosshairSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AFC18B1FD4637E46C11CA7 /* CrosshairSpotView.swift */; };
 		77084244531EA1125D1C00E1 /* BallisticsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 957114E8D0EB2D87927F3B83 /* BallisticsKit */; };
 		7C2DD2E5091CC8ED15143BC6 /* OrderCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75BC877E68D4709936CE0EB1 /* OrderCard.swift */; };
+		7DC2EAC64681377EA35DFECD /* TheaterKit in Frameworks */ = {isa = PBXBuildFile; productRef = DDD5A3C2C25EEFA38CFFAE29 /* TheaterKit */; };
 		801A31073180797249782AAE /* SquadOrdersPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202B6EDB55A5E428B38307AF /* SquadOrdersPanel.swift */; };
 		833F06491C4DDFF9FDC23AC6 /* CoreGeo in Frameworks */ = {isa = PBXBuildFile; productRef = A767DE0DBD45719511064F3D /* CoreGeo */; };
 		850826D3141B26E48925FB53 /* SquadMembership.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD109C93883530F2F1D8C14B /* SquadMembership.swift */; };
@@ -107,6 +109,7 @@
 		9586D0E4323A37AF04C81EB6 /* CameraHUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraHUD.swift; sourceTree = "<group>"; };
 		9AB73DF938A99A856BB1FB4B /* Field3DView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Field3DView.swift; sourceTree = "<group>"; };
 		A44E34B89E1526A64BADF1B3 /* local */ = {isa = PBXFileReference; lastKnownFileType = folder; name = local; path = courses/local; sourceTree = SOURCE_ROOT; };
+		A5DDF03400D66308C1F6EF79 /* TheaterDoor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TheaterDoor.swift; sourceTree = "<group>"; };
 		AC575A2D9586FD6E557618AD /* PoleHeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoleHeightView.swift; sourceTree = "<group>"; };
 		AE8331D4584229CE4D7A8756 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		B045324F460255AFAFCFE722 /* FieldLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldLog.swift; sourceTree = "<group>"; };
@@ -152,6 +155,7 @@
 				A5E0A234EC6642A523EE480F /* GroupKit in Frameworks */,
 				47FEF687AF2EBDB3FFE0AC73 /* GroupLink in Frameworks */,
 				33EE82BA78FAE6BB5F789431 /* FieldKit in Frameworks */,
+				7DC2EAC64681377EA35DFECD /* TheaterKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -267,6 +271,7 @@
 				9AB73DF938A99A856BB1FB4B /* Field3DView.swift */,
 				5E021E898D313DF96AEA9B39 /* Info.plist */,
 				8F14AA5B7F89FEA9E804DA95 /* SpudTheaterApp.swift */,
+				A5DDF03400D66308C1F6EF79 /* TheaterDoor.swift */,
 			);
 			path = Theater;
 			sourceTree = "<group>";
@@ -374,6 +379,7 @@
 				42F3226CD1FFA1EDFE808E86 /* GroupKit */,
 				205C0B8F75E83E48DA0B80BF /* GroupLink */,
 				B412D2A686B1959C5E6A8C5D /* FieldKit */,
+				DDD5A3C2C25EEFA38CFFAE29 /* TheaterKit */,
 			);
 			productName = SpudTheater;
 			productReference = CB8A578A329DCC609C701191 /* SpudTheater.app */;
@@ -469,6 +475,7 @@
 				C9FE1167D19F7CCAD7C69BBD /* Field3DView.swift in Sources */,
 				D2FDA7DD300BC49CE78F6088 /* SiteMap.swift in Sources */,
 				F663DF385477783B5FE4CBDD /* SpudTheaterApp.swift in Sources */,
+				2BF894FFF3215C250DE6844D /* TheaterDoor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -809,6 +816,10 @@
 		B412D2A686B1959C5E6A8C5D /* FieldKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FieldKit;
+		};
+		DDD5A3C2C25EEFA38CFFAE29 /* TheaterKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TheaterKit;
 		};
 		ED48412377178EFF51799932 /* GroupKit */ = {
 			isa = XCSwiftPackageProductDependency;

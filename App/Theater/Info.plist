@@ -27,6 +27,6 @@
 		<string>_spudgolf._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>SpudGunGolf Theater finds the squads' iPads on the local network to watch the course.</string>
+	<string>SpudGunGolf Theater finds the squads' iPads on the local network to watch the course, and lets phones send it fields, notes and photos.</string>
 </dict>
 </plist>
