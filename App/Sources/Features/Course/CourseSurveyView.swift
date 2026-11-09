@@ -163,7 +163,7 @@ final class SurveySampler: NSObject, ObservableObject, CLLocationManagerDelegate
     }
 }
 
-/// Tools → Survey a course: walk the property and record the pole's base, the firing point and the
+/// Field → Survey a course: walk the property and record the pole's base, the firing point and the
 /// boundary corners with averaged GPS. The result is checked by `CourseValidator` as you go, can be
 /// loaded as this device's course, and can be shared as a course file for `courses/local/course.yaml`.
 struct CourseSurveyView: View {

@@ -6,9 +6,9 @@
 
 ## Before the round
 
-- **Load a course.** Play → Course loads the bundled course, the course server on your Wi-Fi, or a typed address. A course passes every check, or it's refused. A course whose only problems are a safety fan that leaves the boundary, or a shot longer than 91.4 m (100 yd), is **practice only**: you can practise on it, but not play real rounds.
-- **Set up each flag.** A pole is 2.33 to 3.76 m tall, with less than 0.5° of lean (Tools → Lean check, then Measure pole height). The ring around it is 1 m unless the course says otherwise, at most 5 m.
-- **Your own place?** Tools → Survey a course records the pole's base, the firing point and the boundary corners with averaged GPS.
+- **Load a course.** Field → Course loads the bundled course, the course server on your Wi-Fi, or a typed address. A course passes every check, or it's refused. A course whose only problems are a safety fan that leaves the boundary, or a shot longer than 91.4 m (100 yd), is **practice only**: you can practise on it, but not play real rounds.
+- **Set up each flag.** A pole is 2.33 to 3.76 m tall, with less than 0.5° of lean (Field → Check pole lean, then Measure pole height). The ring around it is 1 m unless the course says otherwise, at most 5 m.
+- **Your own place?** Field → Survey a course records the pole's base, the firing point and the boundary corners with averaged GPS.
 - **Long holes have layup points.** A hole longer than one shot gets marker poles between the firing point and the flag. Each leg (firing point to the first layup, layup to layup, the last layup to the flag) is one shot, so each must be within 91.4 m (100 yd), with its safety fan inside the boundary. Survey a course shows each leg's length and where to add a layup.
 
 ## A hole, step by step

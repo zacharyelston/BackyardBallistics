@@ -1,119 +1,121 @@
 import SwiftUI
 
-/// Setup, ranging and field-test tools. During a round the Play tab drives these same features.
-struct ToolsView: View {
-    @EnvironmentObject private var fieldLog: FieldLogStore
-    @EnvironmentObject private var rangingLog: RangingLogStore
+/// The course and the work done out on the field, separate from equipment and diagnostics.
+struct FieldView: View {
+    @EnvironmentObject private var courses: CourseStore
     @EnvironmentObject private var reticleLog: ReticleLogStore
-    @AppStorage(Settings.poleHeightKey) private var poleHeight = Settings.defaultPoleHeight
-    @AppStorage(Settings.cameraHeightKey) private var cameraHeight = Settings.defaultCameraHeight
-    @AppStorage(Settings.simulatedCaptureKey) private var simulatedCapture = false
 
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    NavigationLink { LeanCheckView() } label: {
-                        Label("Lean check", systemImage: "level")
+                Section("Course") {
+                    NavigationLink { CourseView() } label: {
+                        Label(courses.practiceCourse?.name ?? "Load a course", systemImage: "map")
                     }
-                    NavigationLink { PoleHeightView() } label: {
-                        Label("Measure pole height", systemImage: "ruler")
+                    if let course = courses.practiceCourse {
+                        NavigationLink {
+                            SiteMap(squads: [SiteMapSquad(id: course.id, course: course, members: [],
+                                                         positions: [:], activeHole: nil, walkingOut: true)])
+                                .navigationTitle(course.name).navigationBarTitleDisplayMode(.inline)
+                        } label: { Label("Course map", systemImage: "map.fill") }
                     }
-                    NavigationLink { CourseSurveyView() } label: {
-                        Label("Survey a course", systemImage: "mappin.and.ellipse")
-                    }
-                } header: {
-                    Text("Flag setup")
-                } footer: {
-                    Text("Guy the pole until the lean check reads under 0.5°, then measure its height. Survey the course to record the pole, the firing point and the boundary.")
+                    NavigationLink { CourseSurveyView() } label: { Label("Survey a course", systemImage: "mappin.and.ellipse") }
                 }
-
-                Section {
-                    NavigationLink { ReticleRangingView() } label: {
-                        Label("Range the pole", systemImage: "scope")
-                    }
+                Section("Ranging") {
+                    NavigationLink { ReticleRangingView() } label: { Label("Range the pole", systemImage: "scope") }
                     NavigationLink { ReticleLogView() } label: {
-                        Label("Reticle log", systemImage: "list.number")
-                            .badge(reticleLog.items.count)
+                        Label("Recent measurements", systemImage: "clock").badge(reticleLog.items.count)
                     }
-                } header: {
-                    Text("Ranging")
-                } footer: {
-                    Text("Crosshair on the pole's base, turn the dial until the plumb line meets the pole's top, lock.")
                 }
-
+                Section("Field records") {
+                    NavigationLink { FieldNoteView() } label: { Label("Send a field note", systemImage: "note.text.badge.plus") }
+                    NavigationLink { TargetCaptureView() } label: { Label("Capture a target", systemImage: "viewfinder.rectangular") }
+                }
                 Section {
-                    NavigationLink { FieldNoteView() } label: {
-                        Label("Field note", systemImage: "note.text.badge.plus")
-                    }
-                } header: {
-                    Text("Field notes")
-                } footer: {
-                    Text("Pin a note (and a photo) where you're standing, and send it to the Theater host or your squad leader.")
+                    NavigationLink { LeanCheckView() } label: { Label("Check pole lean", systemImage: "level") }
+                    NavigationLink { PoleHeightView() } label: { Label("Measure pole height", systemImage: "ruler") }
+                } header: { Text("Pole setup") } footer: {
+                    Text("Check lean, measure the pole, then survey its position on the course.")
                 }
+            }
+            .navigationTitle("Field")
+        }
+    }
+}
 
+/// Equipment settings and optional field-test tools, away from the active mission.
+struct KitView: View {
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Equipment") {
+                    NavigationLink { LauncherView() } label: { Label("Launcher", systemImage: "scope") }
+                    NavigationLink { RangingSettingsView() } label: { Label("Ranging settings", systemImage: "slider.horizontal.3") }
+                }
                 Section {
-                    NavigationLink { TargetCaptureView() } label: {
-                        Label("Target capture", systemImage: "viewfinder.rectangular")
+                    NavigationLink { RangingDiagnosticsView() } label: {
+                        Label("Tests and cross-checks", systemImage: "wrench.and.screwdriver")
                     }
-                } header: {
-                    Text("3D field")
-                } footer: {
-                    Text("Stand a scale stick next to the target. Take two or more shots from spots a few metres apart, tapping the target and the stick's bottom and top bands on each. Saved captures go to the Theater host.")
+                } header: { Text("Advanced") } footer: {
+                    Text("Optional checks and test logs for setting up and evaluating your kit.")
                 }
+            }
+            .navigationTitle("Kit")
+        }
+    }
+}
 
-                Section {
-                    NavigationLink { RangingView() } label: {
-                        Label("Multi-photo cross-check", systemImage: "camera.metering.multispot")
+private struct RangingDiagnosticsView: View {
+    @EnvironmentObject private var fieldLog: FieldLogStore
+    @EnvironmentObject private var rangingLog: RangingLogStore
+    @AppStorage(Settings.simulatedCaptureKey) private var simulatedCapture = false
+
+    var body: some View {
+        List {
+            Section {
+                NavigationLink { RangingView() } label: { Label("Multi-photo cross-check", systemImage: "camera.metering.multispot") }
+                NavigationLink { RangingLogView() } label: { Label("Cross-check history", systemImage: "clock").badge(rangingLog.items.count) }
+            } header: { Text("Independent cross-check") } footer: {
+                Text("Use three to five marked photos of the pole from a short arc.")
+            }
+            Section("Sighting test") {
+                NavigationLink { SightingView() } label: { Label("Run a sighting test", systemImage: "scope") }
+                NavigationLink { FieldLogView() } label: { Label("Test history", systemImage: "clock").badge(fieldLog.items.count) }
+            }
+            Section {
+                Toggle("Simulated camera for ranging", isOn: $simulatedCapture)
+            } footer: { Text("Uses a simulated scene instead of the camera for ranging tools.") }
+        }
+        .navigationTitle("Tests and cross-checks").navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct RangingSettingsView: View {
+    @AppStorage(Settings.poleHeightKey) private var poleHeight = Settings.defaultPoleHeight
+    @AppStorage(Settings.cameraHeightKey) private var cameraHeight = Settings.defaultCameraHeight
+
+    var body: some View {
+        Form {
+            Section("Pole") {
+                LabeledContent("Height") {
+                    HStack {
+                        TextField("m", value: $poleHeight, format: .number.precision(.fractionLength(3)))
+                            .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 90)
+                        Text("m")
                     }
-                    NavigationLink { RangingLogView() } label: {
-                        Label("Multi-photo log", systemImage: "list.bullet")
-                            .badge(rangingLog.items.count)
-                    }
-                } header: {
-                    Text("Cross-check (optional)")
-                } footer: {
-                    Text("Three to five marked photos of the pole from a short arc give an independent distance and height difference.")
                 }
-
-                Section {
-                    NavigationLink { SightingView() } label: {
-                        Label("Sighting test", systemImage: "scope")
-                    }
-                    NavigationLink { FieldLogView() } label: {
-                        Label("Field log", systemImage: "list.bullet.rectangle")
-                            .badge(fieldLog.items.count)
-                    }
-                } header: {
-                    Text("Field test")
-                } footer: {
-                    Text("Photograph the pole from taped distances and log how close the range comes.")
-                }
-
-                Section("Ranging settings") {
-                    LabeledContent("Pole height") {
-                        HStack {
-                            TextField("m", value: $poleHeight, format: .number.precision(.fractionLength(3)))
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(maxWidth: 90)
-                            Text("m")
-                        }
-                    }
-                    Text(Units.feetInches(poleHeight)).foregroundStyle(.secondary).font(.footnote)
-                    Toggle("Simulated camera for ranging", isOn: $simulatedCapture)
-                    LabeledContent("Phone height when sighting") {
-                        HStack {
-                            TextField("m", value: $cameraHeight, format: .number.precision(.fractionLength(2)))
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(maxWidth: 90)
-                            Text("m")
-                        }
+                Text(Units.feetInches(poleHeight)).font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("Phone") {
+                LabeledContent("Height when sighting") {
+                    HStack {
+                        TextField("m", value: $cameraHeight, format: .number.precision(.fractionLength(2)))
+                            .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 90)
+                        Text("m")
                     }
                 }
             }
-            .navigationTitle("Tools")
         }
+        .navigationTitle("Ranging settings").navigationBarTitleDisplayMode(.inline)
     }
 }

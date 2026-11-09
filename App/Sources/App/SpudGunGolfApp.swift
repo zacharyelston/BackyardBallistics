@@ -32,27 +32,30 @@ struct SpudGunGolfApp: App {
     }
 }
 
-/// Three tabs, one per job: play a round, look after your launcher, and set up or test kit.
+/// Stable destinations for the active game, the field, and equipment.
 struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var squadCommand: SquadCommand
     @EnvironmentObject private var squadMembership: SquadMembership
 
+    enum Tab: Hashable { case play, field, kit }
+    @State private var selection: Tab
+
+    init(selectedTab: Tab = .play) { _selection = State(initialValue: selectedTab) }
+
     var body: some View {
-        TabView {
+        TabView(selection: $selection) {
             PlayView()
-                .tabItem { Label("Play", systemImage: "flag.fill") }
-            LauncherView()
-                .tabItem { Label("Launcher", systemImage: "scope") }
-            ToolsView()
-                .tabItem { Label("Tools", systemImage: "wrench.and.screwdriver") }
+                .safeAreaInset(edge: .bottom, spacing: 0) { OrderBanner() }
+                .tabItem { Label("Play", systemImage: "flag.fill") }.tag(Tab.play)
+            FieldView()
+                .safeAreaInset(edge: .bottom, spacing: 0) { OrderBanner() }
+                .tabItem { Label("Field", systemImage: "map") }.tag(Tab.field)
+            KitView()
+                .safeAreaInset(edge: .bottom, spacing: 0) { OrderBanner() }
+                .tabItem { Label("Kit", systemImage: "wrench.and.screwdriver") }.tag(Tab.kit)
         }
         .tint(.orange)
-        // The squad leader's newest order, along the bottom of whatever screen is open (clear of
-        // the navigation bar and the tab bar).
-        .overlay(alignment: .bottom) {
-            OrderBanner().padding(.bottom, 58).animation(.default, value: squadMembership.orders.count)
-        }
         // Back from sleep or the background: the squad's iPad reopens its listener at once, and a
         // member's phone retries without waiting out its backoff.
         .onChange(of: scenePhase) { _, phase in

@@ -62,6 +62,7 @@ struct HoleMissionView: View {
         Group {
             if let hole, let play {
                 List {
+                    stageSection(play)
                     switch play.phase {
                     case .setup: setupSections(hole)
                     case .firing:
@@ -97,6 +98,33 @@ struct HoleMissionView: View {
             if let m = play?.mission {
                 CrosshairSpotView(range: m.lockedRange) { lateral = ($0 * 10).rounded() / 10 }
             }
+        }
+    }
+
+    private func stageSection(_ play: HolePlay) -> some View {
+        let stage: Int = {
+            switch play.phase {
+            case .setup: return practice || active?.downrange.isConfirmed(player: player, hole: play.holeNumber) == true ? 1 : 0
+            case .firing: return verifying ? 3 : 2
+            case .ceased: return 3
+            case .finished: return 4
+            }
+        }()
+        return Section {
+            HStack(spacing: 8) {
+                ForEach(Array(["Setup", "Range", "Spot", "Verify"].enumerated()), id: \.offset) { index, title in
+                    VStack(spacing: 6) {
+                        Image(systemName: index < stage ? "checkmark.circle.fill" : index == stage ? "circle.inset.filled" : "circle")
+                        Text(title)
+                    }
+                    .font(.caption.weight(index == stage ? .bold : .regular))
+                    .foregroundStyle(index == stage ? Color.orange : index < stage ? .green : .secondary)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(title + (index < stage ? ": complete" : index == stage ? ": current step" : ": upcoming"))
+                }
+            }
+            .padding(.vertical, 4)
         }
     }
 
@@ -223,12 +251,14 @@ struct HoleMissionView: View {
                 Text(windSpeed < 0.05 ? "Calm" : String(format: "%.1f m/s from %@", windSpeed, compass(windFrom)))
                     .foregroundStyle(.secondary).monospacedDigit()
             }
-            Slider(value: $windSpeed, in: 0...6, step: 0.5) { Text("Wind speed") }
-            if windSpeed >= 0.05 {
-                Picker("From", selection: $windFrom) {
-                    ForEach(Array(stride(from: 0.0, to: 360, by: 45)), id: \.self) { Text(compass($0)).tag($0) }
+            DisclosureGroup("Adjust wind estimate") {
+                Slider(value: $windSpeed, in: 0...6, step: 0.5) { Text("Wind speed") }
+                if windSpeed >= 0.05 {
+                    Picker("From", selection: $windFrom) {
+                        ForEach(Array(stride(from: 0.0, to: 360, by: 45)), id: \.self) { Text(compass($0)).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
                 }
-                .pickerStyle(.segmented)
             }
             if let s = pick {
                 if practice {
@@ -413,20 +443,22 @@ struct HoleMissionView: View {
 
     @ViewBuilder private func roundsSection(_ play: HolePlay) -> some View {
         if !play.rounds.isEmpty {
-            Section("Rounds on this hole") {
-                ForEach(play.rounds.reversed()) { r in
-                    HStack {
-                        Text("\(r.number)").font(.headline.monospacedDigit()).frame(width: 24)
-                        if let s = r.spot {
-                            Text(s.call.label)
-                            Text(abs(s.lateral) < 0.05 ? "on line" : sideText(s.lateral)).foregroundStyle(.secondary)
-                        } else {
-                            Text("Lost").foregroundStyle(.secondary)
+            Section {
+                DisclosureGroup("Rounds on this hole (\(play.rounds.count))") {
+                    ForEach(play.rounds.reversed()) { r in
+                        HStack {
+                            Text("\(r.number)").font(.headline.monospacedDigit()).frame(width: 24)
+                            if let s = r.spot {
+                                Text(s.call.label)
+                                Text(abs(s.lateral) < 0.05 ? "on line" : sideText(s.lateral)).foregroundStyle(.secondary)
+                            } else {
+                                Text("Lost").foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if play.missions.count > 1 { Text("M\(r.mission)").font(.caption).foregroundStyle(.secondary) }
                         }
-                        Spacer()
-                        if play.missions.count > 1 { Text("M\(r.mission)").font(.caption).foregroundStyle(.secondary) }
+                        .monospacedDigit()
                     }
-                    .monospacedDigit()
                 }
             }
         }
