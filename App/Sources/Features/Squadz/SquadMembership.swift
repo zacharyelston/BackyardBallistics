@@ -415,3 +415,24 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
         location.authorizationStatus == .denied || location.authorizationStatus == .restricted
     }
 }
+
+#if DEBUG
+extension SquadMembership {
+    /// Design scenes only: shows what a joined phone would have received, without a network, the
+    /// location manager or notifications. See DesignScenes.swift.
+    func loadDesign(_ bodies: [GroupMessage.Body], fix: CLLocation, heading: Double?, spotRequest: SpotRequest?) {
+        for body in bodies {
+            switch body {
+            case let .welcome(w): welcome = w; squadName = w.squad.name
+            case let .squadStatus(s): status = s; squadName = s.squad.name
+            case let .order(o): if !orders.contains(where: { $0.id == o.id }) { orders.append(o) }
+            default: break
+            }
+        }
+        state = .joined
+        lastFix = fix
+        self.heading = heading
+        self.spotRequest = spotRequest
+    }
+}
+#endif

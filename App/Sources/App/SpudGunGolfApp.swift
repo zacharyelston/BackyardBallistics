@@ -13,7 +13,13 @@ struct SpudGunGolfApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            Group {
+                #if DEBUG
+                if let scene = DesignScene.current { DesignSceneView(scene: scene) } else { RootView() }
+                #else
+                RootView()
+                #endif
+            }
                 .environmentObject(fieldLog)
                 .environmentObject(rangingLog)
                 .environmentObject(reticleLog)
