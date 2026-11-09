@@ -500,4 +500,16 @@ final class GroupKitTests: XCTestCase {
         XCTAssertTrue(f.hosts["Red"]!.round.practice)
         XCTAssertTrue(f.hosts["Red"]!.round.card.practice)
     }
+
+    func testLocksAreCheckedAgainstTheLegsTarget() throws {
+        let o = origin
+        let hole = Hole(number: 1, name: "Long", par: 6, firingPoints: [o],
+                        layups: [Layup(position: geo(Ground(0, 80)), poleHeightM: 2.0)],
+                        flag: Flag(position: geo(Ground(0, 160)), poleHeightM: 2.438, leanDeg: 0.1))
+        var play = HolePlay(hole: hole)
+        XCTAssertEqual(SquadHost.target(for: .initial, hole: hole, play: play).poleHeightM, 2.0, "first leg: the layup")
+        try play.begin(lockedRange: 80, bearing: 0, from: o)
+        XCTAssertFalse(SquadHost.target(for: .verify, hole: hole, play: play).isFlag)
+        XCTAssertTrue(SquadHost.target(for: .nextMission, hole: hole, play: play).isFlag, "next leg: the flag")
+    }
 }

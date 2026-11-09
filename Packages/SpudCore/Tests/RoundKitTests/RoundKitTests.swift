@@ -198,4 +198,48 @@ final class RoundKitTests: XCTestCase {
         let mean = scores.reduce(0, +) / Double(scores.count)
         XCTAssertLessThan(mean, 8, "mean practice score \(mean)")
     }
+
+    // MARK: Layups
+
+    func testAHoleWithALayupPlaysLegByLeg() throws {
+        let o = GeoPoint(latitude: 42.36, longitude: -71.06)
+        let hole = Hole(number: 1, name: "Long", par: 6, firingPoints: [o],
+                        layups: [Layup(position: Geo.offset(o, east: 0, north: 80), poleHeightM: 2.438)],
+                        flag: Flag(position: Geo.offset(o, east: 0, north: 160), poleHeightM: 2.438, leanDeg: 0.1))
+        var h = HolePlay(hole: hole)
+        XCTAssertEqual(h.legs, 2)
+        try h.begin(lockedRange: 80, bearing: 0, from: o)
+        XCTAssertEqual(h.targetIndex, 0)
+        XCTAssertFalse(h.onFlagLeg)
+        try h.record(Spot(call: .short, lateral: 0))
+        try h.record(Spot(call: .rangeCorrect, lateral: 0.5))
+
+        // Cease fire 3 m from the layup: not scored by a ring; the next leg goes on from there.
+        let v = try h.ceaseFire(closest: 3)
+        XCTAssertFalse(v.inRing)
+        XCTAssertTrue(v.canAdvance && v.preferAdvance)
+        XCTAssertEqual(v.closest, 83, accuracy: 0.1, "to go: 3 m to the layup, then 80 m on to the flag")
+
+        try h.advance(lockedRange: 80, bearing: 0, from: Geo.offset(o, east: 0, north: 77))
+        XCTAssertEqual(h.mission?.targetIndex, 1)
+        XCTAssertTrue(h.onFlagLeg)
+        try h.record(Spot(call: .rangeCorrect, lateral: 0.2))
+        let last = try h.ceaseFire(closest: 0.6)
+        XCTAssertTrue(last.inRing)
+        XCTAssertEqual(try h.finish(), 3, "three rounds, in the ring")
+    }
+
+    func testHolesSavedBeforeLayupsStillDecode() throws {
+        var h = HolePlay(holeNumber: 1, par: 4, inRadius: 1, downrangePlay: false)
+        try h.begin(lockedRange: 30, bearing: 0, from: nil)
+        var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(h)) as! [String: Any]
+        json.removeValue(forKey: "onToFlag")
+        var missions = json["missions"] as! [[String: Any]]
+        missions[0].removeValue(forKey: "target")
+        json["missions"] = missions
+        let back = try JSONDecoder().decode(HolePlay.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertEqual(back.legs, 1)
+        XCTAssertTrue(back.onFlagLeg)
+        XCTAssertEqual(back.mission?.targetIndex, 0)
+    }
 }

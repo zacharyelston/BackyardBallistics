@@ -37,6 +37,23 @@ struct HoleMissionView: View {
     }
 
     private var active: RoundStore.Active? { rounds.active }
+
+    /// The pole a new mission ranges: the first leg's target to begin; to advance, the next leg's
+    /// (the flag again on the flag leg). On one-leg holes both are the flag.
+    private func target(for purpose: RangingPurpose, _ hole: Hole) -> HoleTarget {
+        let t = hole.targets
+        switch purpose {
+        case .firstMission: return t[0]
+        case .nextMission:
+            let i = play?.targetIndex ?? 0
+            return t[min((play?.onFlagLeg ?? true) ? i : i + 1, t.count - 1)]
+        }
+    }
+
+    /// The pole the mission in play aims at.
+    private func currentTarget(_ hole: Hole) -> HoleTarget {
+        hole.targets[min(play?.targetIndex ?? 0, hole.targets.count - 1)]
+    }
     private var practice: Bool { active?.practice ?? false }
     private var hole: Hole? { active?.currentHole }
     private var play: HolePlay? { active?.hole }
@@ -67,9 +84,11 @@ struct HoleMissionView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $ranging) { purpose in
             if let hole {
+                let t = target(for: purpose, hole)
                 ReticleRangingView(mission: MissionRangingContext(
-                    title: purpose == .firstMission ? "Range from the firing point" : "Range from your closest round",
-                    poleHeight: hole.flag.poleHeightM, flag: hole.flag.position) { lock in
+                    title: (purpose == .firstMission ? "From the firing point: " : "From your closest round: ")
+                        + (hole.layups.isEmpty ? "range the pole" : "range \(t.name)"),
+                    poleHeight: t.poleHeightM, flag: t.position) { lock in
                         useLock(lock, purpose: purpose, hole: hole)
                     })
             }
@@ -98,6 +117,9 @@ struct HoleMissionView: View {
             }
             LabeledContent("Pole", value: Units.feetInches(hole.flag.poleHeightM))
             LabeledContent("Ring", value: String(format: "%.1f m radius", hole.flag.inRadiusM))
+            if !hole.layups.isEmpty {
+                LabeledContent("Layups", value: "\(hole.layups.count): \(hole.targets.count) legs, each within 100 yd")
+            }
             LabeledContent("Downrange play", value: hole.downrangePlay ? "Yes" : "No")
         } header: {
             Text(hole.name)
@@ -308,8 +330,10 @@ struct HoleMissionView: View {
 
     @ViewBuilder private func verifySections(_ hole: Hole, _ play: HolePlay) -> some View {
         Section {
-            Text("Everyone walks out together. Find your closest round and range the pole from it, or tape it.")
-            LabeledContent("Closest round to the pole") {
+            Text(play.onFlagLeg
+                 ? "Everyone walks out together. Find your closest round and range the pole from it, or tape it."
+                 : "Everyone walks out together. Find your closest round to \(currentTarget(hole).name) and range its marker from there, or tape it. The next leg starts from that round.")
+            LabeledContent(play.onFlagLeg ? "Closest round to the pole" : "Closest round to \(currentTarget(hole).name)") {
                 HStack {
                     TextField("m", value: $verifyDistance, format: .number.precision(.fractionLength(1)))
                         .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 80)
@@ -318,7 +342,9 @@ struct HoleMissionView: View {
             }
             Button("Score with this distance") { scoreVerified(verifyDistance) }
                 .disabled(verifyDistance == nil)
-            Button("It's in the ring") { scoreVerified(min(verifyDistance ?? 0, hole.flag.inRadiusM)) }
+            if play.onFlagLeg {
+                Button("It's in the ring") { scoreVerified(min(verifyDistance ?? 0, hole.flag.inRadiusM)) }
+            }
             Button("No round found") { scoreVerified(nil) }
             Button("Back to firing") { verifying = false }
         } header: {
@@ -330,9 +356,14 @@ struct HoleMissionView: View {
         if let v = play.verdict {
             Section {
                 if practice, let a = active, !a.practiceRests.isEmpty { PracticeSketch(active: a, hole: hole) }
-                Text(v.inRing ? (play.roundsFired == 1 ? "First-round hit!" : "Hit on round \(play.roundsFired)") : "Ceased fire")
-                    .font(.title2.weight(.bold))
-                LabeledContent("Closest round", value: Units.metres(v.closest) + (v.inRing ? " · in the ring" : ""))
+                if play.onFlagLeg {
+                    Text(v.inRing ? (play.roundsFired == 1 ? "First-round hit!" : "Hit on round \(play.roundsFired)") : "Ceased fire")
+                        .font(.title2.weight(.bold))
+                    LabeledContent("Closest round", value: Units.metres(v.closest) + (v.inRing ? " · in the ring" : ""))
+                } else {
+                    Text("Leg \(play.targetIndex + 1) of \(play.legs) done").font(.title2.weight(.bold))
+                    LabeledContent("Still to go, along the layups", value: Units.metres(v.closest))
+                }
                 Text(sumText(play, v)).monospacedDigit()
             }
             Section {
@@ -340,7 +371,9 @@ struct HoleMissionView: View {
                     Button {
                         advance(hole, play)
                     } label: {
-                        Label("Next mission from your closest round", systemImage: "arrow.up.forward")
+                        Label(play.onFlagLeg ? "Next mission from your closest round"
+                                             : "Next leg from your closest round: range \(target(for: .nextMission, hole).name)",
+                              systemImage: "arrow.up.forward")
                             .font(v.preferAdvance ? .headline : .body)
                     }
                 }
@@ -403,9 +436,10 @@ struct HoleMissionView: View {
 
     private func useLock(_ lock: ReticleLock, purpose: RangingPurpose, hole: Hole) {
         let en = lock.eastNorth
-        // The firing computer only takes a range that SafetyKit has checked against the course flag.
+        // The firing computer only takes a range that SafetyKit has checked against the course's
+        // published pole for this leg: a layup marker, or the flag.
         guard case .success(let cleared) = Safety.clearRange(lock, lie: lock.location, east: en.east, north: en.north,
-                                                            flag: hole.flag.position) else { return }
+                                                            flag: target(for: purpose, hole).position) else { return }
         let l = cleared.value
         rounds.update { a in
             if purpose == .firstMission {
@@ -418,23 +452,23 @@ struct HoleMissionView: View {
         ranging = nil
     }
 
-    private func practiceRange(hole: Hole, salt: UInt64) -> PracticeRange {
+    private func practiceRange(hole: Hole, target: HoleTarget, salt: UInt64) -> PracticeRange {
         let seed = (active?.seed ?? 1) &+ UInt64(hole.number) &* 1_000_003 &+ UInt64(play?.roundsFired ?? 0) &* 7919 &+ salt
-        return PracticeRange(pole: poleLocal(hole), poleHeight: hole.flag.poleHeightM,
+        return PracticeRange(pole: poleLocal(hole, target.position), poleHeight: target.poleHeightM,
                              wind: PracticeRange.randomWind(seed: (active?.seed ?? 1) &+ UInt64(hole.number)), seed: seed)
     }
 
     private func firingOrigin(_ hole: Hole) -> Ground { .zero }
 
-    /// The pole in the practice frame: metres east/north of the chosen firing point.
-    private func poleLocal(_ hole: Hole) -> Ground {
+    /// A pole (the flag or a layup marker) in the practice frame: metres east/north of the chosen firing point.
+    private func poleLocal(_ hole: Hole, _ at: GeoPoint) -> Ground {
         let fp = hole.firingPoints[min(active?.firingPoint ?? 0, hole.firingPoints.count - 1)]
-        let en = Geo.eastNorth(of: hole.flag.position, from: fp)
+        let en = Geo.eastNorth(of: at, from: fp)
         return Ground(en.east, en.north)
     }
 
     private func practiceLock(hole: Hole, from: Ground, purpose: RangingPurpose) {
-        var r = practiceRange(hole: hole, salt: purpose == .firstMission ? 11 : 13)
+        var r = practiceRange(hole: hole, target: target(for: purpose, hole), salt: purpose == .firstMission ? 11 : 13)
         let l = r.lock(from: from)
         rounds.update { a in
             a.practiceOrigins.append(from)
@@ -450,7 +484,7 @@ struct HoleMissionView: View {
 
     private func practiceFire(hole: Hole, play: HolePlay, m: Mission) {
         guard let s = chosen(table(m)), let origin = active?.practiceOrigins.last else { return }
-        var r = practiceRange(hole: hole, salt: 17)
+        var r = practiceRange(hole: hole, target: currentTarget(hole), salt: 17)
         let shot = r.fire(s, from: origin)
         let fp = hole.firingPoints[min(active?.firingPoint ?? 0, hole.firingPoints.count - 1)]
         let where_ = Geo.offset(fp, east: shot.rest.x, north: shot.rest.y)
@@ -484,7 +518,7 @@ struct HoleMissionView: View {
         lateral = 0
         if let p = rounds.active?.hole, p.atRoundLimit {
             message = "Ten rounds fired: cease fire."
-        } else if call == .rangeCorrect, abs(lateralOfLast()) <= (hole?.flag.inRadiusM ?? 1) {
+        } else if let hole, play?.onFlagLeg ?? true, call == .rangeCorrect, abs(lateralOfLast()) <= hole.flag.inRadiusM {
             message = "Looks in! Cease fire to verify."
         }
     }
@@ -498,8 +532,8 @@ struct HoleMissionView: View {
 
     private func ceaseFire(_ hole: Hole, _ play: HolePlay) {
         if practice {
-            // Walk out: the exact distance of the closest round that wasn't lost.
-            let pole = poleLocal(hole)
+            // Walk out: the exact distance of the closest round that wasn't lost, to this leg's pole.
+            let pole = poleLocal(hole, currentTarget(hole).position)
             let found = zip(play.rounds, active?.practiceRests ?? []).filter { !$0.0.lost }.map { length($0.1 - pole) }
             rounds.update { try? $0.hole?.ceaseFire(closest: found.min()) }
         } else {
@@ -515,7 +549,7 @@ struct HoleMissionView: View {
 
     private func advance(_ hole: Hole, _ play: HolePlay) {
         if practice {
-            let pole = poleLocal(hole)
+            let pole = poleLocal(hole, currentTarget(hole).position)
             let rests = zip(play.rounds, active?.practiceRests ?? []).filter { !$0.0.lost }.map(\.1)
             guard let closest = rests.min(by: { length($0 - pole) < length($1 - pole) }) else { return }
             practiceLock(hole: hole, from: closest, purpose: .nextMission)
@@ -580,7 +614,8 @@ struct PracticeSketch: View {
         Canvas { ctx, size in
             guard let play = active.hole, let origin = active.practiceOrigins.last else { return }
             let fp = hole.firingPoints[min(active.firingPoint, hole.firingPoints.count - 1)]
-            let en = Geo.eastNorth(of: hole.flag.position, from: fp)
+            let aim = hole.targets[min(play.targetIndex, hole.targets.count - 1)]
+            let en = Geo.eastNorth(of: aim.position, from: fp)
             let pole = Ground(en.east, en.north)
             let line = pole - origin
             let d = max(0.01, (line.x * line.x + line.y * line.y).squareRoot())
@@ -594,9 +629,11 @@ struct PracticeSketch: View {
                 let m = g - pole
                 return CGPoint(x: c.x + (m * n).sum() * s, y: c.y - (m * u).sum() * s)
             }
-            let r = hole.flag.inRadiusM * s
-            ctx.fill(Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r)), with: .color(.green.opacity(0.18)))
-            ctx.stroke(Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r)), with: .color(.green), lineWidth: 1)
+            if aim.isFlag {   // a layup marker has no ring
+                let r = hole.flag.inRadiusM * s
+                ctx.fill(Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r)), with: .color(.green.opacity(0.18)))
+                ctx.stroke(Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r)), with: .color(.green), lineWidth: 1)
+            }
             ctx.fill(Path(ellipseIn: CGRect(x: c.x - 3, y: c.y - 3, width: 6, height: 6)), with: .color(.orange))
             var arrow = Path()
             arrow.move(to: CGPoint(x: c.x, y: size.height - 4)); arrow.addLine(to: CGPoint(x: c.x, y: size.height - 22))

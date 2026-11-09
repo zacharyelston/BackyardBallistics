@@ -133,7 +133,8 @@ struct SquadLobbyView: View {
         if let host = command.host {
             SiteMap(squads: [SiteMapSquad(id: host.player, course: host.round.course,
                                           members: host.round.squad.members, positions: host.positions,
-                                          activeHole: host.round.hole?.holeNumber, walkingOut: host.round.walkingOut,
+                                          activeHole: host.round.hole?.holeNumber, activeLeg: host.round.hole?.targetIndex,
+                                          walkingOut: host.round.walkingOut,
                                           rays: host.locks.filter { $0.status == .used }.map {
                                               SiteMapRay(from: $0.report.lock.location, to: $0.report.lock.polePosition)
                                           },
