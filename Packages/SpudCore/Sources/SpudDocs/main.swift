@@ -46,13 +46,13 @@ var facts: [String: Any] = [
     ],
     "squadz": [
         "protocolVersion": GroupProtocol.version,
-        "matchHostTimeoutS": SquadHost.matchHostTimeout,
+        "positionTimeoutS": SquadHost.positionTimeout,
         "orderMaxText": Order.maxText,
         "orders": Order.Kind.allCases.map { ["kind": $0.rawValue, "title": $0.title] },
         "orderAnswers": OrderAck.Response.allCases.map(\.rawValue),
         "lockPurposes": LockPurpose.allCases.map(\.rawValue),
-        "holds": [Hold.noMatch, .notYourTurn, .walkingOut(SquadID()), .checkFire(by: "Ben"),
-                  .memberInFan(MemberID(), name: "Ben"), .positionUnknown(MemberID(), name: "Ben"), .matchHostLost]
+        "holds": [Hold.walkingOut, .checkFire(by: "Ben"),
+                  .memberInFan(MemberID(), name: "Ben"), .positionUnknown(MemberID(), name: "Ben")]
             .map(\.description),
     ],
 ]

@@ -1,6 +1,6 @@
 # v3 Squadz: group play
 
-Status: G1 to G5 built (see [What's built](#whats-built)); the match link between iPads (G6), the 3D field map on the iPad (G7) and the live render host (G8) are not. **v3 Squadz** is the third SpudGunGolf ruleset, after v1 Classic and v2 Fire Missions. It builds on v2: every hole is still played as v2 fire missions (range the pole, fire, spot, let fire control bracket, cease fire and verify, scored as rounds plus metres outside the ring). v3 changes who the player is: a squad of people with linked devices instead of one person with one phone. It covers the "multi-player turns" item in milestone 6 and goes beyond it. Read [ARCHITECTURE.md](ARCHITECTURE.md) first: this doc uses its modules, its safety gate and its dependency rules.
+Status: G1 to G5 built (see [What's built](#whats-built)); the 3D field map on the iPad (G7) and the live render host (G8) are not. G6, a match between squads, was dropped. **v3 Squadz** is the third SpudGunGolf ruleset, after v1 Classic and v2 Fire Missions. It builds on v2: every hole is still played as v2 fire missions (range the pole, fire, spot, let fire control bracket, cease fire and verify, scored as rounds plus metres outside the ring). v3 changes who the player is: a squad of people with linked devices instead of one person with one phone. It covers the "multi-player turns" item in milestone 6 and goes beyond it. Play is like golf: a group of players works together at the head of a hole, doesn't shoot while anyone is on the field, and manages its own play on the course. There is no turn-taking with other squads. Read [ARCHITECTURE.md](ARCHITECTURE.md) first: this doc uses its modules, its safety gate and its dependency rules.
 
 ## Contents
 
@@ -23,19 +23,19 @@ Status: G1 to G5 built (see [What's built](#whats-built)); the match link betwee
 The rest of this doc is the design. This section says what of it is in the code today.
 
 - **iPad (G1).** The app runs on iPhone and iPad (`TARGETED_DEVICE_FAMILY "1,2"`). The iPad works in landscape everywhere except the camera screens: ranging and spotting measure with the camera upright, so on an iPad turned sideways they ask you to turn it upright.
-- **GroupKit (G2).** `SquadHost`, `MatchHost`, `GroupGate`, the messages and `LoopbackNetwork`, tested with `swift test`: a two-squad practice match over the loopback, and the safety properties below. `Scorecard.playerID`, `DownrangeLog.revoke` and amending a spot by replay are in.
+- **GroupKit (G2).** `SquadHost`, `GroupGate`, the messages and `LoopbackNetwork`, tested with `swift test`: a squad's practice round over the loopback, the squad's own field holds, and the safety properties below. `Scorecard.playerID`, `DownrangeLog.revoke` and amending a spot by replay are in.
 - **Commander screen (G3).** **Play → v3 Squadz → Command a squad** on the iPad. The field map is satellite imagery (MapKit) with the course boundary, flags and rings, firing points, the safety fans (the hole in play highlighted), every member's position (grey when old), used locks as lines, and orders with a place as pins. Beside it: the join code and QR code, the roster, the hole panel, locks, spot calls, orders and an inbox. The iPad stays awake on this screen.
 - **Squad link (G4).** The `GroupLink` module: Network.framework with Bonjour (`_spudgolf._tcp`), TCP with TLS keyed from the 6-character join code (a pre-shared key), and GroupKit's length-prefixed JSON frames. Peer-to-peer Wi-Fi is allowed. Phones join with **Join squad**, then **Scan code** or the typed code, and report their position every few seconds while in the squad.
 - **Members range and spot (G5).** Phones send raw locks (`LockReport`) and spot calls (`SpotReport`), and the gunner calls **Fired**. The iPad gates each lock against its own course flag and commits spots. A lock off the flag is refused, with the reasons sent back in a `LockReceipt`.
+- **Field holds.** The iPad holds its own firing data while someone may be on the field: people walking out after cease fire, a check fire, a member inside the active fan, or a member with no position in the last 15 s (see [Safety](#safety)).
 - **Orders.** The squad leader tasks one member, several or the whole squad: range the pole, spot, move to, capture, hold position, back to the firing point, or a note. Orders carry no firing data. Members answer **Seen**, **Done** or **Can't**.
-- **Field notes and fields.** A member can send a field note (text, a place and a small photo) or a field they surveyed (`FieldSubmission`; the message also allows a loaded one) to the squad leader. Notes go on to anyone watching the squad (the Theater). The leader can adopt a sent-in field **between holes only**: not mid-hole, not while people walk out, and not during a started match. Adopting starts a fresh card on the new field, and a practice-only field puts the squad in practice. A phone can also send notes, fields and files straight to a Theater host; see [THEATER_MODE.md](THEATER_MODE.md).
+- **Field notes and fields.** A member can send a field note (text, a place and a small photo) or a field they surveyed (`FieldSubmission`; the message also allows a loaded one) to the squad leader. Notes go on to anyone watching the squad (the Theater). The leader can adopt a sent-in field **between holes only**: not mid-hole, and not while people walk out. Adopting starts a fresh card on the new field, and a practice-only field puts the squad in practice. A phone can also send notes, fields and files straight to a Theater host; see [THEATER_MODE.md](THEATER_MODE.md).
 - **Sleep-proof links.** If the iPad's listener fails (it slept, or the network changed), `GroupHost` starts a new one on the same port after a short pause, and again when the app comes back to the front. `GroupClient` on the phone reconnects on its own, waiting 1 s and then longer, up to 8 s between tries, and rejoins as the same member. A connection that isn't up within 8 s fails. If that happens before the phone has ever linked, or the TLS handshake fails, the phone stops and says to check the join code.
-- **Protocol version 5** (`GroupProtocol.version` in GroupKit's `Messages.swift`). It goes in the Bonjour TXT record, and a device on another version is refused.
+- **Protocol version 6** (`GroupProtocol.version` in GroupKit's `Messages.swift`). It goes in the Bonjour TXT record, and a device on another version is refused.
 
 Not built yet:
 
 - Squads play practice holes only (simulated rounds). Real rounds wait for launcher calibration (m5) anyway.
-- The match link between iPads (G6). `MatchHost` exists in GroupKit and is tested over the loopback, but no iPad hosts or joins a match over the network. A squad on its own therefore always shows the **Not in a match yet** and **Another squad's turn** holds, so firing data stays held.
 - Auto-accepting the designated spotter's report, left/right measured from a phone's spot, and flank geometry in FieldKit.
 - The 3D field map on the iPad (G7) and the live render host (G8). The 3D view and `spud-mesh` exist on the Mac, for the Theater; see [THEATER_MODE.md](THEATER_MODE.md) and [MESHING.md](MESHING.md).
 
@@ -43,39 +43,37 @@ Not built yet:
 
 | | **Solo (v2 Fire Missions)** | **v3 Squadz** |
 | --- | --- | --- |
-| Who is the player | One person | **A squad.** Squads play against squads |
+| Who is the player | One person | **A squad**, playing its own course |
 | Devices | One phone, or one iPad | Per squad: one **commander's iPad** and each member's phone. Optionally one Mac as a render host |
 | Where the game runs | On that device, as it does today | On the commander's iPad, for that squad |
 | Camera | The device's own camera ranges and spots | **Members' phones only.** The iPad shows the map and never uses its camera |
 | What the iPad shows | Solo on a bigger screen | A **map of the field only**: every member, every observation, and the 3D field built from them, plus the squad's fire mission |
-| Network | None | The squad's local group on the backyard Wi-Fi, and a match link between the squads' iPads. No internet |
+| Network | None | The squad's local group on the backyard Wi-Fi, or peer-to-peer Wi-Fi. No internet |
 
 **Solo is the v2 Fire Missions game**, on a phone or an iPad. An iPad in Solo is just a single player: today's app on a bigger screen, using the iPad's camera for ranging and spotting. Nothing in v3 applies to it. Solo on a phone is unchanged.
 
-**A v3 Squadz match** is two or more squads playing the same course. Each hole is one fire mission sequence per squad, played in turn. **The squad is the player:** each squad has one `HolePlay` per hole and one `Scorecard`, scored exactly as Solo scores a player (rounds plus metres outside the ring). Members range, spot and observe for their squad. The commander puts it together on the map and directs the mission. The lowest squad total wins.
+**A v3 Squadz round** is one squad playing a course, hole by hole. Each hole is one fire mission sequence. **The squad is the player:** each squad has one `HolePlay` per hole and one `Scorecard`, scored exactly as Solo scores a player (rounds plus metres outside the ring). Members range, spot and observe for their squad. The commander puts it together on the map and directs the mission. The squad manages its own play: it fires only when its own field is clear.
 
-**Non-goals:** internet play, a cloud server during a match, more than one squad firing at once, and Android or web clients.
+**Non-goals:** internet play, a cloud server during play, matches or turn order between squads, and Android or web clients.
 
 ## Roles in v3 Squadz
 
 | Role | Device | Does | Never does |
 | --- | --- | --- | --- |
-| **Commander** | The squad's iPad | Hosts the squad: roster, join code, the squad's `HolePlay` and `Scorecard`, the `DownrangeLog`. Sees every member on the map and builds the field from their observations. Runs `Safety.clearRange` and `Safety.clearSolution`, and is the squad's only display of the range and firing data. Tasks members ("Ben: spot from the left flank"). Commits spots. | Use its own camera in Squadz. Accept a confirmation or a cleared value from another device. |
+| **Commander** | The squad's iPad | Hosts the squad: roster, join code, the squad's `HolePlay` and `Scorecard`, the `DownrangeLog`, and the squad's holds (walking out, check fire, members in the fan, silent phones). Lifts a check fire. Sees every member on the map and builds the field from their observations. Runs `Safety.clearRange` and `Safety.clearSolution`, and is the squad's only display of the range and firing data. Tasks members ("Ben: spot from the left flank"). Commits spots. | Use its own camera in Squadz. Accept a confirmation or a cleared value from another device. |
 | **Member** | Each squad member's phone | Shares its position. Ranges with the reticle and sends the raw `ReticleLock`. Spots rounds (call plus measured left/right). Sends observations for the field map. Anyone can call **check fire**. | Show the range result or firing data, or send anything that unlocks a solution. Its message types can't carry one. |
 | **Gunner** | A member (often the one at the launcher) | Lays the launcher from the data the commander reads out, and calls **Fired**. | — |
-| **Match host** | One of the commanders' iPads | Holds the match: squads, turn order between squads, match scoreboard, and holds that span the whole field (walking out, check fire, members inside the active fan). | See or change another squad's mission. |
-| **Render host** (optional) | A Mac on the same network | Turns observations into a detailed 3D field mesh and sends it to the commanders' iPads. See [Optional render host](#optional-render-host). | Take part in firing. It sees no firing data. |
+| **Render host** (optional) | A Mac on the same network | Turns observations into a detailed 3D field mesh and sends it to the commander's iPad. See [Optional render host](#optional-render-host). | Take part in firing. It sees no firing data. |
 
-### One squad's turn
+### One hole
 
 ```mermaid
 sequenceDiagram
-  participant M as Match host
   participant C as Commander (iPad)
   participant A as Ana (gunner)
   participant B as Ben (flank spotter)
-  M->>C: Squad Red's turn, hole 3. No holds
-  C->>C: Commander confirms downrange for Squad Red
+  C->>C: Start hole 3. Holds: everyone's position fresh, nobody in the fan
+  C->>C: Commander confirms downrange
   A->>C: Lock from the firing point (raw ReticleLock)
   C->>C: Recompute, clearRange, HolePlay.begin, clearSolution
   C-->>A: (commander reads out the initial data)
@@ -85,19 +83,16 @@ sequenceDiagram
   B->>C: SpotReport(over, flank)
   A->>C: SpotReport(short, −0.8 m)
   C->>C: Commit Ben's call and Ana's left/right, correction, clearSolution
-  C->>M: Ceased (walking out): hold every squad
+  C->>C: Cease fire: walking out, the squad is held
   A->>C: Lock from the closest round (verify)
-  C->>C: Finish hole, Scorecard.record
-  C->>M: Squad Red hole 3: 4.6
-  M->>M: Next squad's turn
+  C->>C: Finish hole, Scorecard.record (4.6)
 ```
 
 ## Transport
 
-There are two kinds of link, both over the local network:
+There is one kind of link, over the local network:
 
-- **Squad link:** each member's phone connects to its commander's iPad. This is a star.
-- **Match link:** each commander's iPad connects to the match host's iPad. The render host, if present, connects to each commander.
+- **Squad link:** each member's phone connects to its commander's iPad. This is a star. The render host, if present, and Theater observers also connect to the commander.
 
 | Option | On home Wi-Fi | With no router | Fits host and clients | Notes |
 | --- | --- | --- | --- | --- |
@@ -109,13 +104,13 @@ There are two kinds of link, both over the local network:
 
 **Recommendation: Network.framework with Bonjour, behind a `GroupTransport` seam.**
 
-1. Each commander's iPad runs an `NWListener` advertising `_spudgolf._tcp`. The TXT record holds the squad, the role (squad or match), the protocol version and the course ID. Phones, other commanders and the render host browse for it.
-2. Each squad has a 6-character join code, shown as text and a QR code. The TLS pre-shared key is derived from it, so only people who have seen that iPad can join, and nothing travels in the clear. The match has its own code.
+1. Each commander's iPad runs an `NWListener` advertising `_spudgolf._tcp`. The TXT record holds the squad, the role, the protocol version and the course ID. Phones and the render host browse for it.
+2. Each squad has a 6-character join code, shown as text and a QR code. The TLS pre-shared key is derived from it, so only people who have seen that iPad can join, and nothing travels in the clear.
 3. Messages are length-prefixed JSON: a Codable `GroupMessage` in `{protocolVersion, sender, seq, body}`. Mesh files from the render host go as chunked binary on their own connection.
 4. Use the `NWConnection` API now, and move to `NetworkConnection` at iOS 26.
 5. Hide all of this behind `GroupTransport` in `App/Sources/Shared`, like `RangingCaptureSource`. Ship `NetworkGroupTransport` and `LoopbackGroupTransport` (in memory, for `swift test` and the Simulator).
 
-**Use the home Wi-Fi for a match.** Peer-to-peer Wi-Fi tops out around 8 peers in field reports, and two squads of four plus two iPads and a Mac is already 11. A single squad with no router fits within peer-to-peer.
+**Peer-to-peer Wi-Fi tops out around 8 peers** in field reports. A squad of up to about six with its iPad fits with no router; a bigger squad, or one with a render host and observers, should use the home Wi-Fi.
 
 Info.plist needs `NSBonjourServices` = `_spudgolf._tcp`, and `NSLocalNetworkUsageDescription` should mention joining the squad's iPad.
 
@@ -128,24 +123,23 @@ Every object has one owner, and only the owner changes it. Owners send snapshots
 | Object | Owner | Who receives it | Inputs from others |
 | --- | --- | --- | --- |
 | Squad: roster, members' devices | Commander | Members | Join requests |
-| The squad's `HolePlay` (RoundKit, unchanged) | Commander | Members get a summary: phase, rounds, calls, add/drop in metres. The match host gets the phase and score | — |
-| The squad's `Scorecard` (`player` = the squad's name) | Commander | Members, match host | — |
+| The squad's `HolePlay` (RoundKit, unchanged) | Commander | Members get a summary: phase, rounds, calls, add/drop in metres. Observers get the phase and holds | — |
+| The squad's `Scorecard` (`player` = the squad's name) | Commander | Members | — |
 | `DownrangeLog` (the squad is the player) | Commander, from the commander's tap | Shown to members | — |
 | Firing solution | Commander only | **No one** | — |
-| Member position (`GeoPoint`, accuracy, heading, time) | That member's phone | Commander, match host (for the fan hold) | — |
+| Member position (`GeoPoint`, accuracy, heading, time) | That member's phone | Commander (for the fan and position holds), observers through the commander | — |
 | Locks, spots | Proposed by members | — | `LockReport` and `SpotReport` to the commander, who gates and commits them |
 | Field observations | Their authors | Commander (and the render host) | `Observation`, see [The field map](#the-field-map) |
 | Field model (sparse surface, layers) | Commander, built from observations | Render host | — |
 | Field mesh (detailed) | Render host | Commander | — |
-| Match: squads, turn order, scoreboard | Match host | Commanders | Each squad's hole results |
-| Field-wide holds (walking out, check fire, members in the fan) | Match host | Commanders, and through them members | Check fire from anyone; ceased phases from commanders |
-| Course | Match host chooses it; every device validates its own copy | — | A course hash on joining |
+| The squad's holds (walking out, check fire, members in the fan, silent phones) | Commander | Members | Check fire from anyone |
+| Course | Commander chooses it; every device validates its own copy | — | A course hash on joining |
 
 ### Types
 
 Two new platform-free modules, both tested with `swift test`:
 
-- **GroupKit** holds the squad and match protocol: messages, `SquadHost`, `MatchHost`, turn order, holds and `GroupGate`. It depends on RoundKit.
+- **GroupKit** holds the squad protocol: messages, `SquadHost`, holds and `GroupGate`. It depends on RoundKit.
 - **FieldKit** turns observations into a field model: a height-sample store, a surface built by triangulation (TIN), and the map layers. It depends on CoreGeo and RangingKit. It never imports a renderer. **As built,** FieldKit holds the field's local frames, georeferencing of photo meshes to GPS, bare-earth elevation grids and mesh records, for the Theater's 3D view. It depends on CoreGeo and CourseKit. The surface from height samples isn't built.
 
 ```swift
@@ -166,16 +160,6 @@ public struct SquadRound: Codable, Equatable, Sendable {   // on the commander's
     public var card: Scorecard
     public var hole: HolePlay?
     public var downrange: DownrangeLog
-    public var revision: Int
-}
-
-public struct Match: Codable, Equatable, Sendable {        // on the match host
-    public var id: UUID
-    public var courseID: String, courseVersion: Int, courseHash: String
-    public var squads: [SquadID]
-    public var turn: Turn                // hole, whose turn
-    public var scores: [SquadID: [Int: Double]]
-    public var holds: [Hold]
     public var revision: Int
 }
 
@@ -204,7 +188,7 @@ public struct SpotReport: Codable, Equatable, Sendable {
 - `Scorecard.playerID: UUID?` (here, the squad ID). Old files still decode.
 - `HolePlay(replaying:)` and an event log, so the commander can amend a spot.
 - `DownrangeLog.revoke(hole:)` for check fire.
-- `SquadStore` on the iPad, persisting `SquadRound` (and `Match` on the match host) after every change.
+- `SquadStore` on the iPad, persisting `SquadRound` after every change.
 
 ### Locks and spots
 
@@ -216,7 +200,6 @@ public struct SpotReport: Codable, Equatable, Sendable {
 
 - **A member drops out.** Nothing is lost. Their marker goes stale on the map, as in Squadz, and they rejoin as the same member.
 - **The commander's iPad goes away.** That squad stops. Its members show "Waiting for the commander", and the iPad resumes from `SquadStore`.
-- **The match host goes away.** The match is held for every squad: no squad fires without the field-wide holds. The match host resumes from its store, or another commander takes the match over, with confirmation, from the last scoreboard every commander holds.
 - **The render host goes away.** The map falls back to the sparse surface. Play is unaffected.
 
 ## Safety
@@ -224,31 +207,30 @@ public struct SpotReport: Codable, Equatable, Sendable {
 The architecture's rule holds: `Cleared<T>` is created only in SafetyKit, on the device that shows the result. In v3 Squadz that device is the commander's iPad, for its own squad.
 
 1. **The commander's iPad is the squad's only firing display.** `clearRange` and `clearSolution` run there, on its own validated course, launcher profile and `DownrangeLog`. Phones in v3 Squadz have no code path that shows a solution.
-2. **Everything from another device is untrusted data.** That covers locks (recomputed and gated), spots (a call and metres, applied by the iPad's `HolePlay`), positions and observations. A course arriving from elsewhere is validated locally and must match the match's hash.
+2. **Everything from another device is untrusted data.** That covers locks (recomputed and gated), spots (a call and metres, applied by the iPad's `HolePlay`), positions and observations. A course arriving from elsewhere is validated locally.
 3. **The field map is a picture, not an input.** No surface, mesh or position from the map feeds `clearRange` or `clearSolution`. Ranges come only from cleared locks, and height differences from the lock itself. The render host's mesh is display only.
 4. **`Cleared` never crosses the wire.** It isn't `Codable`, and its initializer is file-private. A test pins that `Cleared<Int>.self` is not `Decodable` and that no `GroupMessage` contains one.
-5. **Firing data stays on the commander's iPad.** No message carries a charge setting, elevation or aim: not to members, other squads or the render host.
+5. **Firing data stays on the commander's iPad.** No message carries a charge setting, elevation or aim: not to members, observers or the render host.
 6. **Confirmations happen on the commander's iPad.** The downrange confirmation for the squad is the commander's tap. No message confirms.
 7. **Members can never unlock a solution.** Phone message types are limited to `position`, `lock`, `spot`, `observation`, `fired`, `checkFire`, `hello` and `bye`. A committed spot moves fire control's aim, and the new aim goes back through `clearSolution` (including the 100 yd limit) before it is shown.
 8. **Holds only add.** The commander's iPad shows firing data only when `clearSolution` succeeds **and** `GroupGate` has no holds. `GroupGate` can turn allowed into blocked, never the reverse. The holds are:
 
    | Hold | When |
    | --- | --- |
-   | `notYourTurn` | Another squad's turn, or no match-host grant |
-   | `walkingOut(squad)` | Any squad's `HolePlay` is `.ceased`: people are downrange |
+   | `walkingOut` | The squad's `HolePlay` is `.ceased`, or the squad is walking out: people are downrange |
    | `checkFire(by)` | Anyone raised check fire |
-   | `memberInFan(member)` | Any member of any squad reports a position inside the active firing point's ±30° fan (allowing for GPS accuracy) |
-   | `matchHostLost` | The match host's heartbeat is stale |
+   | `memberInFan(member)` | While a hole is live (setup or firing), a member's GPS circle lies inside the active firing point's ±30° fan |
+   | `positionUnknown(member)` | While a hole is live, a member has sent no position in the last 15 s (`SquadHost.positionTimeout`) |
 
-   `memberInFan` is extra protection only. GPS is accurate to a few metres, so it never replaces the downrange confirmation, and a phone that isn't reporting counts as unknown, not clear.
-9. **Check fire** can come from any phone or iPad, at any time. It holds every squad and revokes the current hole's downrange confirmations. It lifts only when it is withdrawn on the match host **and** each commander confirms downrange again.
-10. **Fail closed.** A protocol or course mismatch keeps a device out. A lost commander stops its squad, and a lost match host stops the match.
+   The commander's iPad computes all of these itself, from its own roster, positions and hole. Between holes there are no fan or position holds. `memberInFan` and `positionUnknown` are extra protection only. GPS is accurate to a few metres, so they never replace the downrange confirmation, and a silent phone counts as unknown, not clear.
+9. **Check fire** can come from any phone or the iPad, at any time. It holds the squad and revokes the current hole's downrange confirmation. Only the commander lifts it, on the iPad, and then must confirm downrange again.
+10. **Fail closed.** A protocol or course mismatch keeps a device out. A lost commander stops its squad.
 
 GroupKit includes a property test: random member, commander and render-host messages applied to a `SquadHost` never turn a blocked verdict into an allowed one.
 
 ## The field map
 
-The commander's view is the field, built up during the match from what the members observe. It works in 2D top-down and 3D orbit, with the same layers in each.
+The commander's view is the field, built up during play from what the members observe. It works in 2D top-down and 3D orbit, with the same layers in each.
 
 | Layer | Source | Without a render host |
 | --- | --- | --- |
@@ -264,7 +246,7 @@ The commander's view is the field, built up during the match from what the membe
 
 ## The commander's iPad
 
-`TARGETED_DEVICE_FAMILY "1,2"`. On an iPad the Play tab offers **Solo** (v2 Fire Missions, a single player, with the iPad's camera) and **v3 Squadz**, which offers to command a squad and to host or join a match. Squadz on the iPad never opens the camera.
+`TARGETED_DEVICE_FAMILY "1,2"`. On an iPad the Play tab offers **Solo** (v2 Fire Missions, a single player, with the iPad's camera) and **v3 Squadz**, which offers to command a squad. Squadz on the iPad never opens the camera.
 
 ```
 ┌─────────────────┬──────────────────────────────────────┬──────────────────────────┐
@@ -273,27 +255,27 @@ The commander's view is the field, built up during the match from what the membe
 │ Ben  flank L ●  │    ╲   ✦ Ben (ray to pole)           │ Initial data / correction│
 │ Cy   capture ○  │     ╲ fan ±30°                       │   (this iPad only)       │
 │                 │      ▲ FP1  ● Ana                    │ Round 2: spots           │
-│ MATCH           │   surface contours, hazards          │  Ben  Over        [✓]    │
-│ Red   12.4      │                                      │  Ana  Short −0.8  [✓]    │
-│ Blue  13.1  ▶   │                                      │ 1 Over −1.2 drop 3.7     │
+│ CARD  12.4      │   surface contours, hazards          │  Ben  Over        [✓]    │
+│                 │                                      │  Ana  Short −0.8  [✓]    │
+│                 │                                      │ 1 Over −1.2 drop 3.7     │
 │ Holds: none     │                                      │ [Cease fire] [Lost]      │
 │ [CHECK FIRE]    │                                      │ [Scorecard]              │
 └─────────────────┴──────────────────────────────────────┴──────────────────────────┘
 ```
 
-- **The left column** shows the squad roster, with each member's role, task and link health; the match scoreboard and whose turn it is; the holds; **Check fire**; and the join codes.
+- **The left column** shows the squad roster, with each member's role, task and link health; the squad's card; the holds; **Check fire**; and the join code.
 - **The centre** is the field map. Tapping a member tasks them, and tapping a gap asks for a capture there.
-- **The right column** is today's `HoleMissionView` steps for the squad, on the big screen. It shows the range from the received lock, the downrange confirmation, initial data and corrections, spot reports with one-tap commit, and Cease fire and Verify. During another squad's turn it shows their phase and score only.
+- **The right column** is today's `HoleMissionView` steps for the squad, on the big screen. It shows the range from the received lock, the downrange confirmation, initial data and corrections, spot reports with one-tap commit, and Cease fire and Verify.
 
 ## The member's phone
 
 - **Join.** **Squadz → Join squad** browses for commanders' iPads, then takes the code or a QR scan. The phone shares its position while joined, and the system's location prompt explains why.
-- **The squad bar** shows the turn, the member's task, holds and **Check fire**.
+- **The squad bar** shows the hole, the member's task, holds and **Check fire**.
 - **Range.** Today's reticle screen. Lock sends the lock to the commander.
 - **Spot.** On "spot round N", `CrosshairSpotView` opens with Short / Over / Range correct and the crosshair for left/right.
 - **Fired.** A button for the gunner.
 - **Observe.** When tasked, Freeze-style captures that queue for upload.
-- **No firing data.** The phone shows the squad's mission summary and the scoreboard.
+- **No firing data.** The phone shows the squad's mission summary and its card.
 - **Solo is unchanged.**
 
 ## Optional render host
@@ -311,9 +293,9 @@ A Mac on the same network can take the heavy work off the iPads. It is optional:
 
 - Take part in firing: it receives no locks for firing, no solutions and no confirmations. Its output is display only (see [Safety](#safety), rule 3).
 
-**In v4.** [v4 Theater Mode](THEATER_MODE.md) keeps this host as the built-in implementation of a `FieldMappingService` interface. On a course with an owner's Theater station, the course's GPU mapping back end takes this role for every match.
+**In v4.** [v4 Theater Mode](THEATER_MODE.md) keeps this host as the built-in implementation of a `FieldMappingService` interface. On a course with an owner's Theater station, the course's GPU mapping back end takes this role for every squad.
 
-**How it fits.** A small macOS target in `project.yml`, built from the same SpudCore packages (they're platform free and already build on macOS for `swift test`). It joins over the same `GroupTransport` as a `renderHost` peer with the match code. Without it, each iPad draws the course, surface, members and mission layers itself, which covers everything the game needs.
+**How it fits.** A small macOS target in `project.yml`, built from the same SpudCore packages (they're platform free and already build on macOS for `swift test`). It joins over the same `GroupTransport` as a `renderHost` peer with the squad's join code. Without it, each iPad draws the course, surface, members and mission layers itself, which covers everything the game needs.
 
 ## Prior work: Squadz
 
@@ -322,13 +304,13 @@ A Mac on the same network can take the heavy work off the iPads. It is optional:
 | Squadz (earlier project) | v3 Squadz |
 | --- | --- |
 | Squad with a leader and a join code | Squad with a commander's iPad; the same 6-character code, also used as the TLS pre-shared key |
-| Members sharing GPS locations | Members' phones sharing positions with the commander, and with the match host for the fan hold |
+| Members sharing GPS locations | Members' phones sharing positions with the commander, for the fan and position holds |
 | `SquadMap` with every member | The commander's field map |
-| Location TTL and stale flag | Stale member markers; a non-reporting phone counts as unknown in `memberInFan` |
+| Location TTL and stale flag | Stale member markers; a phone silent for 15 s during a live hole holds the squad (`positionUnknown`) |
 | `require_approval` | The commander approves each join |
-| Server holds the state; clients post updates | The commander's iPad holds the squad, and the match host holds the match; phones post positions, locks, spots and observations |
+| Server holds the state; clients post updates | The commander's iPad holds the squad; phones post positions, locks, spots and observations |
 
-The code doesn't carry over: play has to run offline on iPads and phones, in Swift. The model and the server-holds-state architecture carry over directly. A Squadz-style internet server could come back after play, for milestone 8's course registry, match results and leaderboards, or spectators, but never in the firing path.
+The code doesn't carry over: play has to run offline on iPads and phones, in Swift. The model and the server-holds-state architecture carry over directly. A Squadz-style internet server could come back after play, for milestone 8's course registry, results and leaderboards, or spectators, but never in the firing path.
 
 ## Milestone plan
 
@@ -337,21 +319,19 @@ These are the v3 build steps. They are numbered G1 to G8 rather than v3.1, v3.2 
 | Step | Builds | Done when | Status |
 | --- | --- | --- | --- |
 | **G1. Solo on iPad** | `TARGETED_DEVICE_FAMILY "1,2"`, size-class-safe layouts, landscape reticle and capture, ranging without GPS from a published firing point | A solo practice round plays on an iPad as a single player | Built: iPad layouts, landscape except the camera screens, which ask to be held upright. Ranging without GPS from a published firing point isn't built |
-| **G2. GroupKit over loopback** | `SquadHost` (the squad as the player, locks, spots, `GroupGate`), `MatchHost` (turns between squads, field-wide holds, check fire, `memberInFan`), messages, `LoopbackGroupTransport`; `Scorecard.playerID`, `DownrangeLog.revoke`, `HolePlay` replay | `swift test` plays a two-squad practice match with simulated members; the safety tests pass (no `Cleared` on the wire, the message fuzz can't unlock, holds only add, a member in the fan holds everyone) | Built |
+| **G2. GroupKit over loopback** | `SquadHost` (the squad as the player, locks, spots, the squad's holds: walking out, check fire, `memberInFan`, `positionUnknown`; `GroupGate`), messages, `LoopbackGroupTransport`; `Scorecard.playerID`, `DownrangeLog.revoke`, `HolePlay` replay | `swift test` plays a squad's practice round with simulated members; the safety tests pass (no `Cleared` on the wire, the message fuzz can't unlock, holds only add, a member in the fan or a silent phone holds the squad) | Built |
 | **G3. Commander screen, 2D** | The three-column iPad layout and the 2D field map (course, members and mission layers) driven by simulated members | One iPad runs a squad's practice holes with simulated members moving on the map | Built: the iPad screen with a satellite site map, driven by real phones (practice holes) |
 | **G4. Squad link** | `NetworkGroupTransport`, Bonjour Info.plist, commander lobby (code, QR, approve), phone **Join squad**, live positions | Three phones join an iPad on home Wi-Fi and with the router off; members show and go stale on the map | Built: the `GroupLink` module; join by code or QR; reconnects after sleep |
 | **G5. Members range and spot** | `LockReport` and `SpotReport` from phones, commit on the iPad, the gunner's Fired, auto-accept, flank geometry in FieldKit | A squad plays a practice course with real phones ranging and spotting; a lock off the flag is refused with reasons on the iPad | Built, except auto-accept and flank geometry; phones send the call only |
-| **G6. Match** | Match link between iPads, the match lobby and code, turn order between squads, scoreboard, field-wide holds and check fire across squads, match-host takeover | Two squads play a practice match; one squad ceasing fire holds the other; check fire from any phone stops both | Not built: `MatchHost` is in GroupKit and tested over the loopback, with no network match link or lobby |
+| **G6. Match** | — | — | Dropped. A squad manages its own field, like a group on a golf course; there is no match host, match link or turn order between squads. Its field holds moved to `SquadHost` |
 | **G7. 3D field map** | FieldKit's surface from height samples, the 3D orbit view, observation capture and tasking | The map's surface matches taped heights at the flags and firing points within the locks' ± | Not built on the iPad. The Theater's Mac 3D view uses USGS ground heights, not locks |
 | **G8. Render host** | The macOS target, photogrammetry and mesh fusion, alignment to the flags, LOD tiles to the iPads | A captured field renders smoothly on the iPad; switching the Mac off falls back to G7 without a hitch | Not built as a live host. `spud-mesh` builds a georeferenced mesh from photos on a Mac ([MESHING.md](MESHING.md)) |
 
-G1 to G5 are built. G6 (the match) is next, and v4's observer feed (T1) builds on it.
+G1 to G5 are built. G6 is dropped. G7 and G8 are next.
 
 ## Open questions
 
 1. **Who sees the firing data.** This design shows it only on the commander's iPad, and the commander reads it out. A gunner's phone that also displayed it would become a firing device, running its own `clearSolution` with its own downrange confirmation. Is that worth adding later?
-2. **What other squads can see.** Should a squad see another squad's observations, mesh or member positions? The match host needs positions for `memberInFan`, but commanders could be shown only their own squad's.
-3. **Launcher profile.** After m5 the profile lives with the commander's iPad. Does each squad have its own launcher, or do squads share one profile, re-checked on each commander's iPad?
-4. **The range-correct band** for flank calls starts at 0.5 m and gets tuned from G5's field data.
-5. **Capture size and timing.** How many stills a decent field mesh needs, and how long uploads take on peer-to-peer Wi-Fi; G8 will measure both.
-6. **iOS 26 APIs** (`NetworkConnection`, Wi-Fi Aware): adopt when the deployment target allows. The transport seam contains the change.
+2. **The range-correct band** for flank calls starts at 0.5 m and gets tuned from G5's field data.
+3. **Capture size and timing.** How many stills a decent field mesh needs, and how long uploads take on peer-to-peer Wi-Fi; G8 will measure both.
+4. **iOS 26 APIs** (`NetworkConnection`, Wi-Fi Aware): adopt when the deployment target allows. The transport seam contains the change.
