@@ -283,10 +283,6 @@ struct SquadLobbyView: View {
                     ForEach(s.holds, id: \.self) { h in
                         Label(h.description, systemImage: "hand.raised.fill").font(.footnote).foregroundStyle(.orange)
                     }
-                    if s.holds.contains(.noMatch) {
-                        Text("A squad on its own has no match host, so firing data stays held. That's expected in practice; holds never stop orders, locks or the map.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
                 }
             }
         }

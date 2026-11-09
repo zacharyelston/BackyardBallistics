@@ -26,12 +26,6 @@ final class SafetyPropertyTests: XCTestCase {
         let squad = Squad(name: "Red", members: [Member(name: "Ana", device: UUID(), role: .gunner)])
         var lock = reticleLock((40, 10, 0.2), from: .zero, poleHeight: 2.438)
         lock.date = t
-        let state = MatchState(revision: 3, courseID: "c", courseVersion: 1, courseHash: "h",
-                               squads: [SquadEntry(id: squad.id, name: "Red")], started: true,
-                               turn: Turn(hole: 1, squad: squad.id), scores: [squad.id: [1: 4.5]],
-                               holds: [.checkFire(by: "Ana"), .walkingOut(squad.id), .memberInFan(MemberID(), name: "Ben"),
-                                       .positionUnknown(MemberID(), name: "Cy"), .matchHostLost, .notYourTurn, .noMatch],
-                               knownCheckFires: [UUID()])
         let all: [GroupMessage.Body] = [
             .hello(Hello(name: "Ana", device: UUID(), joinCode: "RED")),
             .bye,
@@ -55,19 +49,17 @@ final class SafetyPropertyTests: XCTestCase {
             .squadStatus(SquadStatus(revision: 1, squad: squad, hole: 1, phase: .firing, walkingOut: false, missions: 1,
                                      rounds: [RoundSummary(number: 1, mission: 1, call: .short, lateral: 0.2, addDrop: 4,
                                                            rightLeft: -0.2, lost: false)],
-                                     roundInFlight: 2, total: 3, toPar: -1, yourTurn: true, holds: [.notYourTurn])),
+                                     roundInFlight: 2, total: 3, toPar: -1,
+                                     holds: [.walkingOut, .checkFire(by: "Ana"), .memberInFan(MemberID(), name: "Ben"),
+                                             .positionUnknown(MemberID(), name: "Cy")])),
             .spotRequest(SpotRequest(hole: 1, mission: 1, round: 2)),
             .lockReceipt(LockReceipt(lock: UUID(), status: .refused, reasons: ["far"])),
-            .joinMatch(JoinMatch(squad: squad.id, name: "Red", joinCode: "M", courseID: "c", courseVersion: 1, courseHash: "h")),
-            .squadReport(SquadReport(squad: squad.id, revision: 2, members: squad.members, hole: 1, phase: .firing,
-                                     walkingOut: false, fan: Fan(origin: origin, bearing: 10), scores: [1: 4.5])),
-            .positions(squad: squad.id, [MemberPosition(member: MemberID(), at: origin, accuracy: 2, time: t)]),
-            .matchState(state)
+            .positions(squad: squad.id, [MemberPosition(member: MemberID(), at: origin, accuracy: 2, time: t)])
         ]
         for body in all {
             switch body {   // exhaustive on purpose
             case .hello, .bye, .position, .lock, .spot, .fired, .orderAck, .order, .fieldNote, .fieldSubmission, .fileOffer, .fileChunk, .fileDone, .receipt, .checkFire, .welcome, .observing, .course, .refused, .squadStatus,
-                 .spotRequest, .lockReceipt, .joinMatch, .squadReport, .positions, .matchState: break
+                 .spotRequest, .lockReceipt, .positions: break
             }
         }
         return all
@@ -136,7 +128,7 @@ final class SafetyPropertyTests: XCTestCase {
         let ok = Safety.clearSolution(7, distance: 40, muzzleVelocity: 20, launcher: launcher, roundID: "r",
                                       downrange: log, player: "Red", hole: 1)
         XCTAssertTrue(GroupGate.display(ok, holds: []).isShown)
-        for hold in [Hold.noMatch, .notYourTurn, .matchHostLost, .checkFire(by: "x")] {
+        for hold in [Hold.walkingOut, .checkFire(by: "x"), .memberInFan(MemberID(), name: "Ben"), .positionUnknown(MemberID(), name: "Cy")] {
             XCTAssertFalse(GroupGate.display(ok, holds: [hold]).isShown, "\(hold)")
         }
     }
@@ -148,12 +140,9 @@ final class SafetyPropertyTests: XCTestCase {
         for scenario in 0..<4 {
             let f = Field()
             f.addSquad("Red")
-            f.addSquad("Blue")
             let ana = f.addPhone("Ana", squad: "Red", at: Ground(0, -2))
             let mal = f.addPhone("Mal", squad: "Red", at: Ground(1, -3))
-            f.addPhone("Dee", squad: "Blue", at: Ground(4, -4))
             f.tick()
-            f.matchAction { m, now in m.start(now: now) }
             f.command("Red") { $0.startNextHole(now: $1) }
             let hole = f.hosts["Red"]!.round.currentHole!
             var range = PracticeRange(pole: ground(hole.flag.position), poleHeight: 2.438, wind: .calm, seed: 9)
@@ -166,18 +155,16 @@ final class SafetyPropertyTests: XCTestCase {
             case 1: f.command("Red") { $0.confirmDownrange(now: $1) }
                     f.command("Red") { $0.ceaseFire(now: $1) }                 // walking out
             case 2: f.command("Red") { $0.confirmDownrange(now: $1) }
-                    f.matchAction { m, now in m.callCheckFire(by: "Host", now: now) }
+                    f.command("Red") { $0.callCheckFire(by: "Commander", now: $1) }   // check fire on the iPad
             default: f.command("Red") { $0.confirmDownrange(now: $1) }
-                    f.net.down.insert(f.matchPeer)
-                    f.tick(SquadHost.matchHostTimeout + 1)                     // match host lost
+                    f.send(ana, .checkFire(CheckFire(by: "Ana")))                    // check fire from a phone
             }
             f.tick(0)
             let heldBefore = f.holds("Red")
             let confirmedBefore = f.hosts["Red"]!.isDownrangeConfirmed()
             XCTAssertFalse(isShown(f), "scenario \(scenario) starts blocked")
 
-            // Not the match host itself: its link is authenticated (the match code keys its TLS in G4).
-            let peers = [ana.peer, mal.peer, PeerID("stranger"), PeerID("fake-match")]
+            let peers = [ana.peer, mal.peer, PeerID("stranger")]
             for _ in 0..<600 {
                 let from = peers[Int.random(in: 0..<peers.count, using: &g)]
                 if Int.random(in: 0..<10, using: &g) == 0 {
@@ -185,9 +172,7 @@ final class SafetyPropertyTests: XCTestCase {
                     if Bool.random(using: &g) { bytes.replaceSubrange(0..<min(4, bytes.count), with: [0, 0, 0, 20]) }
                     f.net.sendRaw(from: from, to: Field.ipad("Red"), bytes)
                 } else {
-                    var body = randomBody(&g, f: f)
-                    // A phone pretending to be the match host, with every hold lifted.
-                    if case var .matchState(s) = body { s.holds = []; s.turn = Turn(hole: 1, squad: f.hosts["Red"]!.squadID); body = .matchState(s) }
+                    let body = randomBody(&g, f: f)
                     f.net.send(from: from, [Outgoing(to: Field.ipad("Red"), body)])
                 }
                 f.net.run()

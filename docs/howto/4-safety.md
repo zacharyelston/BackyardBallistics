@@ -19,7 +19,7 @@ Low-power launchers only, inanimate targets, on your own property. Every limit l
 
 - **One gate.** A range or a solution reaches the screen only after SafetyKit has checked it. There's no other path, and the device that shows firing data runs the checks itself.
 - **Downrange is a person's call.** Before the first shot on a hole, someone has to answer *Is the whole fan downrange clear of people and animals?* by tapping on the device that shows the firing data. No message from another device can answer it.
-- **Squads only add holds.** Holds pause firing data and never lift a safety check. **Check fire** from any device stops everyone, and each commander confirms downrange again afterwards.
+- **Squads only add holds.** Holds pause firing data and never lift a safety check. **Check fire** from any device in the squad stops the squad. Only the commander lifts it, and then confirms downrange again.
 - **Phones never show firing data.** They send positions, locks, spot calls and order answers. The commander's iPad checks each one.
 - **Every shot is within the limit.** On a hole with layup points, each leg is checked on its own: no leg may be longer than 91.4 m (100 yd), and each leg's safety fan must stay inside the boundary.
 - **Practice fires nothing.** A course whose safety fan doesn't fit, or with a leg past 91.4 m, can still be used for practice and demos, but not for real rounds.

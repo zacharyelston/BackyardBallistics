@@ -15,4 +15,4 @@ What works today:
 - **3D view.** The toolbar switches between the map and the course in 3D on the ground's real shape (USGS 3DEP heights, US only; flat ground elsewhere). It shows the boundary, the poles and rings, the firing points, every safety fan, members, and any field meshes saved for the course. Drag to orbit, scroll or pinch to zoom.
 - **Field meshes.** `spud-mesh` on the Mac turns photos of the course into a mesh for the 3D view. See [MESHING.md](../MESHING.md). A mesh is a picture only: it never feeds a range or a solution.
 
-Planned: watching whole matches, course-wide holds and check fire for the owner, and a GPU mapping back end that builds the field. See [THEATER_MODE.md](../THEATER_MODE.md).
+Planned: locks, spots and scores in the feed, course-wide holds and check fire for the owner, and a GPU mapping back end that builds the field. See [THEATER_MODE.md](../THEATER_MODE.md).
