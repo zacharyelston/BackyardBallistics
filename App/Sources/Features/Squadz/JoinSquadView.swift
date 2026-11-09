@@ -3,7 +3,7 @@ import RoundKit
 import GroupKit
 import GroupLink
 
-/// Play → v3 Squadz → Join squad: pick a commander's iPad, type its code, and you're in. While
+/// Play → Join squad: pick a commander's iPad, type its code, and you're in. While
 /// joined the phone shows the squad's status and reports its position. No firing data, ever.
 struct JoinSquadView: View {
     @EnvironmentObject private var membership: SquadMembership
@@ -11,6 +11,8 @@ struct JoinSquadView: View {
     @State private var picked: GroupBrowser.Found?
     @State private var code = ""
     @State private var scanning = false
+    @State private var showingDetails = false
+    @State private var confirmLeave = false
 
     var body: some View {
         Form {
@@ -27,7 +29,29 @@ struct JoinSquadView: View {
                 pickSections
             }
         }
-        .navigationTitle("Join squad")
+        .navigationTitle(membership.isInSquad ? "Squad " + (membership.squadName ?? "") : "Join squad")
+        .navigationBarTitleDisplayMode(membership.isInSquad ? .inline : .large)
+        .toolbar {
+            if membership.isInSquad {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button("Squad details", systemImage: "person.3") { showingDetails = true }
+                        Button("Leave squad", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) { confirmLeave = true }
+                    } label: { Label("Squad", systemImage: "ellipsis.circle") }
+                }
+            }
+        }
+        .sheet(isPresented: $showingDetails) {
+            NavigationStack {
+                Form { membershipDetails }
+                    .navigationTitle("Squad details")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { showingDetails = false } } }
+            }
+        }
+        .confirmationDialog("Leave the squad?", isPresented: $confirmLeave, titleVisibility: .visible) {
+            Button("Leave squad", role: .destructive) { membership.leave() }
+        } message: { Text("Your position and reports will stop being sent to the commander.") }
         .onAppear { membership.showingJoinScreen = true }
         .onDisappear { membership.showingJoinScreen = false }
         .sheet(isPresented: $scanning) {
@@ -122,46 +146,63 @@ struct JoinSquadView: View {
     // MARK: Joined
 
     @ViewBuilder private var joinedSections: some View {
-        if case let .reconnecting(why) = membership.state {
-            Section {
-                HStack(spacing: 10) {
-                    ProgressView()
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Reconnecting to \(membership.squadName ?? "the squad")…")
-                        Text(why).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                    }
-                }
-                Button("Try now") { membership.retry() }
-            } footer: {
-                Text("If the commander's iPad slept or the Wi-Fi blinked, the phone rejoins on its own as the same member.")
-            }
-        }
         Section {
-            LabeledContent("Squad", value: membership.squadName ?? "—")
-            if let me = membership.me {
-                LabeledContent("You", value: me.name)
-                LabeledContent("Role", value: me.role == .gunner ? "Gunner" : "Member")
-            }
-        } header: {
-            Text(membership.state == .joined ? "Welcome" : "Squad")
-        }
-        if !membership.orders.isEmpty {
-            Section {
-                ForEach(membership.orders.reversed()) { order in
-                    VStack(alignment: .leading, spacing: 8) {
-                        OrderCard(order: order)
-                        if order.at != nil {
-                            NavigationLink { OrderDetailView(order: order) } label: {
-                                Label("Map and details", systemImage: "map").font(.footnote)
-                            }
-                        }
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Label(membership.state == .joined ? "Connected" : "Reconnecting",
+                          systemImage: "antenna.radiowaves.left.and.right")
+                        .foregroundStyle(membership.state == .joined ? .green : .orange)
+                    Spacer()
+                    if case .reconnecting = membership.state {
+                        Button("Try now") { membership.retry() }.frame(minHeight: 44)
+                    } else if let me = membership.me {
+                        Text(me.name).foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 4)
                 }
-            } header: {
-                Text("Orders")
-            } footer: {
-                Text("From the squad leader. Each order opens the tool it needs; Done or Can't takes it off your list.")
+                .font(.subheadline)
+                if case let .reconnecting(why) = membership.state {
+                    Text(why).font(.caption).foregroundStyle(.secondary)
+                }
+                positionStatus
+            }
+            .padding(.vertical, 4)
+        }
+        if let order = membership.orders.last {
+            Section("Current task") {
+                OrderCard(order: order)
+                    .padding(.vertical, 8)
+                if order.at != nil {
+                    NavigationLink { OrderDetailView(order: order) } label: {
+                        Label("Map and details", systemImage: "map")
+                    }
+                }
+            }
+        } else {
+            Section {
+                Label("No pending tasks", systemImage: "checkmark.circle")
+                Text("New orders from your commander appear here.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+        if membership.orders.count > 1 {
+            Section("Other tasks") {
+                ForEach(membership.orders.dropLast().reversed()) { order in
+                    NavigationLink { OrderDetailView(order: order) } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label(order.kind.title, systemImage: order.kind.systemImage).font(.headline)
+                            if !order.text.isEmpty { Text(order.text).font(.footnote).foregroundStyle(.secondary) }
+                        }
+                        .padding(.vertical, 6)
+                    }
+                }
+            }
+        }
+        if let s = membership.status, !s.holds.isEmpty {
+            Section("Holds") {
+                ForEach(s.holds, id: \.self) { hold in
+                    Label(hold.description, systemImage: "hand.raised.fill")
+                        .foregroundStyle(.orange).font(.footnote)
+                }
             }
         }
         Section {
@@ -176,16 +217,40 @@ struct JoinSquadView: View {
         } footer: {
             Text("A note (and a photo) pinned where you stand, to your squad leader, who passes it on to the Theater.")
         }
+    }
+
+    @ViewBuilder private var positionStatus: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            if membership.locationDenied {
+                Label("Location is off. Enable it in Settings to share your position.", systemImage: "location.slash")
+                    .foregroundStyle(.red)
+            } else if let fix = membership.lastFix {
+                let age = membership.lastSent.map { max(0, context.date.timeIntervalSince($0)) }
+                Text(String(format: "GPS ±%.0f m", fix.horizontalAccuracy)
+                     + (age.map { " · sent \(Int($0)) s ago" } ?? " · not sent yet"))
+                    .foregroundStyle(age.map { $0 > 15 } ?? true ? .orange : .secondary)
+            } else {
+                Label("Waiting for GPS…", systemImage: "location")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .font(.footnote)
+    }
+
+    @ViewBuilder private var membershipDetails: some View {
+        Section("Membership") {
+            LabeledContent("Squad", value: membership.squadName ?? "—")
+            if let me = membership.me {
+                LabeledContent("You", value: me.name)
+                LabeledContent("Role", value: me.role == .gunner ? "Gunner" : "Member")
+            }
+        }
         if let s = membership.status {
             Section {
                 LabeledContent("Hole", value: s.hole.map { "\($0)" } ?? "Not started")
                 if let phase = s.phase { LabeledContent("Phase", value: Self.label(phase, walkingOut: s.walkingOut)) }
                 LabeledContent("Total", value: String(format: "%.1f (%@%.1f)", s.total, s.toPar >= 0 ? "+" : "", s.toPar))
                 LabeledContent("Members", value: "\(s.squad.members.count)")
-                if let r = membership.spotRequest {
-                    Label("Round \(r.round) is in the air. Spotting from phones comes next.", systemImage: "scope")
-                        .foregroundStyle(.secondary).font(.footnote)
-                }
             } header: {
                 Text("Squad status")
             }
@@ -199,28 +264,7 @@ struct JoinSquadView: View {
                 }
             }
         }
-        Section {
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-                if membership.locationDenied {
-                    Text("Location is off for SpudGunGolf. The commander needs your position to keep the fan clear: turn it on in Settings.")
-                        .foregroundStyle(.red)
-                } else if let fix = membership.lastFix {
-                    LabeledContent("GPS", value: String(format: "±%.0f m", fix.horizontalAccuracy))
-                    if let sent = membership.lastSent {
-                        LabeledContent("Last sent", value: "\(Int(max(0, context.date.timeIntervalSince(sent)))) s ago")
-                    }
-                } else {
-                    Text("Waiting for GPS…").foregroundStyle(.secondary)
-                }
-            }
-        } header: {
-            Text("Your position")
-        } footer: {
-            Text("Sent to the commander every \(Int(SquadMembership.positionInterval)) seconds while you're in the squad.")
-        }
-        Section {
-            Button("Leave the squad", role: .destructive) { membership.leave() }
-        }
+        Section("Your position") { positionStatus }
     }
 
     static func label(_ phase: HolePlay.Phase, walkingOut: Bool) -> String {

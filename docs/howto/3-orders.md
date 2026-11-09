@@ -8,6 +8,8 @@ The squad leader tasks one member, several members, or the whole team. Orders ar
 
 ## Sending an order (iPad)
 
+Open the **Orders** workspace, then:
+
 1. **Who:** tap names, roster rows or dots on the map. Picking nobody sends to the whole team.
 2. **What:** tap a kind. Picking a kind doesn't send anything yet.
 3. **Where:** for orders that take a place, tap the map. Picking a kind always clears the old place, so a location never carries over from the last order.
@@ -29,9 +31,9 @@ Below the composer, each order shows every recipient's answer: **seen**, **done*
 
 ## On the phone
 
-- New orders appear as a banner along the bottom of any screen, and in Join squad. The phone buzzes, and posts a notification if it's locked.
+- The joined **Play** screen shows the current task first, followed by other pending tasks. Outside that screen, a compact order strip above the tabs opens the orders list. The phone buzzes, and posts a notification if it's locked.
 - Each order with a place shows a **pointer** that turns with the phone, the distance, and a small map.
-- **Seen** tells the commander you have it, and opens the tool the order needs. **Done** or **Can't** takes the order off your list.
+- **Start ranging**, **Open spotter**, or **Go there** opens the task's tool. **Mark seen** separately tells the commander you have the order. **Done** or **Can't** takes it off your list.
 - Back steps between orders, so you can walk to one place, then range from another.
 
 ## Spotting

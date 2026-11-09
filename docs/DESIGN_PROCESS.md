@@ -33,12 +33,20 @@ Ben and Cy. Ben has three orders: move to the tree line, range the pole from the
 
 | Scene | Device | Screen |
 |---|---|---|
-| `phone-orders` | iPhone 17e | Join squad, joined, with Ben's orders |
-| `phone-banner` | iPhone 17e | The Play tab with the newest order as the banner |
+| `phone-orders` | iPhone 17e | Joined Play screen with Ben's current task and other orders |
+| `phone-banner` | iPhone 17e | Field tab with the compact order strip above the tabs |
 | `phone-order-detail` | iPhone 17e | One order: the card and the map |
 | `phone-goto` | iPhone 17e | Go there: the big pointer and the map |
 | `phone-spotter` | iPhone 17e | The spotter card with round 2 in the air |
 | `ipad-command` | iPad (A16), landscape | The commander's squad screen |
+| `phone-play` | iPhone 17e | Start screen with solo and squad choices |
+| `phone-field` | iPhone 17e | Course, ranging, records and pole setup |
+| `phone-kit` | iPhone 17e | Equipment and advanced tests |
+| `phone-solo` | iPhone 17e | Active solo hole, progress and scorecard access |
+| `phone-empty` | iPhone 17e | Joined with no pending tasks |
+| `phone-reconnect` | iPhone 17e | Joined screen reconnecting to its commander |
+| `ipad-invite` | iPad (A16), landscape | Invite sheet with code and QR |
+| `ipad-team` | iPad (A16), landscape | Team roster and inbox |
 | `ipad-order-draft` | iPad (A16), landscape | The same screen part-way through an order: Cy, Capture, a place on the map |
 
 The defaults match the devices we test on. To render on another simulator:

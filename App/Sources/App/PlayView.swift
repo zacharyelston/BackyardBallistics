@@ -1,108 +1,79 @@
 import SwiftUI
-import SafetyKit
 import CourseKit
 
-/// The round: start or continue one on the loaded course, as real fire missions or as practice
-/// with simulated rounds, and look back at saved scorecards.
+/// Play follows the active job. Setup and history stay reachable without interrupting a mission.
 struct PlayView: View {
     @EnvironmentObject private var courses: CourseStore
     @EnvironmentObject private var rounds: RoundStore
     @EnvironmentObject private var squadCommand: SquadCommand
     @EnvironmentObject private var squadMembership: SquadMembership
     @AppStorage(Settings.playerNameKey) private var player = Settings.defaultPlayerName
-    @State private var openRound = false
-    @State private var confirmReplace: Bool?
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    if let a = rounds.active {
-                        NavigationLink {
-                            RoundView()
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(a.practice ? "Continue practice round" : "Continue round").font(.headline)
-                                Text("\(a.course.name) · \(a.card.played.count) of \(a.card.holes.count) holes")
-                                    .font(.footnote).foregroundStyle(.secondary)
+            if squadMembership.isInSquad {
+                JoinSquadView()
+            } else if squadCommand.host != nil {
+                CommandSquadView()
+            } else if let active = rounds.active {
+                if active.card.isComplete {
+                    RoundView()
+                } else {
+                    HoleMissionView()
+                        .toolbar {
+                            ToolbarItem(placement: .primaryAction) {
+                                NavigationLink { RoundView() } label: { Label("Scorecard", systemImage: "list.number") }
                             }
                         }
-                    }
-                    if let course = courses.practiceCourse {
-                        if courses.playableCourse != nil {
-                            Button {
-                                begin(course, practice: false)
-                            } label: {
-                                Label("Play \(course.name)", systemImage: "flag.fill")
-                            }
-                        } else {
-                            Label {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("\(course.name) is practice only")
-                                    Text("A safety fan leaves the boundary, or a firing point is past 100 yd, so real rounds are off. Practice and demos fire nothing.")
-                                        .font(.footnote).foregroundStyle(.secondary)
-                                }
-                            } icon: {
-                                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
-                            }
-                        }
-                        Button {
-                            begin(course, practice: true)
-                        } label: {
-                            Label("Practice with simulated rounds", systemImage: "gamecontroller")
-                        }
-                    } else {
-                        Text("No playable course loaded.").foregroundStyle(.secondary)
-                    }
-                    LabeledContent("Player") {
-                        TextField("Name", text: $player).multilineTextAlignment(.trailing)
-                    }
-                } header: {
-                    Text("Round")
-                } footer: {
-                    Text("Each hole is a fire mission: confirm downrange, range the pole, fire and spot, let fire control correct, cease fire and verify. Score is rounds plus metres outside the ring. Practice plays the same flow with simulated rounds and no launcher.")
                 }
-                Section {
-                    NavigationLink { CommandSquadView() } label: {
-                        Label(squadCommand.host.map { "Command \($0.player)" } ?? "Command a squad", systemImage: "ipad.landscape")
-                    }
-                    NavigationLink { JoinSquadView() } label: {
-                        Label(squadMembership.squadName.map { squadMembership.state == .joined ? "In squad \($0)" : "Join squad" } ?? "Join squad",
-                              systemImage: "person.3.fill")
-                    }
-                } header: {
-                    Text("v3 Squadz")
-                } footer: {
-                    Text("Squads play squads. The commander's iPad hosts the squad; members join from their phones with its code.")
-                }
-                Section {
-                    NavigationLink { CourseView() } label: { Label("Course", systemImage: "map") }
-                    NavigationLink { ScorecardHistoryView(saved: rounds.saved) } label: {
-                        Label("Scorecards", systemImage: "list.number")
-                    }
-                    NavigationLink { ReticleRangingView() } label: { Label("Range a pole now", systemImage: "scope") }
-                }
-            }
-            .navigationTitle("Play")
-            .navigationDestination(isPresented: $openRound) { RoundView() }
-            .confirmationDialog("A round is in progress", isPresented: Binding(get: { confirmReplace != nil }, set: { if !$0 { confirmReplace = nil } }),
-                                titleVisibility: .visible) {
-                Button("End it and start a new one", role: .destructive) {
-                    if let practice = confirmReplace, let course = practice ? courses.practiceCourse : courses.playableCourse {
-                        rounds.endRound()
-                        rounds.start(course: course, player: player, practice: practice)
-                        openRound = true
-                    }
-                }
-            } message: {
-                Text("Finished holes from the current round are saved to a scorecard.")
+            } else {
+                startScreen
             }
         }
+        // Starting or leaving a session discards setup destinations from the old workspace.
+        .id(workspace)
     }
 
-    private func begin(_ course: Course, practice: Bool) {
-        if rounds.active != nil { confirmReplace = practice; return }
-        rounds.start(course: course, player: player, practice: practice)
-        openRound = true
+    private var workspace: String {
+        if squadMembership.isInSquad { return "member" }
+        if squadCommand.host != nil { return "command" }
+        if rounds.active != nil { return "solo" }
+        return "start"
+    }
+
+    private var startScreen: some View {
+        List {
+            Section {
+                NavigationLink { JoinSquadView() } label: { Label("Join squad", systemImage: "person.3.fill") }
+                NavigationLink { CommandSquadView() } label: { Label("Start a squad", systemImage: "ipad.landscape") }
+            } header: { Text("Play together") } footer: {
+                Text("An iPad commands the squad. Members join from their phones.")
+            }
+            Section {
+                if let course = courses.practiceCourse {
+                    Text(course.name).font(.headline)
+                    if courses.playableCourse != nil {
+                        Button { rounds.start(course: course, player: player, practice: false) } label: {
+                            Label("Play solo", systemImage: "flag.fill")
+                        }
+                    } else {
+                        Label("Practice only", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                        NavigationLink { CourseView() } label: { Text("Review course restrictions") }
+                    }
+                    Button { rounds.start(course: course, player: player, practice: true) } label: {
+                        Label("Practice with simulated rounds", systemImage: "gamecontroller")
+                    }
+                } else {
+                    NavigationLink { CourseView() } label: { Label("Load a course to play", systemImage: "map") }
+                }
+                LabeledContent("Player") { TextField("Name", text: $player).multilineTextAlignment(.trailing) }
+            } header: { Text("Play solo") } footer: {
+                Text("Practice uses simulated rounds and no launcher. Score is rounds plus metres outside the ring.")
+            }
+            Section {
+                NavigationLink { ScorecardHistoryView(saved: rounds.saved) } label: { Label("Scorecards", systemImage: "list.number") }
+            }
+        }
+        .navigationTitle("Play")
     }
 }

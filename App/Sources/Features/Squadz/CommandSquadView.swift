@@ -2,7 +2,7 @@ import SwiftUI
 import CourseKit
 import GroupKit
 
-/// Play → v3 Squadz → Command a squad: start a squad on the loaded course, show its join code and
+/// Play → Start a squad: start a squad on the loaded course, show its join code and
 /// QR code, and watch members join with live positions. Built for the iPad in landscape; works in
 /// portrait and on a phone too.
 struct CommandSquadView: View {
@@ -37,7 +37,7 @@ struct CommandSquadView: View {
                     LabeledContent("Course", value: course.name)
                     LabeledContent("Mode", value: "Practice (simulated rounds)")
                 } else {
-                    Text("Load a course first (Play → Course).").foregroundStyle(.secondary)
+                    Text("Load a course first (Field → Course).").foregroundStyle(.secondary)
                 }
             } header: {
                 Text("Squad")
@@ -82,31 +82,40 @@ struct CommandSquadView: View {
 struct SquadLobbyView: View {
     @EnvironmentObject private var command: SquadCommand
     @State private var confirmEnd = false
+    @State private var inviting = false
+    @State private var panel: Panel = .mission
+    @State private var orderNote = ""
+
+    init(inviting: Bool = false, initialWorkspace: Panel = .mission) {
+        _inviting = State(initialValue: inviting)
+        _panel = State(initialValue: initialWorkspace)
+    }
+
+    enum Panel: String, CaseIterable {
+        case mission = "Mission", orders = "Orders", team = "Team"
+    }
 
     var body: some View {
         GeometryReader { geo in
             if geo.size.width > geo.size.height && geo.size.width > 700 {
                 HStack(spacing: 0) {
                     map
-                    ScrollView {
-                        VStack(spacing: 16) { codePanel(compact: true); SquadOrdersPanel(); rosterPanel; SquadHolePanel(); SquadLocksPanel(); SquadInboxPanel(); statusPanel }.padding(16)
-                    }
-                    .frame(width: min(400, geo.size.width * 0.36))
-                    .background(Color(.systemGroupedBackground))
+                    commandPane
+                        .frame(width: min(400, geo.size.width * 0.36))
+                        .background(Color(.systemGroupedBackground))
                 }
             } else {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        map.frame(height: max(320, geo.size.height * 0.45))
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                        codePanel(compact: false); SquadOrdersPanel(); rosterPanel; SquadHolePanel(); SquadLocksPanel(); SquadInboxPanel(); statusPanel
-                    }
-                    .padding()
+                VStack(spacing: 0) {
+                    map.frame(height: min(280, geo.size.height * 0.32))
+                    commandPane
                 }
                 .background(Color(.systemGroupedBackground))
             }
         }
         .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { inviting = true } label: { Label("Invite", systemImage: "qrcode") }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Menu {
                     Button { command.stop() } label: { Label("Stop advertising", systemImage: "pause.circle") }
@@ -116,6 +125,19 @@ struct SquadLobbyView: View {
                 }
             }
         }
+        .navigationTitle(command.host.map { "Squad " + $0.player } ?? "Command a squad")
+        .sheet(isPresented: $inviting) {
+            NavigationStack {
+                ScrollView { codePanel(compact: false).padding() }
+                    .navigationTitle("Invite members")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { inviting = false } } }
+            }
+        }
+        .onAppear { if command.orderKind != nil { panel = .orders } }
+        .onChange(of: command.orderTargets) { _, targets in
+            if !targets.isEmpty { panel = .orders }
+        }
         // A small, solid title bar: the large title would sit on top of the satellite map.
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.visible, for: .navigationBar)
@@ -123,6 +145,26 @@ struct SquadLobbyView: View {
             Button("End it", role: .destructive) { command.end() }
         } message: {
             Text("Members are disconnected and the code stops working. A new squad gets a new code.")
+        }
+    }
+
+    /// Status stays above the scrolling workspace so switching tasks never hides holds.
+    private var commandPane: some View {
+        VStack(spacing: 0) {
+            statusPanel
+            Picker("Workspace", selection: $panel) {
+                ForEach(Panel.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16).padding(.bottom, 12)
+            ScrollView {
+                VStack(spacing: 16) {
+                    if panel == .orders { SquadOrdersPanel(text: $orderNote) }
+                    if panel == .mission { SquadHolePanel(); SquadLocksPanel() }
+                    if panel == .team { rosterPanel; SquadInboxPanel() }
+                }
+                .padding(16)
+            }
         }
     }
 
@@ -143,10 +185,10 @@ struct SquadLobbyView: View {
                                           notes: Array(host.notes.suffix(30)))],
                     selected: command.orderTargets,
                     draftPlace: command.orderPlace,
-                    onTapPlace: command.placingOrder ? { command.setPlace($0) } : nil,
-                    onTapMember: command.placingOrder ? nil : { command.toggleTarget($0) })
+                    onTapPlace: panel == .orders && command.placingOrder ? { command.setPlace($0) } : nil,
+                    onTapMember: panel == .orders && command.placingOrder ? nil : { command.toggleTarget($0) })
                 .overlay(alignment: .top) {
-                    if command.placingOrder, let kind = command.orderKind {
+                    if panel == .orders, command.placingOrder, let kind = command.orderKind {
                         Label("Tap where: \(kind.title)", systemImage: "hand.tap.fill")
                             .font(.headline).padding(.horizontal, 14).padding(.vertical, 8)
                             .background(.orange, in: Capsule()).foregroundStyle(.white)
@@ -171,7 +213,7 @@ struct SquadLobbyView: View {
                     .background(.white, in: RoundedRectangle(cornerRadius: 12))
                 linkLabel
                 Text("\(host.round.course.name) · practice").font(.footnote).foregroundStyle(.secondary)
-                Text("On each phone: Play → v3 Squadz → Join squad, pick \(host.player) and type the code.")
+                Text("On each phone: Play → Join squad, pick \(host.player) and type the code.")
                     .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
         }
@@ -275,17 +317,19 @@ struct SquadLobbyView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let host = command.host {
                 let s = host.status(now: Date())
-                Text("Squad status").font(.headline)
+                HStack {
+                    Text("Squad status").font(.headline)
+                    Spacer()
+                    Text(String(format: "%.1f total", s.total)).font(.caption).foregroundStyle(.secondary)
+                }
                 LabeledContent("Hole", value: s.hole.map { "\($0)" } ?? "Not started")
-                LabeledContent("Total", value: String(format: "%.1f", s.total))
+                Text(s.phase.map { SquadHolePanel.phase($0, walkingOut: s.walkingOut) } ?? "Between holes")
+                    .font(.subheadline.weight(.semibold))
+                linkLabel.font(.caption)
                 if !s.holds.isEmpty {
                     Text("Holds").font(.subheadline.weight(.semibold)).padding(.top, 4)
                     ForEach(s.holds, id: \.self) { h in
                         Label(h.description, systemImage: "hand.raised.fill").font(.footnote).foregroundStyle(.orange)
-                    }
-                    if s.holds.contains(.noMatch) {
-                        Text("A squad on its own has no match host, so firing data stays held. That's expected in practice; holds never stop orders, locks or the map.")
-                            .font(.caption).foregroundStyle(.secondary)
                     }
                 }
             }

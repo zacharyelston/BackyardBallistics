@@ -15,9 +15,17 @@ import GroupKit
 // course, never from courses/local.
 
 enum DesignScene: String, CaseIterable {
-    /// A member's Join squad screen with three open orders.
+    case phonePlay = "phone-play"
+    case phoneField = "phone-field"
+    case phoneKit = "phone-kit"
+    case phoneSolo = "phone-solo"
+    case phoneEmpty = "phone-empty"
+    case phoneReconnect = "phone-reconnect"
+    case ipadInvite = "ipad-invite"
+    case ipadTeam = "ipad-team"
+    /// A joined member's Play screen with three open orders.
     case phoneOrders = "phone-orders"
-    /// The newest order as the banner over the Play tab.
+    /// The newest order as the banner above the Field tab.
     case phoneBanner = "phone-banner"
     /// One order in full: the card and the map.
     case phoneOrderDetail = "phone-order-detail"
@@ -45,6 +53,8 @@ struct DesignSceneView: View {
     let scene: DesignScene
     @EnvironmentObject private var command: SquadCommand
     @EnvironmentObject private var membership: SquadMembership
+    @EnvironmentObject private var courses: CourseStore
+    @EnvironmentObject private var rounds: RoundStore
     @State private var ready = false
 
     var body: some View {
@@ -54,6 +64,8 @@ struct DesignSceneView: View {
         .tint(.orange)
         .onAppear {
             guard !ready, let f = DesignFixture.make() else { return }
+            courses.loadBundledSample()
+            rounds.active = nil
             switch scene.device {
             case .iPad:
                 command.loadDesign(f.host, draft: scene == .ipadOrderDraft ? f.draft : nil)
@@ -61,7 +73,15 @@ struct DesignSceneView: View {
                     ws.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight))
                 }
             case .iPhone:
-                membership.loadDesign(f.phone, fix: f.phoneFix, heading: 20, spotRequest: scene == .phoneSpotter ? f.spotRequest : nil)
+                if [.phonePlay, .phoneField, .phoneKit, .phoneSolo].contains(scene) {
+                    if scene == .phoneSolo, let course = courses.practiceCourse {
+                        rounds.start(course: course, player: "Ben", practice: true)
+                    }
+                } else {
+                    membership.loadDesign(f.phone, fix: f.phoneFix, heading: 20, spotRequest: scene == .phoneSpotter ? f.spotRequest : nil)
+                    if scene == .phoneEmpty { for order in membership.orders { membership.ack(order, .done) } }
+                    if scene == .phoneReconnect { membership.loadDesignReconnect() }
+                }
             }
             ready = true
             Self.markReady(after: scene.device == .iPad ? 4 : 3)
@@ -80,21 +100,22 @@ struct DesignSceneView: View {
 
     @ViewBuilder private var screen: some View {
         switch scene {
-        case .phoneOrders:
-            NavigationStack { JoinSquadView() }
-        case .phoneBanner:
-            TabView {
-                PlayView().tabItem { Label("Play", systemImage: "flag.fill") }
-                Color.clear.tabItem { Label("Launcher", systemImage: "scope") }
-                Color.clear.tabItem { Label("Tools", systemImage: "wrench.and.screwdriver") }
-            }
-            .overlay(alignment: .bottom) { OrderBanner().padding(.bottom, 58) }
+        case .phonePlay, .phoneSolo, .phoneOrders, .phoneEmpty, .phoneReconnect:
+            RootView()
+        case .phoneField, .phoneBanner:
+            RootView(selectedTab: .field)
+        case .phoneKit:
+            RootView(selectedTab: .kit)
         case .phoneOrderDetail:
             NavigationStack { if let o = membership.orders.first { OrderDetailView(order: o) } }
         case .phoneGoTo:
             NavigationStack { if let o = membership.orders.first(where: { $0.kind == .moveTo }) { GoToView(order: o) } }
         case .phoneSpotter:
             NavigationStack { SpotterCard(order: membership.orders.first(where: { $0.kind == .spot })) }
+        case .ipadInvite:
+            NavigationStack { SquadLobbyView(inviting: true) }
+        case .ipadTeam:
+            NavigationStack { SquadLobbyView(initialWorkspace: .team) }
         case .ipadCommand, .ipadOrderDraft:
             NavigationStack { CommandSquadView() }
         }
@@ -124,7 +145,7 @@ struct DesignFixture {
               let course = CourseFile.load(data: data).practiceCourse,
               let hole = course.holes.first, let fp = hole.firingPoints.first else { return nil }
         let flag = hole.flag.position
-        var host = SquadHost(squad: Squad(name: "Red"), course: course, practice: true, joinCode: "RED-4821")
+        var host = SquadHost(squad: Squad(name: "Red"), course: course, practice: true, joinCode: "R7D482")
         var toBen: [GroupMessage.Body] = []
         func deliver(_ out: [Outgoing]) { toBen += out.filter { $0.to == PeerID("ben") }.map(\.body) }
 

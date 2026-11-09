@@ -8,7 +8,7 @@ import GroupKit
 /// Orders are tasking only; they never carry firing data.
 struct SquadOrdersPanel: View {
     @EnvironmentObject private var command: SquadCommand
-    @State private var text = ""
+    @Binding var text: String
 
     private let columns = [GridItem(.adaptive(minimum: 104), spacing: 8)]
 

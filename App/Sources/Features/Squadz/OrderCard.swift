@@ -28,9 +28,9 @@ enum OrderTool {
 
     var title: String {
         switch self {
-        case .ranging: return "Open ranging"
+        case .ranging: return "Start ranging"
         case .goTo: return "Go there"
-        case .spotting: return "Spot"
+        case .spotting: return "Open spotter"
         case .none: return ""
         }
     }
@@ -110,16 +110,13 @@ struct OrderMiniMap: View {
     }
 }
 
-/// One order, compact: what, the note, the pointer, its tool, and Seen / Done / Can't. Seen tells
-/// the commander you've got it and opens the tool the order needs: ranging for Range the pole, the
-/// spotter card for Spot, Go there for an order with a place.
+/// One task with an explicit tool action and separate acknowledgement controls.
 struct OrderCard: View {
     @EnvironmentObject private var membership: SquadMembership
     @EnvironmentObject private var reticleLog: ReticleLogStore
     let order: Order
     var compact = false
-    /// When set, the tool opens through this (the banner opens the orders screen at the tool);
-    /// otherwise it opens in a sheet over this screen.
+    /// Optional routing override; the default opens the tool in a sheet.
     var onOpen: (() -> Void)?
     @State private var showingTool = false
 
@@ -155,15 +152,19 @@ struct OrderCard: View {
                 Text(order.text).font(compact ? .footnote : .body).lineLimit(compact ? 2 : nil)
             }
             if order.at != nil { OrderPointer(order: order, size: compact ? 22 : 34) }
-            // The commands: one even row that never wraps.
-            HStack(spacing: 8) {
-                answer("Seen", .seen, tint: .blue)
+            if tool != .none {
+                Button(action: openTool) {
+                    Label(tool.title, systemImage: tool.systemImage)
+                        .font(.headline).frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            HStack(spacing: 12) {
+                answer(membership.answers[order.id] == .seen ? "Seen" : "Mark seen", .seen, tint: .blue)
                 answer("Done", .done, tint: .green)
                 answer("Can't", .cannot, tint: .red)
             }
-            if tool != .none && !compact {
-                Text("Tap the order or Seen to open \(Self.toolName(tool)).").font(.caption).foregroundStyle(.secondary)
-            }
+
         }
         .sheet(isPresented: $showingTool) {
             NavigationStack {
@@ -182,16 +183,13 @@ struct OrderCard: View {
     private func answer(_ title: String, _ r: OrderAck.Response, tint: Color) -> some View {
         Button {
             membership.ack(order, r)
-            if r == .seen && tool != .none { openTool() }
         } label: {
-            Text(title).font(.subheadline.weight(.semibold)).lineLimit(1).fixedSize()
-                .frame(maxWidth: .infinity)
+            Text(title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity, minHeight: 44)
         }
         .buttonStyle(.bordered)
         .tint(tint)
-        .controlSize(compact ? .small : .regular)
-        // Seen stays live while it opens a tool, so it can bring the tool back.
-        .disabled(r == .seen && tool == .none && membership.answers[order.id] == .seen)
+        .disabled(r == .seen && membership.answers[order.id] == .seen)
     }
 
     static func toolName(_ t: OrderTool) -> String {
@@ -304,37 +302,35 @@ struct OrdersHub: View {
     }
 }
 
-/// The newest open order along the bottom of any screen while in a squad. Open goes to the
-/// orders screen at that order.
+/// A compact entry to orders. Its safe-area inset reserves space above the tab bar.
 struct OrderBanner: View {
     @EnvironmentObject private var membership: SquadMembership
-    @EnvironmentObject private var reticleLog: ReticleLogStore
-    @State private var opened: Order?
-    @State private var openTool = false
+    @State private var showingOrders = false
 
     var body: some View {
-        Group {
-            if membership.isInSquad, !membership.showingJoinScreen, let order = membership.orders.last {
-                VStack(alignment: .leading, spacing: 4) {
-                    OrderCard(order: order, compact: true, onOpen: { openTool = true; opened = order })
-                    if membership.orders.count > 1 {
-                        Button("\(membership.orders.count - 1) more order\(membership.orders.count > 2 ? "s" : "")") { openTool = false; opened = nil; opened = order }
-                            .font(.caption.weight(.semibold))
+        if membership.isInSquad, !membership.showingJoinScreen, let order = membership.orders.last {
+            Button { showingOrders = true } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: order.kind.systemImage).foregroundStyle(.orange)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(membership.answers[order.id] == nil ? "New order" : "Current task")
+                            .font(.caption).foregroundStyle(.secondary)
+                        Text(order.kind.title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
                     }
+                    Spacer(minLength: 8)
+                    if membership.orders.count > 1 {
+                        Text("+\(membership.orders.count - 1)").font(.subheadline.weight(.semibold))
+                    }
+                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold))
                 }
-                .padding(12)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.orange.opacity(0.6), lineWidth: 1))
-                .shadow(radius: 6)
-                .padding(.horizontal, 12)
-                .frame(maxWidth: 560)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .padding(.horizontal, 16).padding(.vertical, 10)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+                .contentShape(RoundedRectangle(cornerRadius: 14))
             }
-        }
-        .sheet(item: $opened) { order in
-            OrdersHub(start: openTool ? order : nil, openTool: openTool)
-                .environmentObject(membership)
-                .environmentObject(reticleLog)
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .sheet(isPresented: $showingOrders) { OrdersHub() }
         }
     }
 }

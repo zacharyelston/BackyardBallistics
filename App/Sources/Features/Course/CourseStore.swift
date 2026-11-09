@@ -11,7 +11,7 @@ final class CourseStore: ObservableObject {
         case bundledSample
         /// courses/local/course.yaml, bundled at build time when present.
         case bundledLocal
-        /// Made with Tools → Survey a course on this device.
+        /// Made with Field → Survey a course on this device.
         case surveyed
         case url(URL)
 

@@ -448,6 +448,8 @@ final class SquadMembership: NSObject, ObservableObject, CLLocationManagerDelega
 extension SquadMembership {
     /// Design scenes only: shows what a joined phone would have received, without a network, the
     /// location manager or notifications. See DesignScenes.swift.
+    func loadDesignReconnect() { state = .reconnecting("The commander's iPad is unavailable.") }
+
     func loadDesign(_ bodies: [GroupMessage.Body], fix: CLLocation, heading: Double?, spotRequest: SpotRequest?) {
         for body in bodies {
             switch body {
