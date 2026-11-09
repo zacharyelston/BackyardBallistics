@@ -22,6 +22,8 @@ Every line is one flat, dotted key with one value, like an SNMP OID. The path sa
 | `hole.N.meta.par` | `3` | Yes | Rounds a good player needs to land one in the ring |
 | `hole.N.meta.downrange_play` | `false` | No | `true` lets players fire further missions from their closest round; default `false` |
 | `hole.N.firing_point.M` | `42.360120, -71.058880` | Yes | One or more; farther points make harder versions of the hole |
+| `hole.N.layup.K.position` | `42.360520, -71.058850` | No | A marker pole partway down a hole longer than one shot, in playing order. It has no ring and isn't scored |
+| `hole.N.layup.K.pole_height_m` | `2.438` | With a layup | The marker pole's measured height, so it can be ranged like a flag |
 | `hole.N.flag.position` | `42.360950, -71.058810` | Yes | Base of the pole: the hole |
 | `hole.N.flag.pole_height_m` | `2.438` | Yes | Measured with the app at setup |
 | `hole.N.flag.lean_deg` | `0.3` | Yes | From the lean check |
@@ -53,7 +55,7 @@ The app reads the file with its own small parser (`CourseFile` in CourseKit), no
 
 ## Validation
 
-The app validates a course file in the course tool before it's published, and again whenever a player loads it, including a course restored from the phone's cache. A course with any error is refused; warnings don't stop play. Each problem names its line and key where it has one. The checks (`CourseValidator` in CourseKit):
+The app validates a course file in the course tool before it's published, and again whenever a player loads it, including a course restored from the phone's cache. A course with any error is refused, apart from the practice-only errors below; warnings don't stop play. Each problem names its line and key where it has one. The checks (`CourseValidator` in CourseKit):
 
 - Every required key is present and parses, as above.
 - The boundary has at least 3 corners, and the course has at least one hole.
@@ -61,8 +63,11 @@ The app validates a course file in the course tool before it's published, and ag
 - Every flag has a measured pole height between 2.33 and 3.76 m (the flag kit's 8 to 12 ft poles, with 10 cm of slack for measurement) and a lean of at least 0° and under 0.5°.
 - A ring radius, if given, is over 0 and at most 5 m. A lid diameter, if given, is over 0 and under 2 m.
 - Every flag and every firing point is inside `course.boundary`.
-- Every firing point is at least 1 m from its flag and has its hole within 100 yd (`maxSolutionRange` in SafetyKit).
-- The safety fan from every firing point (105 yd, ±30° of the line to the hole) stays inside `course.boundary` (`Safety.checkFan` in SafetyKit).
+- A layup's marker pole is between 2.33 and 3.76 m, like a flag's.
+- A hole is played in legs: firing point to the first layup (or the flag), layup to the next layup, the last layup to the flag. Each leg starts inside `course.boundary`, at least 1 m from its target, and is within 100 yd (`maxSolutionRange` in SafetyKit).
+- The safety fan from the start of every leg (105 yd, ±30° of the line to its target) stays inside `course.boundary` (`Safety.checkFan` in SafetyKit).
+
+A leg past 100 yd, or a fan that leaves the boundary, makes the course **practice only**: it loads and practice plays it, since practice fires nothing, but real rounds are refused. Every other error refuses the course. To play a long hole for real, add layup points so every leg is within 100 yd.
 
 A 105 yd fan is wide: about 96 m across at ±30°, so a firing point needs roughly 48 m of property either side of the line to its hole and 96 m beyond it. Hazards aren't checked against the boundary, since an `ob` area may follow it.
 

@@ -6,9 +6,10 @@
 
 ## Before the round
 
-- **Load a course.** Play → Course loads the bundled course, the course server on your Wi-Fi, or a typed address. A course passes every check, or it's refused. A course whose only problem is the safety fan is **practice only**: you can practise on it, but not play real rounds.
+- **Load a course.** Play → Course loads the bundled course, the course server on your Wi-Fi, or a typed address. A course passes every check, or it's refused. A course whose only problems are a safety fan that leaves the boundary, or a shot longer than 91.4 m (100 yd), is **practice only**: you can practise on it, but not play real rounds.
 - **Set up each flag.** A pole is 2.33 to 3.76 m tall, with less than 0.5° of lean (Tools → Lean check, then Measure pole height). The ring around it is 1 m unless the course says otherwise, at most 5 m.
 - **Your own place?** Tools → Survey a course records the pole's base, the firing point and the boundary corners with averaged GPS.
+- **Long holes have layup points.** A hole longer than one shot gets marker poles between the firing point and the flag. Each leg (firing point to the first layup, layup to layup, the last layup to the flag) is one shot, so each must be within 91.4 m (100 yd), with its safety fan inside the boundary. Survey a course shows each leg's length and where to add a layup.
 
 ## A hole, step by step
 
@@ -25,6 +26,8 @@
 Score = rounds fired + metres the closest round finished outside the ring.
 
 For example, 3 rounds with the closest at 2.4 m from the pole and a 1 m ring scores **4.4**.
+
+**Layups.** A layup pole has no ring and isn't scored. Range it, fire at it, cease fire, then range the next pole from your closest round and fire the next leg. Only the flag's leg is scored by the ring. If the round limit ends the hole on a layup leg, the distance still to go to the flag counts as the miss.
 
 On a **downrange** hole you may fire the next mission from your closest round instead of finishing. The app suggests it when the round is 3 m or more outside the ring.
 

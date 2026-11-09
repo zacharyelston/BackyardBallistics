@@ -20,13 +20,22 @@ In Squadz, **the squad is the player**. A squad has one scorecard, and squads pl
 2. On each phone: **Play → v3 Squadz → Join squad**, pick the squad, then **Scan code** or type it.
 3. Allow **Local Network** on both devices, and **Location** on the phone. Phones keep reporting their position in the background while in a squad.
 
-If the iPad sleeps or the Wi-Fi blinks, phones rejoin on their own as the same member.
+If the iPad sleeps or the Wi-Fi blinks, phones rejoin on their own as the same member. The iPad reopens the squad on the same code when it wakes. A phone that can't get through in 8 seconds on its first try stops and says to check the code.
+
+Squads play practice holes (simulated rounds) for now. A squad plays on its own: playing another squad over the network (a match) isn't built yet.
 
 ## The commander's screen
 
 - **The map:** satellite imagery with the course boundary, the flags and rings, the firing points, the safety fans (the hole in play is highlighted), and every member as a dot. A dot goes grey when its position is old. **Fit** frames the course and the squad. Used locks are drawn as lines, and orders with a place as pins with a dashed pointer from each member.
 - **Hole:** **Start hole** (choose a firing point), **Confirm downrange** (only the commander's own tap does this), **Fired**, then members' spot calls with **Use** or **Lost**, then **Cease fire** and **Finish hole**.
 - **Locks:** members' locks, newest first. **Use** checks a lock against the course on the iPad and begins, advances or verifies the mission.
+- **Inbox:** field notes and fields that members sent in. See below.
+
+## Field notes and fields
+
+- **A field note** is a short note (up to 500 characters), where you stand, and an optional photo. On a phone in the squad: **Send a field note** in Join squad, or Tools → Field note. Pick **Squad leader** or **Theater**. Notes to the leader show in the iPad's inbox, and go on to the Theater if one is watching.
+- **A field** is a course a member surveyed (Tools → Survey a course). **Send to my squad leader** there puts it in the inbox. A field with blocking problems is refused.
+- **Adopt** switches the squad to that field, with a fresh card. The leader can only adopt between holes: not mid-hole, not while people walk out. A practice-only field puts the squad in practice. **Decline** drops it.
 
 ## Holds
 
@@ -42,4 +51,4 @@ Holds pause firing data for the squad. They only ever add to the safety checks, 
 
 A squad playing on its own has no match host, so it always shows the first two holds. That's expected in practice.
 
-Protocol version 4: a device running a different version is refused, so update every device together.
+Protocol version 5: a device running a different version is refused, so update every device together.
