@@ -22,7 +22,7 @@ SpudGunGolf is backyard golf played with a low-power launcher and a guyed flag p
 
 - **v1 Classic:** the original browser game. Walk to every round.
 - **v2 Fire Missions:** solo play, on a phone or an iPad. This is the game itself.
-- **v3 Squadz:** squads play squads, with the squad as the player.
-- **v4 Theater:** the course owner watches every match. Partly built: the Mac app watches squads, keeps fields and takes notes and photos from phones.
+- **v3 Squadz:** a squad plays as one player, and manages its own field.
+- **v4 Theater:** the course owner watches every squad on the course. Partly built: the Mac app watches squads, keeps fields and takes notes and photos from phones.
 
 The app helps you play the game and solves the shot. It never covers building, pressurizing or tuning a launcher.

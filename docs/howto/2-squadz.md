@@ -4,7 +4,7 @@
 
 [Back to How to play](README.md)
 
-In Squadz, **the squad is the player**. A squad has one scorecard, and squads play against squads. Each hole is still a v2 fire mission.
+In Squadz, **the squad is the player**. A squad has one scorecard. Each hole is still a v2 fire mission. It plays like golf: the squad works together at the head of the hole, doesn't shoot while anyone is on the field, and manages its own play on the course. There are no turns with other squads.
 
 ## Who does what
 
@@ -22,7 +22,7 @@ In Squadz, **the squad is the player**. A squad has one scorecard, and squads pl
 
 If the iPad sleeps or the Wi-Fi blinks, phones rejoin on their own as the same member. The iPad reopens the squad on the same code when it wakes. A phone that can't get through in 8 seconds on its first try stops and says to check the code.
 
-Squads play practice holes (simulated rounds) for now. A squad plays on its own: playing another squad over the network (a match) isn't built yet.
+Squads play practice holes (simulated rounds) for now.
 
 ## The commander's screen
 
@@ -41,16 +41,19 @@ The map remains beside the workspace on a landscape iPad. Hole, phase, connectio
 
 ## Holds
 
-Holds pause firing data for the squad. They only ever add to the safety checks, never remove them:
+Holds pause firing data while someone may be on the field. They only ever add to the safety checks, never remove them. The iPad works them out itself:
 
-- Not in a match yet.
-- Another squad's turn.
 - Cease fire: people are walking out.
 - Check fire, called by Ben.
 - Ben is inside the firing fan.
 - No recent position from Ben.
-- Lost the match host.
 
-A squad playing on its own has no match host, so it always shows the first two holds. That's expected in practice.
+What each one means:
 
-Protocol version 5: a device running a different version is refused, so update every device together.
+- **Walking out** lasts from **Cease fire** until the hole is finished or resumed, or the next mission begins.
+- **Check fire** can come from any phone or the iPad. It holds the squad and cancels the downrange confirmation. Only the commander lifts it, on the iPad, and then confirms downrange again.
+- **Inside the firing fan** and **No recent position** apply only while a hole is live. A phone that hasn't sent its position for 15 s holds the squad: silence is not clear. Between holes there are no fan or position holds.
+
+Holds never stop orders, locks or the map.
+
+Protocol version 6: a device running a different version is refused, so update every device together.

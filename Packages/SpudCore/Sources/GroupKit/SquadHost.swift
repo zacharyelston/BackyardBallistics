@@ -96,8 +96,6 @@ public struct SquadHost {
     public private(set) var locks: [ReceivedLock] = []
     public private(set) var spotReports: [ReceivedSpot] = []
     public private(set) var roundInFlight: Int?
-    public private(set) var match: MatchState?
-    public private(set) var matchHost: PeerID?
     /// The last thing that went wrong, for the commander's screen.
     public private(set) var lastProblem: String?
     /// Field notes from members, oldest first (passed on to observers as they arrive).
@@ -112,13 +110,15 @@ public struct SquadHost {
     /// Things that happened under a hold (a Fired while held), for the after-action log.
     public private(set) var incidents: [String] = []
 
-    private var matchSeenAt: Date?
-    /// Check fires raised through this squad that the match host hasn't acknowledged yet.
-    private var pendingCheckFires: [CheckFire] = []
+    /// Check fire in force, from any member or this iPad. Only the commander lifts it.
+    public private(set) var activeCheckFire: CheckFire?
     private var seenCheckFires: Set<UUID> = []
 
-    /// The match host's heartbeat older than this holds the squad.
-    public static let matchHostTimeout: TimeInterval = 5
+    /// A member's position older than this counts as unknown, which holds the squad while a hole is live.
+    public static let positionTimeout: TimeInterval = 15
+    /// Within this of the fan's origin (or the GPS accuracy, if larger), a member is at the firing
+    /// point, behind the fan, not in it.
+    public static let firingPointRadius = 5.0
     static let maxLocksKept = 50
 
     public init(squad: Squad, course: Course, practice: Bool, joinCode: String) {
@@ -133,22 +133,39 @@ public struct SquadHost {
 
     public var squadID: SquadID { round.squad.id }
     public var player: String { round.squad.name }
-    public var isOurTurn: Bool { match?.turn?.squad == squadID }
 
     // MARK: Holds and the firing display
 
     /// Everything holding this squad right now. Holds only add (see `GroupGate`).
+    /// The squad's own field: nobody shoots while someone may be out there.
     public func holds(now: Date) -> Set<Hold> {
-        var h = Set(match?.holds ?? [])
-        if let seen = matchSeenAt {
-            if now.timeIntervalSince(seen) > Self.matchHostTimeout { h.insert(.matchHostLost) }
-        } else {
-            h.insert(.noMatch)
+        var h: Set<Hold> = []
+        if let cf = activeCheckFire { h.insert(.checkFire(by: cf.by)) }
+        if round.walkingOut || round.hole?.phase == .ceased { h.insert(.walkingOut) }
+        if let fan = activeFan() {
+            for m in round.squad.members {
+                guard let p = positions[m.id], now.timeIntervalSince(p.time) <= Self.positionTimeout else {
+                    h.insert(.positionUnknown(m.id, name: m.name))
+                    continue
+                }
+                if Self.inFan(p, fan) { h.insert(.memberInFan(m.id, name: m.name)) }
+            }
         }
-        if match?.turn?.squad != squadID { h.insert(.notYourTurn) }
-        for cf in pendingCheckFires { h.insert(.checkFire(by: cf.by)) }
-        if round.walkingOut || round.hole?.phase == .ceased { h.insert(.walkingOut(squadID)) }
         return h
+    }
+
+    /// Whether any part of a position's GPS accuracy circle lies in the fan: beyond the firing
+    /// point, within the fan's radius and inside ± the fan's half-angle.
+    public static func inFan(_ p: MemberPosition, _ fan: Fan) -> Bool {
+        let limits = Safety.limits
+        let d = Geo.distance(fan.origin, p.at)
+        let acc = max(0, p.accuracy)
+        if d <= max(firingPointRadius, acc) { return false }
+        if d - acc > limits.fanRange { return false }
+        let off = abs(((Geo.bearing(from: fan.origin, to: p.at) - fan.bearing).truncatingRemainder(dividingBy: 360) + 540)
+            .truncatingRemainder(dividingBy: 360) - 180)
+        let margin = Geo.degrees(asin(min(1, acc / d)))
+        return off <= limits.fanHalfAngle + margin
     }
 
     /// The only path from a solution to the commander's screen: SafetyKit's `clearSolution` first,
@@ -162,10 +179,6 @@ public struct SquadHost {
     public mutating func handle(_ message: GroupMessage, from peer: PeerID, now: Date) -> [Outgoing] {
         guard message.protocolVersion == GroupProtocol.version else {
             return [Outgoing(to: peer, .refused("Protocol version \(message.protocolVersion); this iPad speaks \(GroupProtocol.version). Update the app."))]
-        }
-        if peer == matchHost {
-            if case let .matchState(state) = message.body { return applyMatch(state, now: now) }
-            return []
         }
         if case let .hello(hello) = message.body {
             if hello.role == .contributor {
@@ -187,7 +200,7 @@ public struct SquadHost {
             p.member = member
             positions[member] = p
             let toObservers = observers.sorted { $0.raw < $1.raw }.map { Outgoing(to: $0, .positions(squad: squadID, [p])) }
-            return (matchHost.map { [Outgoing(to: $0, .positions(squad: squadID, [p]))] } ?? []) + toObservers
+            return toObservers
         case let .lock(report):
             locks.append(ReceivedLock(report: report, member: member, status: .received))
             if locks.count > Self.maxLocksKept { locks.removeFirst(locks.count - Self.maxLocksKept) }
@@ -223,7 +236,7 @@ public struct SquadHost {
         case let .checkFire(cf):
             return raiseCheckFire(cf, now: now)
         default:
-            return []   // commander and match messages from a phone are ignored
+            return []   // commander messages from a phone are ignored
         }
     }
 
@@ -256,31 +269,7 @@ public struct SquadHost {
             + open.map { Outgoing(to: peer, .order($0)) } + changed(now: now)
     }
 
-    private mutating func applyMatch(_ state: MatchState, now: Date) -> [Outgoing] {
-        let newer = state.revision != match?.revision
-        match = state
-        matchSeenAt = now
-        let known = Set(state.knownCheckFires)
-        pendingCheckFires.removeAll { known.contains($0.id) }
-        // A check fire raised anywhere withdraws this squad's downrange confirmation.
-        for id in known where !seenCheckFires.contains(id) {
-            seenCheckFires.insert(id)
-            revokeDownrange()
-        }
-        return newer ? statusToMembers(now: now) : []
-    }
-
     // MARK: Commander's actions
-
-    /// Links to the match host (which may be this iPad, over the loopback).
-    public mutating func connectMatch(_ peer: PeerID, joinCode: String, now: Date) -> [Outgoing] {
-        matchHost = peer
-        let course = round.course
-        return [Outgoing(to: peer, .joinMatch(JoinMatch(squad: squadID, name: player, joinCode: joinCode,
-                                                        courseID: course.id, courseVersion: course.version,
-                                                        courseHash: CourseFingerprint.hash(course)))),
-                Outgoing(to: peer, .squadReport(report()))]
-    }
 
     public mutating func setRole(_ member: MemberID, _ role: MemberRole, now: Date) -> [Outgoing] {
         guard let i = round.squad.members.firstIndex(where: { $0.id == member }) else { return [] }
@@ -288,7 +277,7 @@ public struct SquadHost {
         return changed(now: now)
     }
 
-    /// Takes a member off the roster (gone home): the match stops waiting for their position.
+    /// Takes a member off the roster (gone home): the squad stops waiting for their position.
     public mutating func removeMember(_ member: MemberID, now: Date) -> [Outgoing] {
         round.squad.members.removeAll { $0.id == member }
         peers = peers.filter { $0.value != member }
@@ -466,14 +455,12 @@ public struct SquadHost {
         return (members + Array(observers)).sorted { $0.raw < $1.raw }.map { Outgoing(to: $0, .order(order)) }
     }
 
-    /// Switches the squad to a field a member sent in. Only between holes and outside a started
-    /// match: the squad keeps its members and starts a fresh card on the new field. Observers (the
+    /// Switches the squad to a field a member sent in. Only between holes: the squad keeps its members and starts a fresh card on the new field. Observers (the
     /// Theater) get the new course, so it's registered there too.
     public mutating func adoptField(_ submission: UUID, now: Date) -> [Outgoing] {
         guard let f = submissions.first(where: { $0.id == submission }) else { return problem("No such field.", now: now) }
         if let h = round.hole, h.phase != .finished { return problem("Finish or end hole \(h.holeNumber) first.", now: now) }
         if round.walkingOut { return problem("People are walking out. Adopt the field once they're back.", now: now) }
-        if match?.started == true { return problem("The match is under way on \(round.course.name).", now: now) }
         // A field that's practice only (a fan leaving the boundary, a firing point out of range) puts
         // the squad in practice: simulated rounds only.
         let practiceOnly = CourseValidator.isPracticeOnly(f.course)
@@ -507,6 +494,13 @@ public struct SquadHost {
     /// Check fire called on this iPad.
     public mutating func callCheckFire(by: String, now: Date) -> [Outgoing] {
         raiseCheckFire(CheckFire(by: by), now: now)
+    }
+
+    /// Lifts check fire. The commander still has to confirm downrange again before firing data shows.
+    public mutating func withdrawCheckFire(now: Date) -> [Outgoing] {
+        guard activeCheckFire != nil else { return [] }
+        activeCheckFire = nil
+        return changed(now: now)
     }
 
     // MARK: Internals
@@ -544,10 +538,9 @@ public struct SquadHost {
     private mutating func raiseCheckFire(_ cf: CheckFire, now: Date) -> [Outgoing] {
         guard !seenCheckFires.contains(cf.id) else { return [] }
         seenCheckFires.insert(cf.id)
-        pendingCheckFires.append(cf)
+        if activeCheckFire == nil { activeCheckFire = cf }
         revokeDownrange()
-        let forward = matchHost.map { [Outgoing(to: $0, .checkFire(cf))] } ?? []
-        return forward + changed(now: now)
+        return changed(now: now)
     }
 
     private mutating func revokeDownrange() {
@@ -581,11 +574,10 @@ public struct SquadHost {
         return []
     }
 
-    /// Bumps the revision and tells the members and the match host.
+    /// Bumps the revision and tells the members.
     private mutating func changed(now: Date) -> [Outgoing] {
         round.revision += 1
-        let toMatch = matchHost.map { [Outgoing(to: $0, .squadReport(report()))] } ?? []
-        return statusToMembers(now: now) + toMatch
+        return statusToMembers(now: now)
     }
 
     /// Status to every member and observer.
@@ -604,7 +596,7 @@ public struct SquadHost {
         return SquadStatus(revision: round.revision, squad: round.squad, hole: h?.holeNumber, phase: h?.phase,
                            walkingOut: round.walkingOut, missions: h?.missions.count ?? 0, rounds: rounds,
                            roundInFlight: roundInFlight, total: round.card.total, toPar: round.card.toPar,
-                           yourTurn: isOurTurn, holds: holds(now: now).sorted { $0.description < $1.description })
+                           holds: holds(now: now).sorted { $0.description < $1.description })
     }
 
     /// The target a lock is for: the first leg's to begin, the next leg's to advance (the flag again
@@ -620,19 +612,13 @@ public struct SquadHost {
         return t[min(max(0, i), t.count - 1)]
     }
 
-    /// What the match host needs: phase, the active fan, walking out, finished scores.
-    public func report() -> SquadReport {
-        var fan: Fan?
-        if let h = round.hole, let hole = round.currentHole, !round.walkingOut, h.phase == .setup || h.phase == .firing {
-            let origin = h.mission?.from ?? hole.firingPoints[min(round.firingPoint, hole.firingPoints.count - 1)]
-            let aim = hole.targets[min(h.targetIndex, hole.targets.count - 1)].position
-            fan = Fan(origin: origin, bearing: Geo.bearing(from: origin, to: aim))
-        }
-        var scores: [Int: Double] = [:]
-        for s in round.card.holes { if let v = s.score { scores[s.number] = v } }
-        return SquadReport(squad: squadID, revision: round.revision, members: round.squad.members,
-                           hole: round.hole?.holeNumber, phase: round.hole?.phase, walkingOut: round.walkingOut,
-                           fan: fan, scores: scores)
+    /// The active fan while the squad could fire: from the firing position toward the current target.
+    public func activeFan() -> Fan? {
+        guard let h = round.hole, let hole = round.currentHole, !round.walkingOut,
+              h.phase == .setup || h.phase == .firing else { return nil }
+        let origin = h.mission?.from ?? hole.firingPoints[min(round.firingPoint, hole.firingPoints.count - 1)]
+        let aim = hole.targets[min(h.targetIndex, hole.targets.count - 1)].position
+        return Fan(origin: origin, bearing: Geo.bearing(from: origin, to: aim))
     }
 }
 

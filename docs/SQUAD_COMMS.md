@@ -58,7 +58,7 @@ transports and a second app, and each of them must keep the rules:
    and none of them has a field that could hold firing data. The golf layer may send only check fire,
    cease fire (walking out), presence and coarse positions over LoRa. A test pins this list.
 3. **Holds only add.** A message over LoRa can raise a hold (check fire, walking out, a member in the
-   fan). Nothing over LoRa can lift a hold, confirm downrange or grant a turn.
+   fan). Nothing over LoRa can lift a hold or confirm downrange.
 4. **Silence is not clear.** Losing the LoRa link, or a LoRa position, never counts as "no one in the
    fan". A position heard only over LoRa can raise `memberInFan`, but it is too coarse and too old to
    clear `positionUnknown`; only a recent position over the local link does that.
@@ -202,10 +202,9 @@ for it.
 
 ### Protocol changes
 
-`GroupProtocol.version` goes from 5 to 6, and devices on v5 are refused (fail closed, as now).
+`GroupProtocol.version` goes from 6 to 7, and devices on v6 are refused (fail closed, as now).
 `Hello.joinCode` goes; `Welcome` gains `credential`; `Hello.role` becomes a request that the
-credential's role overrides. `JoinMatch.joinCode` (commander to match host) gets the same treatment
-later; the match link is between a few iPads, so it can keep its code for now.
+credential's role overrides.
 
 ## Part 2: a long-range link over LoRa
 
@@ -312,7 +311,7 @@ the app shows how old each position is and which link it came on.
 ### What goes over LoRa
 
 The exact byte layouts, the instruction codebook and the retry rules are in
-[LORA_MESSAGES.md](LORA_MESSAGES.md).
+[LORA_MESSAGES.md](LORA_MESSAGES.md). Tasking a recon drone over these links, and corrections to the numbers above, are in [RECON.md](RECON.md).
 
 | Fits | Doesn't fit |
 | --- | --- |
@@ -415,7 +414,7 @@ neither wants anything to do with a launcher.
 | Layer | Package | Contents |
 | --- | --- | --- |
 | **Generic squad layer** | `SquadKit` (new) | `Squad`, `Member`, `MemberID`, credentials and roles, the envelope with message IDs, `Hello` / `Welcome` / `Refused`, positions and tracks, presence, orders and acks, notes, receipts, files, check-ins, SOS, sectors. A generic host (`SquadHub`) that owns the roster and these messages. The `Transport` seam and `LinkRouter`. No golf types, and no dependency on SafetyKit, RoundKit or CourseKit |
-| **Golf layer** | `GroupKit` (what's left) | `SquadHost` rounds, `HolePlay` events, locks and lock receipts, spotting and spot requests, Fired, check fire and holds, `GroupGate`, the match host, course and field submissions |
+| **Golf layer** | `GroupKit` (what's left) | `SquadHost` rounds, `HolePlay` events, locks and lock receipts, spotting and spot requests, Fired, check fire and holds, `GroupGate`, course and field submissions |
 | **Transport** | `GroupLink` | The LAN transport (today's code) and, later, the Meshtastic transport |
 
 Golf messages ride the generic layer as a **namespaced payload**:
