@@ -124,8 +124,9 @@ struct SiteMap: View {
                             .foregroundStyle(color.opacity(0.15))
                         Annotation(m.name, coordinate: p.at.coordinate) {
                             Circle().fill(stale ? .gray : color)
-                                .frame(width: 12, height: 12)
-                                .overlay(Circle().stroke(.white, lineWidth: 2))
+                                .frame(width: 18, height: 18)
+                                .overlay(Circle().stroke(.white, lineWidth: 2.5))
+                                .shadow(radius: 2)
                                 .padding(4)
                                 .overlay(Circle().stroke(.yellow, lineWidth: selected.contains(m.id) ? 3 : 0))
                                 .contentShape(Circle())
@@ -134,11 +135,13 @@ struct SiteMap: View {
                     }
                 }
                 ForEach(squad.orders.filter { $0.at != nil }) { order in
-                    Annotation(order.kind.title, coordinate: order.at!.coordinate, anchor: .bottom) {
+                    // No caption: the icon says the kind, and a caption would cover nearby pins.
+                    Annotation("", coordinate: order.at!.coordinate, anchor: .bottom) {
                         Image(systemName: order.kind.systemImage)
-                            .font(.caption.weight(.bold)).foregroundStyle(.white)
-                            .padding(6).background(color, in: Circle())
-                            .overlay(Circle().stroke(.white, lineWidth: 1.5))
+                            .font(.callout.weight(.bold)).foregroundStyle(.white)
+                            .padding(8).background(color, in: Circle())
+                            .overlay(Circle().stroke(.white, lineWidth: 2))
+                            .shadow(radius: 2)
                     }
                 }
             }
@@ -152,12 +155,14 @@ struct SiteMap: View {
                 }
             }
             if let draftPlace {
-                Annotation("New order", coordinate: draftPlace.coordinate, anchor: .bottom) {
-                    Image(systemName: "mappin.circle").font(.title).foregroundStyle(.yellow).shadow(radius: 2)
+                Annotation("", coordinate: draftPlace.coordinate, anchor: .bottom) {
+                    Image(systemName: "mappin.circle.fill").font(.largeTitle).foregroundStyle(.black, .yellow).shadow(radius: 3)
                 }
             }
         }
-        .mapStyle(.hybrid(elevation: .realistic))
+        // Flat, without points of interest: 3D buildings and trees can hide the members' dots,
+        // and shop and street labels crowd the course.
+        .mapStyle(.hybrid(elevation: .flat, pointsOfInterest: .excludingAll))
         .mapControls {
             MapCompass()
             MapScaleView()

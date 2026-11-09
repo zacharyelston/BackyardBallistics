@@ -116,6 +116,9 @@ struct SquadLobbyView: View {
                 }
             }
         }
+        // A small, solid title bar: the large title would sit on top of the satellite map.
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.visible, for: .navigationBar)
         .confirmationDialog("End the squad?", isPresented: $confirmEnd, titleVisibility: .visible) {
             Button("End it", role: .destructive) { command.end() }
         } message: {

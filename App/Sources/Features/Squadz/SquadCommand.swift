@@ -29,6 +29,10 @@ final class SquadCommand: ObservableObject {
     /// Links the transport has closed. `SquadHost` has no message for a dropped phone, so the
     /// roster works out "offline" from this.
     @Published private(set) var closedPeers: Set<PeerID> = []
+    #if DEBUG
+    /// Design scenes: show every member online (there's no transport to ask).
+    var designAllOnline = false
+    #endif
 
     // Drafting an order, one step at a time: who it's for (empty = the whole team), what kind,
     // where (a fresh map tap, for kinds that take a place), then Send. Nothing carries over from
@@ -123,7 +127,10 @@ final class SquadCommand: ObservableObject {
 
     var roster: [RosterLine] {
         guard let host else { return [] }
-        let live = Set(host.peers.filter { group?.connections[$0.key] != nil && !closedPeers.contains($0.key) }.values)
+        var live = Set(host.peers.filter { group?.connections[$0.key] != nil && !closedPeers.contains($0.key) }.values)
+        #if DEBUG
+        if designAllOnline { live = Set(host.peers.values) }
+        #endif
         return host.round.squad.members.map {
             RosterLine(member: $0, online: live.contains($0.id), position: host.positions[$0.id])
         }
@@ -289,3 +296,20 @@ final class SquadCommand: ObservableObject {
         try? data.write(to: fileURL, options: .atomic)
     }
 }
+
+#if DEBUG
+extension SquadCommand {
+    /// Design scenes only: commands `host` as if it were advertising with every member online,
+    /// optionally part-way through an order. Nothing is saved or sent. See DesignScenes.swift.
+    func loadDesign(_ host: SquadHost, draft: DesignFixture.Draft?) {
+        self.host = host
+        link = .listening(port: 7400)
+        designAllOnline = true
+        if let draft {
+            orderTargets = draft.targets
+            chooseKind(draft.kind)
+            setPlace(draft.place)
+        }
+    }
+}
+#endif

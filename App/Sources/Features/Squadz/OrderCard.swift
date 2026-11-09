@@ -131,19 +131,24 @@ struct OrderCard: View {
             Button {
                 if tool != .none { openTool() }
             } label: {
+                // Plain style: a borderless button would tint the whole title orange.
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Label(order.kind.title, systemImage: order.kind.systemImage)
+                    Image(systemName: order.kind.systemImage).foregroundStyle(.orange)
                         .font(compact ? .subheadline.weight(.bold) : .title3.weight(.bold))
-                        .foregroundStyle(.primary)
-                    Text(order.to == nil ? "Team" : "You").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    Text(order.kind.title).foregroundStyle(.primary)
+                        .font(compact ? .subheadline.weight(.bold) : .title3.weight(.bold))
+                    Text(order.to == nil ? "Team" : "You")
+                        .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Color(.tertiarySystemFill), in: Capsule())
                     Spacer(minLength: 4)
                     if tool != .none {
-                        Image(systemName: "chevron.right").font(.subheadline.weight(.semibold)).foregroundStyle(.tint)
+                        Image(systemName: "chevron.right").font(.subheadline.weight(.semibold)).foregroundStyle(.orange)
                     }
                 }
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.plain)
             .disabled(tool == .none)
             .accessibilityHint(tool == .none ? "" : "Opens \(Self.toolName(tool))")
             if !order.text.isEmpty {
