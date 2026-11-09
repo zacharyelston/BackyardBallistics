@@ -13,6 +13,10 @@ final class CourseStore: ObservableObject {
         case bundledLocal
         /// Made with Tools → Survey a course on this device.
         case surveyed
+        /// A field a squad member sent in, adopted on the squad leader's iPad.
+        case adopted(from: String)
+        /// A course file opened on this device (AirDrop, Files).
+        case file(String)
         case url(URL)
 
         var label: String {
@@ -20,6 +24,8 @@ final class CourseStore: ObservableObject {
             case .bundledSample: return "Bundled sample"
             case .bundledLocal: return "Your bundled course"
             case .surveyed: return "Surveyed on this device"
+            case let .adopted(from): return "Sent in by \(from), adopted for the squad"
+            case let .file(name): return "Opened from \(name)"
             case let .url(url): return url.absoluteString
             }
         }
@@ -86,6 +92,25 @@ final class CourseStore: ObservableObject {
     func loadSurveyed(_ text: String) {
         fetchError = nil
         accept(CourseFile.load(text), from: .surveyed)
+    }
+
+    /// Makes a field the squad adopted this iPad's course too, so the Course screen, the map and the
+    /// next squad all use it, and it's kept for offline play.
+    func loadAdopted(_ course: Course, from author: String) {
+        fetchError = nil
+        accept(CourseLoadResult(course: course, problems: CourseValidator.problems(for: course)), from: .adopted(from: author))
+    }
+
+    /// Checks and loads a course file opened on this device (from AirDrop or the Files app).
+    func loadFile(at url: URL) {
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        guard let data = try? Data(contentsOf: url) else {
+            fetchError = "Couldn't read \(url.lastPathComponent)."
+            return
+        }
+        fetchError = nil
+        accept(CourseFile.load(data: data), from: .file(url.lastPathComponent))
     }
 
     /// Downloads and checks a course file. Keeps the current course if the download fails.
