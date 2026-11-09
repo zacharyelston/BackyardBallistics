@@ -35,6 +35,8 @@ struct Watch: Identifiable {
     var id: String { name }
     var name: String
     var link: GroupClient.Status = .searching
+    /// The link has worked with this code at least once (so a later stop isn't a wrong code).
+    var linked = false
     var squad: Squad?
     var course: Course?
     var status: SquadStatus?
@@ -90,27 +92,84 @@ final class TheaterModel: ObservableObject {
         }
         // Squads only: the Theater's own door (and any other Theater) advertises the same service.
         browser.onChange = { [weak self] f in
-            MainActor.assumeIsolated { self?.found = f.filter { $0.txt[GroupService.Key.role] != TheaterModel.doorRole } }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.found = f.filter { $0.txt[GroupService.Key.role] != TheaterModel.doorRole }
+                self.rewatchRemembered()
+            }
         }
         browser.onFailed = { [weak self] e in MainActor.assumeIsolated { self?.browserProblem = e } }
         browser.start()
     }
 
+    // MARK: Remembered codes
+
+    /// Each squad's join code, by its Bonjour name, kept between launches so the Theater asks once.
+    /// A squad that refuses its code (a new squad has a new one) is forgotten.
+    @Published private(set) var savedCodes: [String: String] =
+        UserDefaults.standard.dictionary(forKey: "squadCodes") as? [String: String] ?? [:]
+    /// Squads to watch again on their own when they show up: watched and not stopped by hand.
+    private var rememberedWatches = Set(UserDefaults.standard.stringArray(forKey: "watchedSquads") ?? [])
+
+    private func saveRemembered() {
+        UserDefaults.standard.set(savedCodes, forKey: "squadCodes")
+        UserDefaults.standard.set(rememberedWatches.sorted(), forKey: "watchedSquads")
+    }
+
+    /// Watches every squad on the network that was being watched last time, with its saved code.
+    private func rewatchRemembered() {
+        for f in found where f.isCompatible && watches[f.name] == nil && rememberedWatches.contains(f.name) {
+            if let code = savedCodes[f.name] { watch(f.name, code: code) }
+        }
+    }
+
     /// Watches a squad by its Bonjour name. The link rejoins on its own if the iPad sleeps.
     func watch(_ name: String, code: String) {
-        stop(name)
+        watches[name]?.client.stop()
+        watches[name] = nil
         let code = JoinCode.normalized(code)
+        savedCodes[name] = code
+        rememberedWatches.insert(name)
+        saveRemembered()
         let hello = Hello(name: Self.hostName, device: device, joinCode: code, role: .observer)
         let client = GroupClient(squadName: name, joinCode: code, hello: hello, queue: .main)
         watches[name] = Watch(name: name, client: client)
-        client.onStatus = { [weak self] s in MainActor.assumeIsolated { self?.watches[name]?.link = s } }
+        client.onStatus = { [weak self] s in MainActor.assumeIsolated { self?.linkChanged(name, s) } }
         client.onMessage = { [weak self] m in MainActor.assumeIsolated { self?.receive(m, from: name) } }
         client.start()
     }
 
+    private func linkChanged(_ name: String, _ s: GroupClient.Status) {
+        guard watches[name] != nil else { return }
+        watches[name]?.link = s
+        switch s {
+        case .connected:
+            watches[name]?.linked = true
+        case .stopped:
+            // Refused before it ever linked: the saved code is wrong (or old), so don't try it again.
+            if watches[name]?.linked != true {
+                savedCodes[name] = nil
+                rememberedWatches.remove(name)
+                saveRemembered()
+            }
+        default: break
+        }
+    }
+
+    /// Stops watching. The code stays remembered (Watch again needs no typing), but the squad
+    /// isn't watched on its own at the next launch.
     func stop(_ name: String) {
         watches[name]?.client.stop()
         watches[name] = nil
+        rememberedWatches.remove(name)
+        saveRemembered()
+    }
+
+    /// Forgets a squad's saved code.
+    func forgetCode(_ name: String) {
+        savedCodes[name] = nil
+        rememberedWatches.remove(name)
+        saveRemembered()
     }
 
     func retryAll() {
@@ -291,16 +350,23 @@ struct TheaterView: View {
                                 }
                             }
                             HStack {
-                                TextField("Join code", text: Binding(get: { codes[f.name, default: ""] },
+                                TextField("Join code", text: Binding(get: { code(for: f) },
                                                                      set: { codes[f.name] = $0 }))
                                     .textFieldStyle(.roundedBorder).frame(width: 110)
                                     .onSubmit { startWatching(f) }
                                 if model.watches[f.name] == nil {
                                     Button("Watch") { startWatching(f) }
-                                        .disabled(JoinCode.normalized(codes[f.name, default: ""]).count != 6 || !f.isCompatible)
+                                        .disabled(JoinCode.normalized(code(for: f)).count != 6 || !f.isCompatible)
                                 } else {
                                     Button("Stop") { model.stop(f.name) }
                                 }
+                            }
+                            if model.savedCodes[f.name] != nil, codes[f.name] == nil {
+                                HStack(spacing: 4) {
+                                    Text(model.watches[f.name] == nil ? "Code remembered" : "Code remembered: watched again at launch")
+                                    Button("Forget") { model.forgetCode(f.name) }.buttonStyle(.link)
+                                }
+                                .font(.caption).foregroundStyle(.secondary)
                             }
                         }
                         .padding(.vertical, 2)
@@ -384,9 +450,16 @@ struct TheaterView: View {
         }
     }
 
+    /// What's typed for a squad, or else its remembered code.
+    private func code(for f: GroupBrowser.Found) -> String {
+        codes[f.name] ?? model.savedCodes[f.name] ?? ""
+    }
+
     private func startWatching(_ f: GroupBrowser.Found) {
-        guard JoinCode.normalized(codes[f.name, default: ""]).count == 6, f.isCompatible else { return }
-        model.watch(f.name, code: codes[f.name, default: ""])
+        let code = code(for: f)
+        guard JoinCode.normalized(code).count == 6, f.isCompatible else { return }
+        codes[f.name] = nil
+        model.watch(f.name, code: code)
     }
 }
 
