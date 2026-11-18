@@ -1,6 +1,6 @@
 # Squad core, mission add-ons, and internet hosting
 
-Status: design, not built. This doc proposes two changes to Squadz:
+Status: C1 is built (`SquadCore`, `Mission`, `GolfMission` in GroupKit). The rest moves to the `squadz` repo as SquadZ-v2, tracked in [squadz#2](https://github.com/zacharyelston/squadz/issues/2). This doc proposes two changes to Squadz:
 
 1. **Split it.** A **squad core** does what every squad needs: join, roster, positions, orders,
    notes, files, check fire, and holds. **Missions are add-ons** on top of that core. SpudGunGolf
@@ -192,7 +192,7 @@ remove those two routes, before using it again.**
 
 | Step | What | Done when |
 | --- | --- | --- |
-| **C1. Extract the core** | Move the golf parts of GroupKit and `SquadHost` behind the `Mission` protocol, with no change in behaviour. Golf is the only mission | Every GroupKit and safety test passes unchanged. A fuzz test: no mission message lifts a core hold |
+| **C1. Extract the core** (built) | Move the golf parts of GroupKit and `SquadHost` behind the `Mission` protocol, with no change in behaviour. Golf is the only mission | Every GroupKit and safety test passes unchanged. A fuzz test: no mission message lifts a core hold |
 | **C2. Mission messages** | `.mission(id, version, payload)`, a core-only protocol version, hold ids per mission | A squad with no mission plays a "positions and orders" session on devices. A golf version bump doesn't break core-only devices |
 | **C3. Relay** | The recycled squadz server: tokens, rooms, WebSocket frames, SQLite, the fixes above | A phone on cellular joins an iPad on home Wi-Fi through the relay and shows up on its map |
 | **C4. Sealed frames** | Bodies sealed with the squad keys; the relay sees headers only | A test relay that logs everything logs no positions, names or notes |
@@ -204,7 +204,7 @@ remove those two routes, before using it again.**
 
 - **Name.** Is the core "Squadz" and golf "SpudGunGolf for Squadz", or does the core get its own
   name?
-- **Repo.** Keep the core in this repo's SpudCore package, or move it and the relay to the
-  `squadz` repo and depend on it from here?
+- **Repo.** Decided: the core and the relay move to the `squadz` repo as SquadZ-v2, and this repo
+  depends on its Swift package and keeps `GolfMission` ([squadz#2](https://github.com/zacharyelston/squadz/issues/2)).
 - **Browser members.** Worth doing for core-only squads, or app only?
 - **Where to host the relay.** Any host that runs a container with TLS works. Pick one when C3 starts.

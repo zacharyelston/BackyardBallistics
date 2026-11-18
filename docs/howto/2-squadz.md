@@ -36,8 +36,8 @@ The map remains beside the workspace on a landscape iPad. Hole, phase, connectio
 ## Field notes and fields
 
 - **A field note** is a short note (up to 500 characters), where you stand, and an optional photo. On a phone in the squad: **Send a field note** on the joined Play screen, or Field → Send a field note. Pick **Squad leader** or **Theater**. Notes to the leader show in the iPad's inbox, and go on to the Theater if one is watching.
-- **A field** is a course a member surveyed (Field → Survey a course). **Send to my squad leader** there puts it in the inbox. A field with blocking problems is refused.
-- **Adopt** switches the squad to that field, with a fresh card. The leader can only adopt between holes: not mid-hole, not while people walk out. A practice-only field puts the squad in practice. **Decline** drops it.
+- **A field** is a course a member surveyed (Field → Survey a course). **Send to my squad leader** there puts it in the inbox. A field with blocking problems is refused. Without a squad, **Share course file** AirDrops it to the iPad, which opens it with Field → Course → **Open a course file**.
+- **Adopt** switches the squad to that field, with a fresh card, and makes it the iPad's own course too, so it stays after a relaunch and the next squad uses it. The leader can only adopt between holes: not mid-hole, not while people walk out. A practice-only field puts the squad in practice. **Decline** drops it.
 
 ## Holds
 

@@ -132,9 +132,9 @@ Three tabs, one per job:
 
 | Tab | For | Now | Later |
 | --- | --- | --- | --- |
-| Play | Playing a round as fire missions | Play or practice a round on the loaded course, hole by hole, with the scorecard saved at the end; v3 Squadz (Command a squad, Join squad); the Course screen; saved scorecards | Real initial data once a launcher is calibrated (m5) |
-| Launcher | Your launcher's profile and the limits | Fixed safety limits | Calibration shots and per-setting velocities (m5), sight mode (m7) |
-| Tools | Setting up flags and testing | Lean check, pole height, ranging, survey a course (with layup points), field notes, target capture (each can be sent to the Theater), sighting test, logs | Course publishing (m8) |
+| Play | Playing a round as fire missions | v3 Squadz (Join squad, Start a squad); play solo or practise with simulated rounds on the loaded course, hole by hole, with the scorecard saved at the end; saved scorecards | Real initial data once a launcher is calibrated (m5) |
+| Field | Courses and flags, out on the ground | The Course screen (load a course, or open a course file), the course map, survey a course (with layup points), range the pole, field notes, target capture (each can be sent to the Theater), pole lean and height | Course publishing (m8) |
+| Kit | Your launcher and the instruments | The launcher's profile and the fixed safety limits, ranging settings, tests and cross-checks (multi-photo cross-check, sighting test, the simulated camera) | Calibration shots and per-setting velocities (m5), sight mode (m7) |
 
 ### One fire mission, end to end
 

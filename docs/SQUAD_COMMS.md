@@ -411,6 +411,8 @@ neither wants anything to do with a launcher.
 
 ### Splitting GroupKit
 
+*Update:* the split was built differently, as `SquadCore` running a `Mission` add-on (golf first). See [SQUAD_CORE.md](SQUAD_CORE.md); the core moves to the `squadz` repo as SquadZ-v2. The table below is the original proposal.
+
 | Layer | Package | Contents |
 | --- | --- | --- |
 | **Generic squad layer** | `SquadKit` (new) | `Squad`, `Member`, `MemberID`, credentials and roles, the envelope with message IDs, `Hello` / `Welcome` / `Refused`, positions and tracks, presence, orders and acks, notes, receipts, files, check-ins, SOS, sectors. A generic host (`SquadHub`) that owns the roster and these messages. The `Transport` seam and `LinkRouter`. No golf types, and no dependency on SafetyKit, RoundKit or CourseKit |
