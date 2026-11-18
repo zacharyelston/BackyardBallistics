@@ -40,6 +40,16 @@ Ranging uses the standard wide (1×) camera by choice. ARKit can also track on t
 
 No phone handy? Turn on **Kit → Tests and cross-checks → Simulated camera for ranging** (always on in the Simulator). It renders a pole 40 m away from known poses, so you can walk through capture, marking, the solver, the flag check (tap **Use the simulated scene's flag point**) and the log.
 
+## Squad link over an OpenMANET mesh
+
+Two OpenMANET nodes ([SQUAD_CORE.md](SQUAD_CORE.md#an-ip-mesh-openmanet)), a few hundred metres
+apart. The commander's iPad joins one node's Wi-Fi, a phone joins the other's.
+
+1. On the phone, **Play → Join squad**. Pass if the iPad's squad shows up and the phone joins.
+2. Walk the phone from one node's Wi-Fi to the other. Pass if it reconnects by itself within 30 s.
+3. Turn off the phone's node during a live hole. Pass if the iPad shows "no recent position" for that
+   member within 15 s and the firing gate holds.
+
 # Milestone 1 field test: sighting the pole
 
 Goal: find out how precisely a player can mark a pole's tip and base, and how good a single-photo size range is, at 10–90 m on each lens.
