@@ -131,6 +131,29 @@ same length-prefixed frames as the local link ([Wire.swift](../Packages/SpudCore
 A member can be on both links; the commander takes the first copy of each frame (messages already
 carry a sequence number) and ignores repeats. A device prefers the local link when it's there.
 
+### An IP mesh: OpenMANET
+
+[OpenMANET](https://openmanet.net/) builds mesh radios from a Raspberry Pi and a Wi-Fi HaLow
+(802.11ah, 915 MHz) board. Nodes run OpenWrt with BATMAN-V over 802.11s, and each node also offers a
+normal 2.4/5 GHz access point. The whole mesh is one network (`10.41.0.0/16`) with mDNS reflected
+across it ([networking docs](https://openmanet.github.io/docs/networking)). Their range tests give
+about 600 m per hop at a few Mbps, and over 1 km at a few hundred kbps.
+
+**It needs no new link.** A phone joins a node's Wi-Fi like any other network. Bonjour finds the
+commander's iPad several hops away and the existing TLS link runs end to end, so we don't rely on the
+mesh's own encryption. Not yet tried on hardware.
+
+- **Moving between nodes** changes the Wi-Fi network and probably the address, so the connection drops
+  and reconnects. The client already retries; positions go stale for a few seconds and the "no
+  recent position" hold covers that.
+- **It's slow at range.** Positions and orders are fine. Files should be throttled: the link reports
+  `LinkKind.lanMesh` so the router treats bulk traffic like a slow link.
+- **US only for now.** 915 MHz; EU builds are experimental. GPL-3.0, hobbyist-grade, very active.
+
+**Longer comms range never widens the field.** A mesh, LoRa or the relay lets a member far away stay
+in touch. It changes nothing about the 91 m (100 yd) limit per shot, and a member's distance from
+the commander says nothing about whether the range is clear.
+
 ### Keys: the relay can't read the squad
 
 Today's local link uses TLS keyed from the join code. That's fine on one Wi-Fi network. It isn't
@@ -142,8 +165,11 @@ enough on the internet, where anyone can try codes.
 - **End-to-end encryption.** Frame bodies are sealed with the squad's keys from
   [SQUAD_COMMS.md](SQUAD_COMMS.md) Part 1 (the same keys LoRa uses). The relay sees only who a
   frame is from, who it's for, and its size.
-- **Join codes are short-lived.** On the relay, a join code works for 10 minutes, or until the
-  commander closes joining, and wrong codes are rate-limited per address. SquadTracker already
+- **Join by QR on the relay.** The commander's QR code ([SQUAD_COMMS.md](SQUAD_COMMS.md#joining-by-qr))
+  carries a 128-bit enrolment secret, the relay's address and its TLS key fingerprint, and the
+  commander's key fingerprint. The relay stores only a hash of the secret. The typed 6-character code
+  doesn't work on the relay; it stays for local Wi-Fi. QR codes expire after 15 minutes or when the
+  commander closes joining, and failed joins are rate-limited per address. SquadTracker already
   expired its codes after 5 minutes.
 
 ### What runs where
