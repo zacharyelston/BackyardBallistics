@@ -19,7 +19,6 @@ let package = Package(
     name: "SpudCore",
     platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
-        .library(name: "CoreGeo", targets: ["CoreGeo"]),
         .library(name: "SafetyKit", targets: ["SafetyKit"]),
         .library(name: "RangingKit", targets: ["RangingKit"]),
         .library(name: "BallisticsKit", targets: ["BallisticsKit"]),
@@ -35,32 +34,32 @@ let package = Package(
         // Photos of a course to a georeferenced mesh for the Theater host (macOS only; docs/MESHING.md).
         .executable(name: "spud-mesh", targets: ["SpudMesh"])
     ],
+    dependencies: [.package(path: "../GeoZones")],
     targets: [
-        .target(name: "CoreGeo"),
-        .target(name: "SafetyKit", dependencies: ["CoreGeo"], resources: [.copy("safety-limits.json")]),
-        .target(name: "RangingKit", dependencies: ["CoreGeo"]),
+        .target(name: "SafetyKit", dependencies: [.product(name: "CoreGeo", package: "GeoZones")], resources: [.copy("safety-limits.json")]),
+        .target(name: "RangingKit", dependencies: [.product(name: "CoreGeo", package: "GeoZones")]),
         .target(name: "BallisticsKit", dependencies: ["SafetyKit"]),
-        .target(name: "CourseKit", dependencies: ["CoreGeo", "SafetyKit"]),
-        .target(name: "RoundKit", dependencies: ["CoreGeo", "RangingKit", "BallisticsKit", "CourseKit"]),
-        .target(name: "GroupKit", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit"]),
-        .executableTarget(name: "SpudDocs", dependencies: ["CoreGeo", "SafetyKit", "RangingKit", "CourseKit", "RoundKit", "GroupKit"]),
+        .target(name: "CourseKit", dependencies: [.product(name: "CoreGeo", package: "GeoZones"), "SafetyKit"]),
+        .target(name: "RoundKit", dependencies: [.product(name: "CoreGeo", package: "GeoZones"), "RangingKit", "BallisticsKit", "CourseKit"]),
+        .target(name: "GroupKit", dependencies: [.product(name: "CoreGeo", package: "GeoZones"), "SafetyKit", "RangingKit", "CourseKit", "RoundKit"]),
+        .executableTarget(name: "SpudDocs", dependencies: [.product(name: "CoreGeo", package: "GeoZones"), "SafetyKit", "RangingKit", "CourseKit", "RoundKit", "GroupKit"]),
         .target(name: "GroupLink", dependencies: ["GroupKit"]),
-        .target(name: "FieldKit", dependencies: ["CoreGeo", "CourseKit"]),
-        .target(name: "TheaterKit", dependencies: ["GroupKit", "FieldKit", "CourseKit", "CoreGeo"]),
-        .target(name: "FieldCapture", dependencies: ["FieldKit", "CourseKit", "CoreGeo"]),
+        .target(name: "FieldKit", dependencies: [.product(name: "CoreGeo", package: "GeoZones"), "CourseKit"]),
+        .target(name: "TheaterKit", dependencies: ["GroupKit", "FieldKit", "CourseKit", .product(name: "CoreGeo", package: "GeoZones")]),
+        .target(name: "FieldCapture", dependencies: ["FieldKit", "CourseKit", .product(name: "CoreGeo", package: "GeoZones")]),
         // RealityKit's PhotogrammetrySession; the sources are `#if os(macOS)`, an iOS build gets a stub.
-        .executableTarget(name: "SpudMesh", dependencies: ["FieldCapture", "FieldKit", "CourseKit", "CoreGeo"]),
-        .testTarget(name: "CoreGeoTests", dependencies: ["CoreGeo"]),
-        .testTarget(name: "SafetyKitTests", dependencies: ["SafetyKit", "CoreGeo"]),
-        .testTarget(name: "RangingKitTests", dependencies: ["RangingKit", "CoreGeo"]),
+        .executableTarget(name: "SpudMesh", dependencies: ["FieldCapture", "FieldKit", "CourseKit", .product(name: "CoreGeo", package: "GeoZones")]),
+        .testTarget(name: "CoreGeoTests", dependencies: [.product(name: "CoreGeo", package: "GeoZones")]),
+        .testTarget(name: "SafetyKitTests", dependencies: ["SafetyKit", .product(name: "CoreGeo", package: "GeoZones")]),
+        .testTarget(name: "RangingKitTests", dependencies: ["RangingKit", .product(name: "CoreGeo", package: "GeoZones")]),
         .testTarget(name: "BallisticsKitTests", dependencies: ["BallisticsKit", "SafetyKit"], resources: [.copy("prototype-reference.json")]),
         // RangingKit is here only to pin CourseRules.maxLeanDeg to LeanMath.limitDegrees.
-        .testTarget(name: "CourseKitTests", dependencies: ["CourseKit", "CoreGeo", "SafetyKit", "RangingKit"]),
-        .testTarget(name: "RoundKitTests", dependencies: ["RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "CoreGeo"]),
-        .testTarget(name: "GroupKitTests", dependencies: ["GroupKit", "RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "SafetyKit", "CoreGeo"]),
-        .testTarget(name: "TheaterKitTests", dependencies: ["TheaterKit", "GroupKit", "FieldKit", "CourseKit", "CoreGeo"]),
-        .testTarget(name: "FieldKitTests", dependencies: ["FieldKit", "CoreGeo", "CourseKit"]),
-        .testTarget(name: "FieldCaptureTests", dependencies: ["FieldCapture", "FieldKit", "CourseKit", "CoreGeo"]),
-        .testTarget(name: "GroupLinkTests", dependencies: ["GroupLink", "GroupKit", "CourseKit", "CoreGeo", "TheaterKit", "FieldKit"])
+        .testTarget(name: "CourseKitTests", dependencies: ["CourseKit", .product(name: "CoreGeo", package: "GeoZones"), "SafetyKit", "RangingKit"]),
+        .testTarget(name: "RoundKitTests", dependencies: ["RoundKit", "RangingKit", "BallisticsKit", "CourseKit", .product(name: "CoreGeo", package: "GeoZones")]),
+        .testTarget(name: "GroupKitTests", dependencies: ["GroupKit", "RoundKit", "RangingKit", "BallisticsKit", "CourseKit", "SafetyKit", .product(name: "CoreGeo", package: "GeoZones")]),
+        .testTarget(name: "TheaterKitTests", dependencies: ["TheaterKit", "GroupKit", "FieldKit", "CourseKit", .product(name: "CoreGeo", package: "GeoZones")]),
+        .testTarget(name: "FieldKitTests", dependencies: ["FieldKit", .product(name: "CoreGeo", package: "GeoZones"), "CourseKit"]),
+        .testTarget(name: "FieldCaptureTests", dependencies: ["FieldCapture", "FieldKit", "CourseKit", .product(name: "CoreGeo", package: "GeoZones")]),
+        .testTarget(name: "GroupLinkTests", dependencies: ["GroupLink", "GroupKit", "CourseKit", .product(name: "CoreGeo", package: "GeoZones"), "TheaterKit", "FieldKit"])
     ]
 )

@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreGeo
+import ZoneMapKit
 import SafetyKit
 import CourseKit
 import GroupKit
@@ -87,9 +88,8 @@ struct SiteMap: View {
     private var map: some View {
         Map(position: $camera) {
             ForEach(courses, id: \.id) { course in
-                MapPolygon(coordinates: course.boundary.vertices.map(\.coordinate))
-                    .foregroundStyle(.clear)
-                    .stroke(.white.opacity(0.9), lineWidth: 2)
+                ZoneMapShape(.polygon(vertices: course.boundary.vertices), fill: .clear,
+                             stroke: .white.opacity(0.9), lineWidth: 2)
                 ForEach(course.holes) { hole in
                     let targets = hole.targets
                     let activeLeg = activeLegs[HoleKey(course: course.id, hole: hole.number)]
@@ -113,9 +113,8 @@ struct SiteMap: View {
                             Self.markerPole(active: activeLeg.map { min($0, targets.count - 1) == k } ?? false)
                         }
                     }
-                    MapCircle(center: hole.flag.position.coordinate, radius: hole.flag.inRadiusM)
-                        .foregroundStyle(.green.opacity(0.35))
-                        .stroke(.green, lineWidth: 1)
+                    ZoneMapShape(.circle(center: hole.flag.position, radius: hole.flag.inRadiusM),
+                                 fill: .green.opacity(0.35), stroke: .green)
                     Annotation("Hole \(hole.number)", coordinate: hole.flag.position.coordinate, anchor: .bottom) {
                         Image(systemName: "flag.fill").foregroundStyle(.red).shadow(radius: 2)
                     }
