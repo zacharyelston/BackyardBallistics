@@ -138,6 +138,40 @@ once the code only enrols: it can expire (say 15 minutes, or when the leader clo
 the leader sees every new member join. A password-authenticated key exchange (PAKE) would close the
 gap entirely; see [Open questions](#open-questions).
 
+### Joining by QR
+
+Typing six characters is fine on one field. A QR code is better everywhere else, and it's the only
+way to join through the internet relay ([SQUAD_CORE.md](SQUAD_CORE.md#keys-the-relay-cant-read-the-squad)).
+The pattern follows [WeHelp](https://github.com/zacharyelston/WeHelp)'s phone pairing
+(`ios/WeHelp/Models/PairingPayload.swift`, `internal/server/pairing.go`), minus a few things listed below.
+
+While enrolment is open, the leader's iPad shows a QR code holding a `spudgolf://join?…` link:
+
+| Field | What it is |
+| --- | --- |
+| `v` | Payload version |
+| `squad` | The `SquadID` |
+| `name` | The squad's name, for display only |
+| `enrol` | A 128-bit random enrolment secret. It replaces the typed code as the enrolment key |
+| `cmd` | SHA-256 fingerprint of the leader device's identity key (below) |
+| `tag` | The Bonjour squad tag |
+| `exp` | When it stops working: 15 minutes, or when the leader closes enrolment |
+| `relay`, `relay_pin` | Later: the relay's address and its TLS key fingerprint |
+
+- **Scan, then confirm.** The phone shows "Join *Golf Sunday* led by *Club iPad*?" and joins only on
+  a tap. No pairing on first scan, and no reading the clipboard.
+- **A leader identity key.** The leader's iPad makes a P-256 key in its Keychain when it creates the
+  squad. It signs the `Welcome` and every re-key, and the phone checks them against `cmd`. A rogue
+  iPad advertising the same squad name, on Wi-Fi, a mesh or the relay, can't pass. Rolling the key
+  over is a signed message from the old key to the new one, so phones aren't stranded.
+- **The QR never carries long-term keys.** No squad root key, member secret or LoRa epoch key. Those
+  arrive only in the `Welcome`, over the authenticated link.
+- **Many uses or one.** For golf, one QR code works for everyone while it's open. For SAR, the leader
+  can issue a single-use QR code per person.
+- **The typed code stays** as a fallback on local Wi-Fi. The relay doesn't accept it.
+
+A 128-bit secret can't be guessed offline, which closes the gap the short code leaves without a PAKE.
+
 ### Crash recovery
 
 | What crashed | What happens |
@@ -330,7 +364,7 @@ Today `GroupClient` and `GroupHost` are the transport. Put a seam under them so 
 messages and a router decides which links carry them:
 
 ```swift
-public enum LinkKind: Sendable { case lan, lora, loopback }
+public enum LinkKind: Sendable { case lan, lanMesh, lora, loopback }
 
 /// What a message is worth, which decides the links it may use.
 public enum Priority: Int, Comparable, Sendable {
@@ -410,6 +444,8 @@ Both want what Squadz already does for golf (who's here, where they are, orders 
 neither wants anything to do with a launcher.
 
 ### Splitting GroupKit
+
+*Update:* the split was built differently, as `SquadCore` running a `Mission` add-on (golf first). See [SQUAD_CORE.md](SQUAD_CORE.md); the core moves to the `squadz` repo as SquadZ-v2. The table below is the original proposal.
 
 | Layer | Package | Contents |
 | --- | --- | --- |
@@ -514,9 +550,9 @@ says so on first launch, in its description and in the SOS screen:
 - **Handing a squad to another leader device.** If the leader's iPad is lost, everyone re-enrols.
   Should a squad have a co-leader device holding a copy of the squad root key (SAR would want this),
   and how is it handed over safely?
-- **PAKE for enrolment.** A password-authenticated key exchange would stop offline guessing of the
-  enrolment code. Is there a maintained Swift implementation worth depending on, or is a short-lived
-  code enough?
+- **PAKE for enrolment.** Mostly answered by [joining by QR](#joining-by-qr): its 128-bit secret can't
+  be guessed offline. A PAKE would still help for the typed code on local Wi-Fi; worth it only if a
+  maintained Swift implementation exists.
 - **US dwell time.** Which Meshtastic preset should be the US default for squads: LongFast for range,
   or MediumFast to keep packets under 400 ms?
 - **A registered Meshtastic port.** Start on the first private port with our magic byte and squad tag

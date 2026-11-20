@@ -10,7 +10,7 @@ Goal: check that a reticle lock lands within its ± at real distances, and that 
 
 1. Set up one plumb flag with its height measured (8, 10 or 12 ft). Stand at the pole and use **Range the pole → Save my GPS position as the flag point** (wait for GPS accuracy of ±5 m or better).
 2. Tape out 10, 30, 60 and 90 m. Note if the ground slopes; measure the height difference if you can.
-3. At each distance, open **Tools → Range the pole**, wait for "Tracking", and check the pole height (the menu sets 8, 10 or 12 ft; a measured height is better).
+3. At each distance, open **Field → Range the pole**, wait for "Tracking", and check the pole height (the menu sets 8, 10 or 12 ft; a measured height is better).
 4. Hold the crosshair on the pole's base. Turn the dial (or use − / + for 0.1 m) until the top of the white plumb line is near the top of the orange band.
 5. Tap **Freeze**. The label shows the still's size (about 4032×3024 on a phone). Pinch to zoom on the still, fine-tune the dial until the line's top meets the band's top, and tap **Lock**. Zoom doesn't change the range.
 6. Read the range, ±, height difference and flag check, enter the taped distance and a note, and tap **Log this lock**. **Re-range** and do three locks per distance.
@@ -18,11 +18,11 @@ Goal: check that a reticle lock lands within its ± at real distances, and that 
 
 What to look for: error within about 2σ of the shown ± (1σ for an 8 ft pole on the frozen full-resolution still is about 2 cm, 17 cm, 70 cm and 1.6 m at 10/30/60/90 m; locking on the live 1920×1440 view doubles that); repeat locks agreeing; flag check under 10 m; the height difference sign on sloped ground; the plumb line staying plumb as you roll the phone.
 
-No phone handy? The Simulator (or **Tools → Simulated camera for ranging**) shows a pole 40 m away with the crosshair on its base. Dial to about 40.1 m, tap **Use the simulated scene's flag point**, then **Freeze** (a 3840×2880 still) and **Lock** to walk through the whole flow.
+No phone handy? The Simulator (or **Kit → Tests and cross-checks → Simulated camera for ranging**) shows a pole 40 m away with the crosshair on its base. Dial to about 40.1 m, tap **Use the simulated scene's flag point**, then **Freeze** (a 3840×2880 still) and **Lock** to walk through the whole flow.
 
 ## Milestone 2 field test: multi-photo cross-check
 
-Optional. The reticle is the main method; this independent solve is a cross-check, kept in **Tools → Multi-photo cross-check**.
+Optional. The reticle is the main method; this independent solve is a cross-check, kept in **Kit → Tests and cross-checks → Multi-photo cross-check**.
 
 Goal: check the fused range, its ± estimate, the height difference and the flag check at real distances.
 
@@ -38,7 +38,17 @@ What to look for: error within about 2σ of the shown ±; "Photo agreement" Good
 
 Ranging uses the standard wide (1×) camera by choice. ARKit can also track on the telephoto camera on iPhones that offer it, which would help on long holes; that's a later option. If you have poles of different heights, repeat at 60 and 90 m with each to confirm taller poles range better.
 
-No phone handy? Turn on **Tools → Simulated camera for ranging** (always on in the Simulator). It renders a pole 40 m away from known poses, so you can walk through capture, marking, the solver, the flag check (tap **Use the simulated scene's flag point**) and the log.
+No phone handy? Turn on **Kit → Tests and cross-checks → Simulated camera for ranging** (always on in the Simulator). It renders a pole 40 m away from known poses, so you can walk through capture, marking, the solver, the flag check (tap **Use the simulated scene's flag point**) and the log.
+
+## Squad link over an OpenMANET mesh
+
+Two OpenMANET nodes ([SQUAD_CORE.md](SQUAD_CORE.md#an-ip-mesh-openmanet)), a few hundred metres
+apart. The commander's iPad joins one node's Wi-Fi, a phone joins the other's.
+
+1. On the phone, **Play → Join squad**. Pass if the iPad's squad shows up and the phone joins.
+2. Walk the phone from one node's Wi-Fi to the other. Pass if it reconnects by itself within 30 s.
+3. Turn off the phone's node during a live hole. Pass if the iPad shows "no recent position" for that
+   member within 15 s and the firing gate holds.
 
 # Milestone 1 field test: sighting the pole
 

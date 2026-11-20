@@ -4,10 +4,11 @@ import CourseKit
 import GroupKit
 
 /// The commander's inbox: field notes from members (also pinned on the map), and fields members
-/// surveyed and sent in, to adopt for the squad or decline. Adopting is refused mid-hole, while
-/// walking out, or in a started match; the reason shows here.
+/// surveyed and sent in, to adopt for the squad or decline. Adopting is refused mid-hole or while
+/// walking out; the reason shows here. An adopted field becomes this iPad's course too.
 struct SquadInboxPanel: View {
     @EnvironmentObject private var command: SquadCommand
+    @EnvironmentObject private var courses: CourseStore
     @State private var enlarged: FieldNote?
 
     var body: some View {
@@ -60,7 +61,9 @@ struct SquadInboxPanel: View {
                         .font(.caption).foregroundStyle(.secondary)
                     if let note = f.note, !note.isEmpty { Text(note).font(.footnote) }
                     HStack {
-                        Button("Adopt") { command.adoptField(f.id) }.buttonStyle(.borderedProminent)
+                        Button("Adopt") {
+                            if let adopted = command.adoptField(f.id) { courses.loadAdopted(adopted.course, from: adopted.author) }
+                        }.buttonStyle(.borderedProminent)
                         Button("Decline", role: .destructive) { command.declineField(f.id) }.buttonStyle(.bordered)
                     }
                     .controlSize(.small)
@@ -68,7 +71,7 @@ struct SquadInboxPanel: View {
                 .padding(10)
                 .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
             }
-            Text("Adopting starts a fresh card on the new field. Only between holes.")
+            Text("Adopting starts a fresh card on the new field and makes it this iPad's course. Only between holes.")
                 .font(.caption).foregroundStyle(.secondary)
             if let problem = host.lastProblem {
                 Label(problem, systemImage: "exclamationmark.triangle.fill").font(.footnote).foregroundStyle(.red)
