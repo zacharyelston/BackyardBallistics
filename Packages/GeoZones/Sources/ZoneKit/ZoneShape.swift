@@ -75,4 +75,3 @@ public enum ZoneShape: Codable, Equatable, Sendable {
         }
     }
 }
-
